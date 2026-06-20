@@ -140,6 +140,8 @@
     bonusBugs: [],
     bonusBugId: 0,
     bonusEating: false,
+    bonusScore: 0,
+    bonusScorePops: [],
     bugsEaten: 0,
     done: false
   };
@@ -153,7 +155,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.2",
+      debugBadge: "BB 2.3",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -223,6 +225,8 @@
     state.bonusBugs = [];
     state.bonusBugId = 0;
     state.bonusEating = false;
+    state.bonusScore = 0;
+    state.bonusScorePops = [];
     state.bugsEaten = 0;
     state.done = false;
 
@@ -523,6 +527,10 @@
 
     for (const particle of state.tongueSparkles) {
       if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
+    }
+
+    for (const pop of state.bonusScorePops) {
+      if (Number.isFinite(pop.bornAt)) pop.bornAt += delta;
     }
 
     if (Number.isFinite(state.frogChompUntil) && state.frogChompUntil > 0) {
@@ -1121,6 +1129,27 @@
     }
   }
 
+  function addBonusScorePop(x, y, label = "+1", kind = "positive") {
+    const now = performance.now();
+
+    state.bonusScorePops.push({
+      id: `bonus-score-pop-${now}-${Math.random()}`,
+      x,
+      y,
+      label,
+      kind,
+      bornAt: now,
+      life: 760,
+      driftX: (Math.random() - 0.5) * 18,
+      driftY: -42 - Math.random() * 18
+    });
+
+    if (state.bonusScorePops.length > 24) {
+      state.bonusScorePops.splice(0, state.bonusScorePops.length - 24);
+    }
+  }
+
+
   function addSpitSpray(now = performance.now()) {
     const origin = getFrogPoint();
     const count = 22;
@@ -1185,6 +1214,8 @@
     state.bonusEndsAt = performance.now() + BONUS_SECONDS * 1000;
     state.bonusBugs = [];
     state.bonusEating = false;
+    state.bonusScore = 0;
+    state.bonusScorePops = [];
     state.bugsEaten = 0;
 
     updateBuildText();
@@ -1287,6 +1318,18 @@
 
     fireTongueToBug(bug, now, BONUS_EAT_MS, true);
 
+    const now = performance.now();
+    const scorePoint = getBugPoint(bug, now, { ignoreEat: true });
+
+    state.bonusEating = true;
+    bug.status = "eating";
+    state.bugsEaten += 1;
+    state.bonusScore += 1;
+
+    addBonusScorePop(scorePoint.x, scorePoint.y - 18, "+1", "positive");
+
+    fireTongueToBug(bug, now, BONUS_EAT_MS, true);
+
     scheduleAction(BONUS_EAT_MS, () => {
       state.tongue = null;
       state.bonusBugs = state.bonusBugs.filter((item) => item.id !== bug.id);
@@ -1304,6 +1347,8 @@
 
     updateTongueSparkles(now);
     state.tongueSparkles = state.tongueSparkles.filter((particle) => now - particle.bornAt < particle.life);
+
+    state.bonusScorePops = state.bonusScorePops.filter((pop) => now - pop.bornAt < pop.life);
 
     updateChosenBugSmokePoofs(now);
 
@@ -1421,6 +1466,7 @@
     state.spitParticles = [];
     state.poofParticles = [];
     state.tongueSparkles = [];
+    state.bonusScorePops = [];
     state.bugs = [];
 
     if (!completionMarked) {
@@ -1489,7 +1535,7 @@
 
     play.innerHTML = renderBugs();
     frogTongueSlot.innerHTML = renderTongue(now);
-    effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now);
+    effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now) + renderBonusScorePops(now);
     reactionLayer.innerHTML = renderReaction(now);
 
     renderOverlay(now, overlay);
@@ -1777,6 +1823,24 @@
     </div>
   `;
   }
+
+  function renderBonusScorePops(now) {
+    if (!state.bonusScorePops.length) return "";
+
+    return state.bonusScorePops.map((pop) => {
+      const age = Math.max(0, now - pop.bornAt);
+      const lifeT = shell.clamp(age / pop.life, 0, 1);
+      const easeOut = 1 - Math.pow(1 - lifeT, 3);
+      const x = pop.x + pop.driftX * easeOut;
+      const y = pop.y + pop.driftY * easeOut;
+      const scale = 0.72 + Math.sin(Math.min(1, lifeT * 2.2) * Math.PI) * 0.32;
+      const opacity = lifeT < 0.72 ? 1 : Math.max(0, 1 - ((lifeT - 0.72) / 0.28));
+      const kindClass = pop.kind === "negative" ? " is-negative" : " is-positive";
+
+      return `<span class="bb-bonus-score-pop${kindClass}" style="left:${x.toFixed(2)}px; top:${y.toFixed(2)}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%, -50%) scale(${scale.toFixed(3)});">${escapeHtml(pop.label)}</span>`;
+    }).join("");
+  }
+
 
 
   function renderSpitParticles(now) {
