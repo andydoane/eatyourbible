@@ -156,7 +156,7 @@ body{overflow:hidden}
   display:flex;
   flex-direction:column;
   gap:12px;
-  padding:calc(18px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));
+  padding:calc(18px + env(safe-area-inset-top)) 0 0;
   box-sizing:border-box;
 }
 
