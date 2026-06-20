@@ -490,6 +490,11 @@ body {
   filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.16));
 }
 
+.bb-bug-emoji[hidden],
+.bb-bug-emoji--fallback[hidden] {
+  display: none !important;
+}
+
 .bb-bug-word {
   max-width: 100%;
   padding: 0;
