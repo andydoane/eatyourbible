@@ -37,7 +37,7 @@
     bonusPop3: `${SOUND_BASE_PATH}verse_invaders_pop_3.mp3`,
     bonusPop4: `${SOUND_BASE_PATH}verse_invaders_pop_4.mp3`,
     bonusPop5: `${SOUND_BASE_PATH}verse_invaders_pop_5.mp3`,
-    bonusPenalty: `${SOUND_BASE_PATH}verse_invaders_wrong.mp3`,
+    bonusPenalty: `${SOUND_BASE_PATH}verse_invaders_wrong_2.mp3`,
     bonusMultiplierUp: `${SOUND_BASE_PATH}verse_invaders_streak.mp3`,
     bonusReveal: `${SOUND_BASE_PATH}verse_invaders_bonus_result.mp3`
   };
@@ -470,7 +470,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.29",
+      debugBadge: "v3.30",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1165,7 +1165,7 @@
     }
 
     const targetPoint = getEntityHitPoint(target);
-    playGameSound("correctHit");
+    playRandomBonusPopSound();
     addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, 1));
 
     target.visible = false;
@@ -1247,7 +1247,7 @@
 
     scheduleAction(CORRECT_HIT_IMPACT_DELAY_MS, () => {
       const targetPoint = getEntityHitPoint(target);
-      playGameSound("correctHit");
+      playRandomBonusPopSound();
       addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.streak));
       showStreakMilestone(state.streak);
       target.visible = false;
@@ -1363,7 +1363,11 @@
     state.entityRenderSignature = "";
 
     const targetPoint = getEntityHitPoint(target);
-    playGameSound("abduction");
+
+    scheduleAction(ABDUCTION_LIFE_MS * 0.16, () => {
+      playGameSound("abduction");
+    });
+
     addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, target.color, () => {
       spawnRound();
     }));
@@ -1395,10 +1399,12 @@
     state.trails = [];
     state.effects = state.effects.filter(effect => effect.until > performance.now());
 
-    playGameSound("bonusStart");
-
     renderHud();
     renderDynamic();
+
+    scheduleAction(120, () => {
+      if (state.bonusIntroMode) playGameSound("bonusStart");
+    });
 
     scheduleAction(2000, () => {
       if (!state.bonusIntroMode) return;
