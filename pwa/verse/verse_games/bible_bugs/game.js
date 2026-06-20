@@ -24,9 +24,25 @@
     lilyPad: "./bible_bugs_images/bible_bugs_lilypad.png"
   };
 
+  const BUG_IMAGE_PATHS = [
+    "./bible_bugs_images/bible_bugs_bug_1.png",
+    "./bible_bugs_images/bible_bugs_bug_2.png",
+    "./bible_bugs_images/bible_bugs_bug_3.png",
+    "./bible_bugs_images/bible_bugs_bug_4.png",
+    "./bible_bugs_images/bible_bugs_bug_5.png",
+    "./bible_bugs_images/bible_bugs_bug_6.png",
+    "./bible_bugs_images/bible_bugs_bug_7.png",
+    "./bible_bugs_images/bible_bugs_bug_8.png",
+    "./bible_bugs_images/bible_bugs_bug_9.png",
+    "./bible_bugs_images/bible_bugs_bug_10.png"
+  ];
+
+  const BONUS_GOOD_BUG_IMAGE_PATHS = BUG_IMAGE_PATHS.filter((_, index) => index !== 7);
+
   const BUG_EMOJIS = ["🪰", "🐞", "🐝", "🦟", "🪲", "🐛"];
   const LANES = [0.18, 0.50, 0.82];
   const BONUS_SECONDS = 20;
+  const BONUS_MAX_BUGS = 3;
 
   const MODE_TIMING = {
     easy: { fallSeconds: 6.8, nextDelay: 0, reactionMs: 620, missDelay: 520 },
@@ -119,7 +135,7 @@
     bonusIntroUntil: 0,
     bonusMode: false,
     bonusEndsAt: 0,
-    bonusBug: null,
+    bonusBugs: [],
     bonusBugId: 0,
     bonusEating: false,
     bugsEaten: 0,
@@ -135,7 +151,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 1.6",
+      debugBadge: "BB 1.7",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -202,7 +218,7 @@
     state.bonusIntroUntil = 0;
     state.bonusMode = false;
     state.bonusEndsAt = 0;
-    state.bonusBug = null;
+    state.bonusBugs = [];
     state.bonusBugId = 0;
     state.bonusEating = false;
     state.bugsEaten = 0;
@@ -481,7 +497,10 @@
     }
 
     shiftBugTimes(state.tutorialBug);
-    shiftBugTimes(state.bonusBug);
+
+    for (const bug of state.bonusBugs) {
+      shiftBugTimes(bug);
+    }
 
     if (state.tongue && Number.isFinite(state.tongue.startedAt)) {
       state.tongue.startedAt += delta;
@@ -712,7 +731,7 @@
     state.tutorialStep = "waiting";
     state.waveStatus = "tutorial";
     state.bugs = [];
-    state.bonusBug = null;
+    state.bonusBugs = [];
     state.tongue = null;
     state.reaction = null;
 
@@ -1034,7 +1053,10 @@
     }
 
     maybePoofBug(state.tutorialBug);
-    maybePoofBug(state.bonusBug);
+
+    for (const bug of state.bonusBugs) {
+      maybePoofBug(bug);
+    }
   }
 
   function addBugSmokePoof(bug, now = performance.now()) {
@@ -1159,7 +1181,7 @@
     state.bonusIntroActive = false;
     state.bonusMode = true;
     state.bonusEndsAt = performance.now() + BONUS_SECONDS * 1000;
-    state.bonusBug = null;
+    state.bonusBugs = [];
     state.bonusEating = false;
     state.bugsEaten = 0;
 
@@ -1168,45 +1190,54 @@
   }
 
   function spawnBonusBug() {
-    if (!state.bonusMode || state.done || state.bonusEating || state.bonusBug) return;
+    if (!state.bonusMode || state.done) return;
 
     const now = performance.now();
     const marginX = 0.16;
     const marginTop = 0.14;
     const marginBottom = 0.34;
 
-    state.bonusBugId += 1;
-    state.bonusBug = {
-      id: `b${state.bonusBugId}`,
-      emoji: BUG_EMOJIS[state.bonusBugId % BUG_EMOJIS.length],
-      xRatio: shell.clamp(marginX + Math.random() * (1 - marginX * 2), marginX, 1 - marginX),
-      yRatio: shell.clamp(marginTop + Math.random() * (1 - marginTop - marginBottom), marginTop, 1 - marginBottom),
-      vx: (Math.random() < 0.5 ? -1 : 1) * (0.055 + Math.random() * 0.055),
-      vy: (Math.random() < 0.5 ? -1 : 1) * (0.040 + Math.random() * 0.050),
-      bornAt: now,
-      expiresAt: now + BONUS_BUG_LIFE_MS,
-      status: "bonus",
-      poofAt: 0,
-      pullPoofed: false,
-      motionPhase: Math.random() * Math.PI * 2,
-      jitterSeed: Math.random() * Math.PI * 2
-    };
+    while (state.bonusBugs.length < BONUS_MAX_BUGS) {
+      state.bonusBugId += 1;
+
+      const imgSrc = BONUS_GOOD_BUG_IMAGE_PATHS[state.bonusBugId % BONUS_GOOD_BUG_IMAGE_PATHS.length];
+
+      state.bonusBugs.push({
+        id: `b${state.bonusBugId}`,
+        kind: "good",
+        imgSrc,
+        emoji: BUG_EMOJIS[state.bonusBugId % BUG_EMOJIS.length],
+        xRatio: shell.clamp(marginX + Math.random() * (1 - marginX * 2), marginX, 1 - marginX),
+        yRatio: shell.clamp(marginTop + Math.random() * (1 - marginTop - marginBottom), marginTop, 1 - marginBottom),
+        vx: (Math.random() < 0.5 ? -1 : 1) * (0.055 + Math.random() * 0.055),
+        vy: (Math.random() < 0.5 ? -1 : 1) * (0.040 + Math.random() * 0.050),
+        bornAt: now,
+        expiresAt: now + BONUS_BUG_LIFE_MS,
+        status: "bonus",
+        poofAt: 0,
+        pullPoofed: false,
+        motionPhase: Math.random() * Math.PI * 2,
+        jitterSeed: Math.random() * Math.PI * 2
+      });
+    }
   }
 
   function handleBonusTap(id) {
     if (!state.bonusMode || state.bonusEating || state.paused || state.done) return;
-    const bug = state.bonusBug;
-    if (!bug || bug.id !== id || bug.status !== "bonus") return;
+
+    const bug = state.bonusBugs.find((item) => item.id === id);
+    if (!bug || bug.status !== "bonus") return;
 
     const now = performance.now();
     state.bonusEating = true;
     bug.status = "eating";
     state.bugsEaten += 1;
+
     fireTongueToBug(bug, now, BONUS_EAT_MS, true);
 
     scheduleAction(BONUS_EAT_MS, () => {
       state.tongue = null;
-      state.bonusBug = null;
+      state.bonusBugs = state.bonusBugs.filter((item) => item.id !== bug.id);
       state.bonusEating = false;
       spawnBonusBug();
     });
@@ -1248,44 +1279,52 @@
     }
 
     if (state.bonusMode && now >= state.bonusEndsAt) {
-      if (state.bonusBug && state.bonusBug.status !== "poof") {
-        state.bonusBug.status = "poof";
-        state.bonusBug.poofAt = now;
+      for (const bug of state.bonusBugs) {
+        if (bug.status !== "poof") {
+          bug.status = "poof";
+          bug.poofAt = now;
+        }
       }
-      if (!state.bonusEating && (!state.bonusBug || state.bonusBug.status === "gone")) {
+
+      if (!state.bonusEating && state.bonusBugs.length === 0) {
         finishGame();
       }
     }
   }
 
   function updateBonusBug(dt, now) {
-    const bug = state.bonusBug;
-    if (!state.bonusMode || !bug) return;
+    if (!state.bonusMode) return;
 
-    if (bug.status === "bonus") {
-      const fieldRatio = state.fieldWidth && state.fieldHeight ? state.fieldWidth / state.fieldHeight : 0.75;
-      bug.xRatio += bug.vx * dt;
-      bug.yRatio += bug.vy * dt * fieldRatio;
+    const fieldRatio = state.fieldWidth && state.fieldHeight ? state.fieldWidth / state.fieldHeight : 0.75;
 
-      if (bug.xRatio < 0.12 || bug.xRatio > 0.88) {
-        bug.vx *= -1;
-        bug.xRatio = shell.clamp(bug.xRatio, 0.12, 0.88);
-      }
+    for (const bug of state.bonusBugs) {
+      if (bug.status === "bonus") {
+        bug.xRatio += bug.vx * dt;
+        bug.yRatio += bug.vy * dt * fieldRatio;
 
-      if (bug.yRatio < 0.14 || bug.yRatio > 0.66) {
-        bug.vy *= -1;
-        bug.yRatio = shell.clamp(bug.yRatio, 0.14, 0.66);
-      }
+        if (bug.xRatio < 0.12 || bug.xRatio > 0.88) {
+          bug.vx *= -1;
+          bug.xRatio = shell.clamp(bug.xRatio, 0.12, 0.88);
+        }
 
-      if (now >= bug.expiresAt) {
-        bug.status = "poof";
-        bug.poofAt = now;
+        if (bug.yRatio < 0.14 || bug.yRatio > 0.66) {
+          bug.vy *= -1;
+          bug.yRatio = shell.clamp(bug.yRatio, 0.14, 0.66);
+        }
+
+        if (now >= bug.expiresAt) {
+          bug.status = "poof";
+          bug.poofAt = now;
+        }
       }
     }
 
-    if (bug.status === "poof" && now - bug.poofAt > 260) {
-      state.bonusBug = null;
-      if (state.bonusMode && now < state.bonusEndsAt) spawnBonusBug();
+    state.bonusBugs = state.bonusBugs.filter((bug) => {
+      return !(bug.status === "poof" && now - bug.poofAt > 260);
+    });
+
+    if (state.bonusMode && now < state.bonusEndsAt && !state.bonusEating) {
+      spawnBonusBug();
     }
   }
 
@@ -1325,7 +1364,7 @@
     state.tutorialBug = null;
     state.bonusMode = false;
     state.bonusIntroActive = false;
-    state.bonusBug = null;
+    state.bonusBugs = [];
     state.tongue = null;
     state.spitParticles = [];
     state.poofParticles = [];
@@ -1446,8 +1485,8 @@
       items.push(renderBugButton(state.tutorialBug, now, false));
     }
 
-    if (state.bonusBug) {
-      items.push(renderBugButton(state.bonusBug, now, true));
+    for (const bug of state.bonusBugs) {
+      items.push(renderBugButton(bug, now, true));
     }
 
     return items.join("");
@@ -1461,6 +1500,9 @@
     const bonusClass = isBonus ? " bb-bug--bonus" : "";
     const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
     const word = isBonus || isTutorial ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
+    const bugVisual = isBonus && bug.imgSrc
+      ? `<img class="bb-bug-img" src="${escapeHtml(bug.imgSrc)}" alt="" aria-hidden="true" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="bb-bug-emoji bb-bug-emoji--fallback" hidden aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>`
+      : `<span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>`;
     const disabled = isTutorial
       ? state.tutorialStep !== "waiting" ? " disabled" : ""
       : (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
@@ -1473,7 +1515,7 @@
     <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${x.toFixed(2)}px; --bb-y:${y.toFixed(2)}px;">
     <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled} style="transform:${buttonTransform};">
       ${word}
-      <span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>
+      ${bugVisual}
     </button>
     </div>
   `;

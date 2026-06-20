@@ -349,6 +349,22 @@ body {
   font-size: clamp(44px, 13vw, 82px);
 }
 
+.bb-bug-img {
+  display: block;
+  height: clamp(44px, 13vw, 82px);
+  width: auto;
+  max-width: clamp(82px, 22vw, 128px);
+  object-fit: contain;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.16));
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.bb-bug-emoji--fallback {
+  font-size: clamp(44px, 13vw, 82px);
+}
+
 .bb-frog {
   position: absolute;
   left: 50%;
