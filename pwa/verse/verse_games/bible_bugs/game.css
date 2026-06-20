@@ -605,10 +605,13 @@ body {
 }
 
 .bb-overlay-bubble.is-tutorial {
-  font-size: clamp(30px, 8.6vw, 58px);
+  width: 75%;
+  max-width: 75%;
+  box-sizing: border-box;
+  font-size: clamp(26px, 7.2vw, 58px);
   line-height: 0.95;
-  padding: clamp(12px, 3.2vw, 18px) clamp(18px, 5.4vw, 34px);
-  white-space: normal;
+  padding: clamp(12px, 3.2vw, 18px) clamp(14px, 4vw, 30px);
+  white-space: nowrap;
 }
 
 .bb-reaction {
