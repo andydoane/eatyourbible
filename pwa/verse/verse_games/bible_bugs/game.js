@@ -151,7 +151,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.0",
+      debugBadge: "BB 2.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1524,6 +1524,7 @@
     return items.join("");
   }
 
+
   function renderBugButton(bug, now, isBonus) {
     const p = getBugPoint(bug, now);
     const motion = getBugMotionState(bug, now, isBonus);
@@ -1532,8 +1533,33 @@
     const bonusClass = isBonus ? " bb-bug--bonus" : "";
     const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
     const word = isBonus || isTutorial ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
-    const bonusRipple = isBonus && bug.status === "poof"
-      ? `<span class="bb-bonus-ripple" aria-hidden="true"><span></span><span></span><span></span></span>`
+
+    const isBonusPoof = isBonus && bug.status === "poof";
+    const poofAge = isBonusPoof && Number.isFinite(bug.poofAt)
+      ? Math.max(0, now - bug.poofAt)
+      : 0;
+    const poofT = isBonusPoof ? shell.clamp(poofAge / 560, 0, 1) : 0;
+    const poofEase = 1 - Math.pow(1 - poofT, 3);
+
+    const sinkScale = isBonusPoof ? Math.max(0.02, 1 - poofEase * 0.98) : 1;
+    const sinkOpacity = isBonusPoof ? Math.max(0, 1 - poofEase) : 1;
+    const sinkY = isBonusPoof ? poofEase * 14 : 0;
+
+    function renderRippleRing(delayMs, maxScale, maxOpacity) {
+      const ringT = shell.clamp((poofAge - delayMs) / 560, 0, 1);
+      const ringEase = 1 - Math.pow(1 - ringT, 3);
+      const scale = 0.18 + ringEase * (maxScale - 0.18);
+      const opacity = ringT <= 0 ? 0 : Math.max(0, 1 - ringT) * maxOpacity;
+
+      return `<span style="--bb-ripple-scale:${scale.toFixed(3)}; --bb-ripple-opacity:${opacity.toFixed(3)};"></span>`;
+    }
+
+    const bonusRipple = isBonusPoof
+      ? `<span class="bb-bonus-ripple" aria-hidden="true">
+          ${renderRippleRing(0, 2.15, 0.82)}
+          ${renderRippleRing(90, 2.35, 0.58)}
+          ${renderRippleRing(170, 2.55, 0.38)}
+        </span>`
       : "";
 
     let bugVisual = "";
@@ -1552,11 +1578,14 @@
     const y = p.y;
     const baseRotateDeg = Number(bug.baseRotateDeg) || 0;
     const rotateDeg = baseRotateDeg + motion.rotateDeg;
-    const buttonTransform = `rotate(${rotateDeg.toFixed(2)}deg) scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)})`;
+    const scaleX = motion.scaleX * sinkScale;
+    const scaleY = motion.scaleY * sinkScale;
+    const buttonTransform = `rotate(${rotateDeg.toFixed(2)}deg) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)}) translateY(${sinkY.toFixed(2)}px)`;
+    const buttonOpacity = isBonusPoof ? ` opacity:${sinkOpacity.toFixed(3)};` : "";
 
     return `
       <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${x.toFixed(2)}px; --bb-y:${y.toFixed(2)}px;">
-        <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled} style="transform:${buttonTransform};">
+        <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled} style="transform:${buttonTransform};${buttonOpacity}">
           ${word}
           ${bugVisual}
         </button>
