@@ -1,3 +1,19 @@
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Titan One";
+  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root{
   --bb-bg:#333333;
   --bb-ink:#243529;
@@ -18,6 +34,7 @@ body{
   margin:0;
   background:var(--bb-bg);
   color:var(--bb-ink);
+  font-family:"Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-user-select:none;
   user-select:none;
   -webkit-touch-callout:none;
@@ -533,7 +550,8 @@ body{
   border-radius:999px;
   background:rgba(47,125,73,0.94);
   color:#ffffff;
-  font-weight:900;
+  font-family:"Titan One", "Baloo 2", system-ui, sans-serif;
+  font-weight:400;
   font-size:clamp(20px, 5.2vw, 34px);
   line-height:1;
   box-shadow:0 5px 0 rgba(0,0,0,0.14);
@@ -595,8 +613,9 @@ body{
 
 .bb-bonus-intro-title{
   color:var(--bb-green-dark);
+  font-family:"Titan One", "Baloo 2", system-ui, sans-serif;
   font-size:clamp(34px, 10vw, 74px);
-  font-weight:900;
+  font-weight:400;
   line-height:0.95;
   letter-spacing:0.03em;
 }
@@ -604,8 +623,9 @@ body{
 .bb-bonus-intro-subtitle{
   margin-top:clamp(10px, 2.8vw, 18px);
   color:var(--bb-ink);
+  font-family:"Titan One", "Baloo 2", system-ui, sans-serif;
   font-size:clamp(20px, 5.6vw, 38px);
-  font-weight:900;
+  font-weight:400;
   line-height:1.05;
   text-wrap:balance;
 }

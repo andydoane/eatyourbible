@@ -128,6 +128,7 @@ const WATER_FX = {
       app,
       title: GAME_TITLE,
       icon: "🐸",
+      debugBadge: "BB 1.0",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
