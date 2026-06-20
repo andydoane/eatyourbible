@@ -38,6 +38,7 @@
   ];
 
   const BONUS_GOOD_BUG_IMAGE_PATHS = BUG_IMAGE_PATHS.filter((_, index) => index !== 7);
+  const VERSE_BUG_IMAGE_PATHS = BONUS_GOOD_BUG_IMAGE_PATHS;
   const BONUS_STINK_BUG_IMAGE_PATH = BUG_IMAGE_PATHS[7];
   const BONUS_STINK_CHANCE = 0.22;
   const BONUS_STINK_IDLE_INTERVAL_MS = 150;
@@ -191,7 +192,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 3.4",
+      debugBadge: "BB 3.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -805,6 +806,7 @@
       correct: true,
       tutorial: true,
       emoji: "🐞",
+      imgSrc: VERSE_BUG_IMAGE_PATHS[1] || BUG_IMAGE_PATHS[1],
       xRatio: 0.5,
       yRatio: 0.36,
       bornAt: now,
@@ -874,7 +876,6 @@
     }
   }
 
-
   function spawnWave() {
     updatePhase();
 
@@ -888,6 +889,8 @@
     const timing = MODE_TIMING[selectedMode] || MODE_TIMING.medium;
     const fallMs = timing.fallSeconds * 1000;
     const shuffledLanes = shell.shuffle(LANES);
+    const shuffledBugImages = shell.shuffle(VERSE_BUG_IMAGE_PATHS);
+    const staggerMs = 145;
 
     state.waveId += 1;
     state.waveStatus = "falling";
@@ -897,10 +900,11 @@
       text: choice.text,
       correct: choice.correct,
       emoji: BUG_EMOJIS[(state.waveId + index) % BUG_EMOJIS.length],
+      imgSrc: shuffledBugImages[index % shuffledBugImages.length],
       xRatio: shuffledLanes[index] || LANES[index] || 0.5,
       startY: -0.06,
       endY: 0.76,
-      bornAt: now,
+      bornAt: now + index * staggerMs,
       fallMs,
       status: "falling",
       poofAt: 0,
@@ -1856,7 +1860,7 @@
     const isTutorial = !!bug.tutorial;
     const statusClass = bug.status === "poof" ? " is-poof" : bug.status === "eating" ? " is-eating" : "";
     const bonusClass = isBonus ? ` bb-bug--bonus${bug.kind === "stink" ? " bb-bug--stink" : ""}` : "";
-    const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
+    const popClass = now >= bug.bornAt && now - bug.bornAt < 260 ? " is-pop" : "";
     const word = isBonus || isTutorial ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
 
     const isBonusPoof = isBonus && bug.status === "poof";
@@ -1889,8 +1893,8 @@
 
     let bugVisual = "";
 
-    if (isBonus && bug.imgSrc) {
-      bugVisual = `<img class="bb-bug-img" src="${escapeHtml(bug.imgSrc)}" alt="" aria-hidden="true">`;
+    if (bug.imgSrc) {
+      bugVisual = `<img class="bb-bug-img" src="${escapeHtml(bug.imgSrc)}" alt="" aria-hidden="true" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="bb-bug-emoji bb-bug-emoji--fallback" hidden aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>`;
     } else {
       bugVisual = `<span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>`;
     }

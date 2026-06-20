@@ -982,6 +982,7 @@ body {
   font-size: clamp(20px, 5.4vw, 34px);
   font-weight: 900;
   line-height: 1.05;
+  text-wrap: balance;
   text-shadow:
     0 3px 0 rgba(47, 125, 73, 0.62),
     0 0 12px rgba(255, 255, 255, 0.30);
