@@ -95,6 +95,8 @@
   let muted = false;
   let completionMarked = false;
   let completionResult = null;
+  let bonusRevealCompletionPromise = Promise.resolve();
+  let bonusRevealContinuePending = false;
   let resizeBound = false;
 
   const shell = window.VerseGameShell;
@@ -189,7 +191,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.9",
+      debugBadge: "BB 3.0",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -219,6 +221,8 @@
     selectedMode = mode;
     completionMarked = false;
     completionResult = null;
+    bonusRevealCompletionPromise = Promise.resolve();
+    bonusRevealContinuePending = false;
 
     state.running = true;
     state.paused = false;
@@ -615,6 +619,12 @@
     if (!field) return;
 
     field.addEventListener("pointerdown", (event) => {
+      if (state.bonusScoreRevealActive) {
+        event.preventDefault();
+        continueAfterBonusScoreReveal();
+        return;
+      }
+
       const bugButton = event.target.closest("[data-bug-id]");
       if (!bugButton) return;
       event.preventDefault();
@@ -1622,7 +1632,7 @@
     state.rafId = requestAnimationFrame(loop);
   }
 
-  async function finishGame() {
+  function finishGame() {
     if (state.done) return;
 
     state.done = true;
@@ -1639,18 +1649,15 @@
     state.tongueSparkles = [];
     state.bonusScorePops = [];
     state.bonusScoreRevealActive = true;
+    bonusRevealContinuePending = false;
     state.bugs = [];
 
-    const revealPromise = new Promise((resolve) => {
-      setTimeout(resolve, BONUS_SCORE_REVEAL_MS);
-    });
-
-    let completionPromise = Promise.resolve();
+    renderFrame();
 
     if (!completionMarked) {
       completionMarked = true;
 
-      completionPromise = window.VerseGameBridge.completeGameRun({
+      bonusRevealCompletionPromise = window.VerseGameBridge.completeGameRun({
         verseId: ctx.verseId,
         gameId: GAME_ID,
         mode: selectedMode,
@@ -1667,13 +1674,28 @@
         console.error("completeGameRun failed", err);
         completionResult = null;
       });
+    } else {
+      bonusRevealCompletionPromise = Promise.resolve();
+    }
+  }
+
+  async function continueAfterBonusScoreReveal() {
+    if (!state.bonusScoreRevealActive || bonusRevealContinuePending) return;
+
+    bonusRevealContinuePending = true;
+
+    try {
+      await bonusRevealCompletionPromise;
+    } catch (err) {
+      console.error("Bonus reveal completion wait failed", err);
     }
 
-    await Promise.all([revealPromise, completionPromise]);
-
     state.bonusScoreRevealActive = false;
+    bonusRevealContinuePending = false;
     renderEndScreen();
   }
+
+  
 
   function renderEndScreen() {
     stopLoop();
@@ -1715,6 +1737,7 @@
           </div>
           ${multiplierHtml}
           <div class="bb-bonus-score-subtitle">${bugsEaten} bugs eaten!</div>
+          <div class="bb-bonus-continue-prompt">Tap to Continue</div>
         </div>
       </div>
     `;
