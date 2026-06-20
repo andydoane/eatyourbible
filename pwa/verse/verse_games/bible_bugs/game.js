@@ -191,7 +191,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 3.1",
+      debugBadge: "BB 3.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1720,11 +1720,6 @@
     if (!state.bonusScoreRevealActive) return "";
 
     const score = Math.max(0, Number(state.bonusScore) || 0);
-    const bugsEaten = Math.max(0, Number(state.bugsEaten) || 0);
-    const multiplier = Math.max(1, Number(state.bonusMultiplier) || 1);
-    const multiplierHtml = multiplier > 1
-      ? `<div class="bb-bonus-score-multiplier ${multiplier >= 3 ? "is-three" : "is-two"}">${multiplier}X streak!</div>`
-      : "";
 
     return `
       <div class="bb-bonus-score-reveal">
@@ -1735,10 +1730,8 @@
             <span class="bb-bonus-score-x">×</span>
             <span class="bb-bonus-score-number">${score}</span>
           </div>
-          ${multiplierHtml}
-          <div class="bb-bonus-score-subtitle">${bugsEaten} bugs eaten!</div>
-          <div class="bb-bonus-continue-prompt">Tap to Continue</div>
         </div>
+        <div class="bb-bonus-continue-prompt">Tap to Continue</div>
       </div>
     `;
   }
