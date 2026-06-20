@@ -871,33 +871,41 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  padding: clamp(8px, 2.2vw, 12px) clamp(14px, 4vw, 22px);
-  border-radius: 999px;
-  background: rgba(47, 125, 73, 0.94);
-  color: #ffffff;
+  padding: clamp(16px, 4.2vw, 26px) clamp(20px, 5.6vw, 38px);
+  border-radius: clamp(26px, 7vw, 48px);
+  background: linear-gradient(180deg, #8fc45f 0%, #5fa246 100%);
+  color: #ffe15e;
   font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
   font-weight: 400;
   font-size: clamp(20px, 5.2vw, 34px);
-  line-height: 1;
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.14);
+  line-height: 0.98;
+  box-shadow:
+    0 11px 0 rgba(47, 125, 73, 0.44),
+    0 18px 28px rgba(0, 0, 0, 0.14),
+    inset 0 3px 0 rgba(255, 255, 255, 0.28);
   animation: bbOverlayPop 360ms ease both;
   text-align: center;
   white-space: nowrap;
+  text-shadow:
+    0 4px 0 rgba(47, 125, 73, 0.72),
+    0 0 14px rgba(255, 255, 255, 0.36);
 }
 
 .bb-overlay-bubble.is-go {
   font-size: clamp(34px, 11vw, 82px);
-  padding: clamp(10px, 2.8vw, 16px) clamp(20px, 6vw, 34px);
+  padding: clamp(18px, 4.8vw, 30px) clamp(30px, 8vw, 52px);
+  border-radius: clamp(30px, 8vw, 54px);
   animation: bbGoPop 1500ms ease both;
 }
 
 .bb-overlay-bubble.is-tutorial {
-  width: 75%;
-  max-width: 75%;
+  width: min(82vw, 460px);
+  max-width: min(82vw, 460px);
   box-sizing: border-box;
-  font-size: clamp(26px, 7.2vw, 58px);
+  font-size: clamp(28px, 7.6vw, 58px);
   line-height: 0.95;
-  padding: clamp(12px, 3.2vw, 18px) clamp(14px, 4vw, 30px);
+  padding: clamp(22px, 6vw, 40px);
+  border-radius: clamp(30px, 8vw, 54px);
   white-space: nowrap;
 }
 
