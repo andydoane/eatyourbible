@@ -49,7 +49,7 @@
     volumes: {
       uiTap: 0.45,
 
-      rocketLaunch: 0.14,
+      rocketLaunch: 0.43,
       correctHit: 0.70,
       wrongHit: 0.30,
       abduction: 0.47,
@@ -183,6 +183,7 @@
   let completionResult = null;
   let resizeHandlerBound = false;
   let alienSvgTemplate = "";
+  let tutorialPlayedThisSession = false;
   let audioCtx = null;
   let silenceAudio = null;
   let audioUnlocked = false;
@@ -470,7 +471,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.30",
+      debugBadge: "v3.31",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -611,7 +612,13 @@
     recalcField();
     renderHud();
     renderStaticField();
-    startTutorialRound();
+
+    if (tutorialPlayedThisSession) {
+      spawnRound();
+    } else {
+      startTutorialRound();
+    }
+
     startLoop();
   }
 
@@ -960,6 +967,7 @@
 
 
   function startTutorialRound() {
+    tutorialPlayedThisSession = true;
     state.tutorialMode = true;
     state.tutorialMessageVisible = true;
     state.tutorialGoVisible = false;
