@@ -62,6 +62,7 @@
   const BONUS_BUG_EXTRA_LIFE_MS = 950;
   const BONUS_INITIAL_STAGGER_MS = [0, 360, 780];
   const BONUS_EAT_MS = 360;
+  const BONUS_SCORE_REVEAL_MS = 1850;
   const MAIN_EAT_MS = 420;
   const TUTORIAL_EAT_MS = 420;
   const TUTORIAL_GO_MS = 1500;
@@ -153,6 +154,7 @@
     bonusCorrectStreak: 0,
     bonusMultiplier: 1,
     bonusScorePops: [],
+    bonusScoreRevealActive: false,
     bugsEaten: 0,
     done: false
   };
@@ -187,7 +189,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.8",
+      debugBadge: "BB 2.9",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -262,6 +264,7 @@
     state.bonusCorrectStreak = 0;
     state.bonusMultiplier = 1;
     state.bonusScorePops = [];
+    state.bonusScoreRevealActive = false;
     state.bugsEaten = 0;
     state.done = false;
 
@@ -293,6 +296,7 @@
               </div>
               <div class="bb-overlay-msg" id="bbOverlay"></div>
               <div class="bb-reaction-layer" id="bbReactionLayer"></div>
+              <div class="bb-bonus-score-reveal-layer" id="bbBonusScoreRevealLayer"></div>
               <div class="bb-bonus-intro-overlay" id="bbBonusIntroOverlay" aria-hidden="true">
                 <div class="bb-bonus-intro-card">
                   <div class="bb-bonus-intro-title">BONUS ROUND!</div>
@@ -1461,12 +1465,6 @@
       state.bonusMultiplier = 1;
       state.fieldFlashUntil = now + 260;
       state.frogChompUntil = now + 320;
-      state.reaction = {
-        type: "incorrect",
-        startedAt: now,
-        duration: 760,
-        until: now + 760
-      };
 
       addBonusScorePop(scorePoint.x, scorePoint.y - 18, "-1", "negative");
       addStinkCloud(scorePoint.x, scorePoint.y, now);
@@ -1640,28 +1638,40 @@
     state.stinkParticles = [];
     state.tongueSparkles = [];
     state.bonusScorePops = [];
+    state.bonusScoreRevealActive = true;
     state.bugs = [];
+
+    const revealPromise = new Promise((resolve) => {
+      setTimeout(resolve, BONUS_SCORE_REVEAL_MS);
+    });
+
+    let completionPromise = Promise.resolve();
 
     if (!completionMarked) {
       completionMarked = true;
-      try {
-        completionResult = await window.VerseGameBridge.completeGameRun({
-          verseId: ctx.verseId,
-          gameId: GAME_ID,
-          mode: selectedMode,
-          stats: {
-            correctEaten: state.correctEaten,
-            mistakes: state.mistakes,
-            misses: state.misses,
-            bugsEaten: state.bugsEaten
-          }
-        });
-      } catch (err) {
+
+      completionPromise = window.VerseGameBridge.completeGameRun({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode,
+        stats: {
+          correctEaten: state.correctEaten,
+          mistakes: state.mistakes,
+          misses: state.misses,
+          bugsEaten: state.bugsEaten,
+          bonusScore: state.bonusScore
+        }
+      }).then((result) => {
+        completionResult = result;
+      }).catch((err) => {
         console.error("completeGameRun failed", err);
         completionResult = null;
-      }
+      });
     }
 
+    await Promise.all([revealPromise, completionPromise]);
+
+    state.bonusScoreRevealActive = false;
     renderEndScreen();
   }
 
@@ -1683,6 +1693,33 @@
       onChangeVerse: () => window.VerseGameBridge.returnToTitle()
     });
   }
+
+  function renderBonusScoreReveal() {
+    if (!state.bonusScoreRevealActive) return "";
+
+    const score = Math.max(0, Number(state.bonusScore) || 0);
+    const bugsEaten = Math.max(0, Number(state.bugsEaten) || 0);
+    const multiplier = Math.max(1, Number(state.bonusMultiplier) || 1);
+    const multiplierHtml = multiplier > 1
+      ? `<div class="bb-bonus-score-multiplier ${multiplier >= 3 ? "is-three" : "is-two"}">${multiplier}X streak!</div>`
+      : "";
+
+    return `
+      <div class="bb-bonus-score-reveal">
+        <div class="bb-bonus-score-card">
+          <div class="bb-bonus-score-title">BONUS SCORE!</div>
+          <div class="bb-bonus-score-line">
+            <img class="bb-bonus-score-bug" src="${escapeHtml(BUG_IMAGE_PATHS[3])}" alt="" aria-hidden="true">
+            <span class="bb-bonus-score-x">×</span>
+            <span class="bb-bonus-score-number">${score}</span>
+          </div>
+          ${multiplierHtml}
+          <div class="bb-bonus-score-subtitle">${bugsEaten} bugs eaten!</div>
+        </div>
+      </div>
+    `;
+  }
+
 
   function renderBonusHud() {
     const score = Math.max(0, Number(state.bonusScore) || 0);
@@ -1710,13 +1747,14 @@
     const effects = document.getElementById("bbEffectsLayer");
     const frogTongueSlot = document.getElementById("bbFrogTongueSlot");
     const reactionLayer = document.getElementById("bbReactionLayer");
+    const bonusScoreRevealLayer = document.getElementById("bbBonusScoreRevealLayer");
     const overlay = document.getElementById("bbOverlay");
     const bonusIntro = document.getElementById("bbBonusIntroOverlay");
     const statusPill = document.getElementById("bbStatusPill");
     const build = document.getElementById("bbBuild");
     const frog = document.getElementById("bbFrog");
 
-    if (!field || !waterSvg || !play || !effects || !frogTongueSlot || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build || !frog) return;
+    if (!field || !waterSvg || !play || !effects || !frogTongueSlot || !reactionLayer || !bonusScoreRevealLayer || !overlay || !bonusIntro || !statusPill || !build || !frog) return;
 
     const now = performance.now();
     field.classList.toggle("is-flash-bad", now < state.fieldFlashUntil);
@@ -1729,6 +1767,7 @@
     frogTongueSlot.innerHTML = renderTongue(now);
     effects.innerHTML = renderStinkParticles(now) + renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now) + renderBonusScorePops(now);
     reactionLayer.innerHTML = renderReaction(now);
+    bonusScoreRevealLayer.innerHTML = renderBonusScoreReveal();
 
     renderOverlay(now, overlay);
 

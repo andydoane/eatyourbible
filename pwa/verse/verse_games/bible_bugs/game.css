@@ -189,6 +189,7 @@ body {
 .bb-frog-layer,
 .bb-overlay-msg,
 .bb-reaction-layer,
+.bb-bonus-score-reveal-layer,
 .bb-bonus-intro-overlay,
 .bb-hud-layer {
   position: absolute;
@@ -228,6 +229,121 @@ body {
 .bb-reaction-layer {
   z-index: 30;
   pointer-events: none;
+}
+
+.bb-bonus-score-reveal-layer {
+  z-index: 55;
+  pointer-events: none;
+}
+
+.bb-bonus-score-reveal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(18px, 5vw, 34px);
+  background: rgba(255, 255, 255, 0.46);
+  animation: bbBonusScoreRevealFade 1850ms ease both;
+}
+
+.bb-bonus-score-card {
+  min-width: min(78vw, 420px);
+  border-radius: clamp(30px, 8vw, 54px);
+  padding: clamp(20px, 5.5vw, 36px);
+  background: #ffffff;
+  box-shadow:
+    0 13px 0 rgba(0, 0, 0, 0.16),
+    0 22px 34px rgba(0, 0, 0, 0.14);
+  text-align: center;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  animation: bbBonusScoreCardPop 1850ms cubic-bezier(.2, 1.35, .35, 1) both;
+}
+
+.bb-bonus-score-title {
+  color: #7c5ec9;
+  font-size: clamp(28px, 7.4vw, 54px);
+  line-height: 0.95;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.10),
+    0 0 14px rgba(255, 255, 255, 0.60);
+}
+
+.bb-bonus-score-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(7px, 2vw, 13px);
+  margin-top: clamp(12px, 3vw, 22px);
+}
+
+.bb-bonus-score-bug {
+  display: block;
+  height: clamp(54px, 15vw, 92px);
+  width: auto;
+  max-width: clamp(78px, 22vw, 132px);
+  object-fit: contain;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.16));
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.bb-bonus-score-x {
+  color: #40b9c5;
+  font-size: clamp(34px, 9vw, 68px);
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.10);
+}
+
+.bb-bonus-score-number {
+  color: #2f7d49;
+  font-size: clamp(46px, 14vw, 98px);
+  line-height: 0.9;
+  text-shadow:
+    0 4px 0 rgba(255, 255, 255, 0.80),
+    0 7px 0 rgba(0, 0, 0, 0.12);
+}
+
+.bb-bonus-score-subtitle {
+  margin-top: clamp(10px, 2.8vw, 18px);
+  color: #5f4ab1;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(19px, 5.2vw, 32px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.bb-bonus-score-multiplier {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(10px, 2.8vw, 18px);
+  padding: clamp(6px, 1.7vw, 9px) clamp(12px, 3.4vw, 20px);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: clamp(22px, 6vw, 38px);
+  line-height: 1;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.16),
+    inset 0 2px 0 rgba(255, 255, 255, 0.32);
+}
+
+.bb-bonus-score-multiplier.is-two {
+  background: linear-gradient(180deg, #66e2f0 0%, #40b9c5 58%, #268d99 100%);
+}
+
+.bb-bonus-score-multiplier.is-three {
+  background: linear-gradient(135deg,
+      #ff5ec4 0%,
+      #ffd34d 23%,
+      #5ee7ff 48%,
+      #8cff7a 72%,
+      #b879ff 100%);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.16),
+    0 0 18px rgba(255, 255, 255, 0.56),
+    inset 0 2px 0 rgba(255, 255, 255, 0.38);
 }
 
 .bb-bonus-intro-overlay {
@@ -1077,7 +1193,43 @@ body {
   }
 }
 
+@keyframes bbBonusScoreRevealFade {
+  0% {
+    opacity: 0;
+  }
 
+  12%,
+  78% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes bbBonusScoreCardPop {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.74) rotate(-3deg);
+  }
+
+  14% {
+    opacity: 1;
+    transform: translateY(0) scale(1.06) rotate(1.5deg);
+  }
+
+  28%,
+  78% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96) rotate(0deg);
+  }
+}
 
 @keyframes bbBonusOverlay {
   0% {
