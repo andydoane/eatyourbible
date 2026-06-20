@@ -127,6 +127,7 @@
     tongue: null,
     spitParticles: [],
     poofParticles: [],
+    stinkParticles: [],
     tongueSparkles: [],
     scheduledActions: [],
     currentStreak: 0,
@@ -150,7 +151,28 @@
     done: false
   };
 
+  preloadBibleBugsImages();
   renderIntro();
+
+  function preloadBibleBugsImages() {
+    const imageSources = [
+      ...Object.values(IMAGE_PATHS),
+      ...BUG_IMAGE_PATHS
+    ];
+
+    for (const src of imageSources) {
+      if (!src) continue;
+
+      const img = new Image();
+      img.decoding = "async";
+      img.src = src;
+
+      if (typeof img.decode === "function") {
+        img.decode().catch(() => { });
+      }
+    }
+  }
+
 
   function renderIntro() {
     stopLoop();
@@ -159,7 +181,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.6",
+      debugBadge: "BB 2.7",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -214,6 +236,7 @@
     state.tongue = null;
     state.spitParticles = [];
     state.poofParticles = [];
+    state.stinkParticles = [];
     state.tongueSparkles = [];
     state.scheduledActions = [];
     state.currentStreak = 0;
@@ -528,6 +551,10 @@
     }
 
     for (const particle of state.poofParticles) {
+      if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
+    }
+
+    for (const particle of state.stinkParticles) {
       if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
     }
 
@@ -1144,6 +1171,34 @@
     return 1;
   }
 
+  function addStinkCloud(x, y, now = performance.now()) {
+    const count = 11;
+    const baseSize = Math.max(10, Math.min(state.fieldWidth, state.fieldHeight) * 0.035);
+
+    for (let index = 0; index < count; index += 1) {
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.5;
+      const speed = Math.min(state.fieldWidth, state.fieldHeight) * (0.10 + Math.random() * 0.18);
+      const size = baseSize * (0.72 + Math.random() * 0.82);
+      const life = 720 + Math.random() * 360;
+
+      state.stinkParticles.push({
+        id: `stink-${now}-${index}-${Math.random()}`,
+        x: x + (Math.random() - 0.5) * 22,
+        y: y + (Math.random() - 0.5) * 18,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size,
+        bornAt: now,
+        life,
+        wobble: Math.random() * Math.PI * 2
+      });
+    }
+
+    if (state.stinkParticles.length > 80) {
+      state.stinkParticles.splice(0, state.stinkParticles.length - 80);
+    }
+  }
+
 
   function addBonusScorePop(x, y, label = "+1", kind = "positive") {
     const now = performance.now();
@@ -1234,6 +1289,7 @@
     state.bonusCorrectStreak = 0;
     state.bonusMultiplier = 1;
     state.bonusScorePops = [];
+    state.stinkParticles = [];
     state.bugsEaten = 0;
 
     updateBuildText();
@@ -1361,6 +1417,10 @@
       };
 
       addBonusScorePop(scorePoint.x, scorePoint.y - 18, "-1", "negative");
+      addStinkCloud(scorePoint.x, scorePoint.y, now);
+
+      scheduleAction(115, () => addStinkCloud(scorePoint.x, scorePoint.y, performance.now()));
+      scheduleAction(230, () => addStinkCloud(scorePoint.x, scorePoint.y, performance.now()));
 
       scheduleAction(560, () => {
         state.bonusBugs = state.bonusBugs.filter((item) => item.id !== bug.id);
@@ -1400,6 +1460,8 @@
     state.spitParticles = state.spitParticles.filter((particle) => now - particle.bornAt < particle.life);
 
     state.poofParticles = state.poofParticles.filter((particle) => now - particle.bornAt < particle.life);
+
+    state.stinkParticles = state.stinkParticles.filter((particle) => now - particle.bornAt < particle.life);
 
     updateTongueSparkles(now);
     state.tongueSparkles = state.tongueSparkles.filter((particle) => now - particle.bornAt < particle.life);
@@ -1521,6 +1583,7 @@
     state.tongue = null;
     state.spitParticles = [];
     state.poofParticles = [];
+    state.stinkParticles = [];
     state.tongueSparkles = [];
     state.bonusScorePops = [];
     state.bugs = [];
@@ -1610,7 +1673,7 @@
 
     play.innerHTML = renderBugs();
     frogTongueSlot.innerHTML = renderTongue(now);
-    effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now) + renderBonusScorePops(now);
+    effects.innerHTML = renderStinkParticles(now) + renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now) + renderBonusScorePops(now);
     reactionLayer.innerHTML = renderReaction(now);
 
     renderOverlay(now, overlay);
@@ -1917,6 +1980,23 @@
     }).join("");
   }
 
+  function renderStinkParticles(now) {
+    if (!state.stinkParticles.length) return "";
+
+    return state.stinkParticles.map((particle) => {
+      const age = Math.max(0, now - particle.bornAt);
+      const t = age / 1000;
+      const lifeT = shell.clamp(age / particle.life, 0, 1);
+      const eased = easeOutCubic(lifeT);
+      const wobble = Math.sin(particle.wobble + age * 0.012) * 10;
+      const x = particle.x + particle.vx * t + wobble;
+      const y = particle.y + particle.vy * t - eased * 22;
+      const scale = 0.45 + eased * 1.35;
+      const opacity = lifeT < 0.68 ? 0.88 : Math.max(0, 0.88 * (1 - ((lifeT - 0.68) / 0.32)));
+
+      return `<span class="bb-stink-dot" style="left:${x.toFixed(1)}px; top:${y.toFixed(1)}px; width:${particle.size.toFixed(1)}px; height:${particle.size.toFixed(1)}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) scale(${scale.toFixed(3)});"></span>`;
+    }).join("");
+  }
 
 
   function renderSpitParticles(now) {
