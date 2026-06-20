@@ -63,6 +63,37 @@ const clamp = window.VerseGameShell.clamp;
     { fill:"#7f66c6", text:"#fff" }
   ];
 
+  const BLOB_SHAPES = {
+    compact: {
+      type: "compact",
+      src: "./verse_splat_images/verse_splat_blob_compact.svg",
+      ratio: 617.24402 / 352
+    },
+    normal: {
+      type: "normal",
+      src: "./verse_splat_images/verse_splat_blob_normal.svg",
+      ratio: 942.30499 / 352
+    },
+    long: {
+      type: "long",
+      src: "./verse_splat_images/verse_splat_blob_long.svg",
+      ratio: 1143.769 / 352
+    }
+  };
+
+  function cleanBlobLabelLength(label){
+    const cleaned = String(label || "").replace(/[^a-zA-Z0-9]/g, "");
+    return cleaned.length;
+  }
+
+  function blobShapeForLabel(label){
+    const len = cleanBlobLabelLength(label);
+
+    if (len <= 4) return BLOB_SHAPES.compact;
+    if (len <= 9) return BLOB_SHAPES.normal;
+    return BLOB_SHAPES.long;
+  }
+
   const SPLAT_SVG = `<svg
    width="100"
    height="100"
@@ -419,7 +450,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 1.0",
+    debugBadge: "VS 1.2",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -681,13 +712,18 @@ function render(){
   }
 
   function labelSizeForBoard(label, bounds, stationary=false){
-    const len = String(label || "").length;
-    const baseH = stationary ? bounds.height * 0.14 : bounds.height * 0.13;
-    const h = clamp(baseH, stationary ? 54 : 58, stationary ? 110 : 118);
-    const charW = clamp(bounds.width * 0.024, 10, 18);
-    const pad = stationary ? 36 : 42;
-    const w = clamp(len * charW + pad, stationary ? 70 : 82, bounds.width * (stationary ? 0.24 : 0.28));
-    return { width: w, height: h };
+    const shape = blobShapeForLabel(label);
+    const baseH = stationary ? bounds.height * 0.13 : bounds.height * 0.125;
+    const h = clamp(baseH, stationary ? 58 : 62, stationary ? 102 : 106);
+    const maxW = bounds.width * (stationary ? 0.52 : 0.86);
+    const w = Math.min(h * shape.ratio, maxW);
+
+    return {
+      width: w,
+      height: h,
+      blobType: shape.type,
+      blobImg: shape.src
+    };
   }
 
   function uniqueLabels(list){
@@ -780,9 +816,12 @@ function render(){
   }
 
   function blobMarkup(blob){
+    const blobType = blob.blobType || "normal";
+    const blobImg = blob.blobImg || BLOB_SHAPES.normal.src;
+
     return `
-      <div class="vsp-blob ${blob.state === 'spawning' ? 'is-spawning' : ''}" data-blob-id="${blob.id}" role="button" tabindex="0" aria-label="${escapeHtml(blob.label)}" style="width:${blob.width}px;height:${blob.height}px;">
-        <div class="vsp-blob-body" style="background:${blob.color};color:${blob.textColor};">
+      <div class="vsp-blob vsp-blob--word vsp-blob--${blobType} ${blob.state === 'spawning' ? 'is-spawning' : ''}" data-blob-id="${blob.id}" role="button" tabindex="0" aria-label="${escapeHtml(blob.label)}" style="width:${blob.width}px;height:${blob.height}px;">
+        <div class="vsp-blob-body" style="--vsp-blob-mask:url('${blobImg}');--vsp-blob-fill:${blob.color};--vsp-blob-text:${blob.textColor};color:${blob.textColor};">
           <span class="vsp-blob-label">${escapeHtml(blob.label)}</span>
         </div>
       </div>
@@ -887,6 +926,8 @@ function render(){
       vy: preserveMotion ? preserveMotion.vy : Math.sin(angle) * velocityMag,
       width: size.width,
       height: size.height,
+      blobType: size.blobType,
+      blobImg: size.blobImg,
       wobblePhase: Math.random() * Math.PI * 2,
       wobbleSpeed: rand(1.2, 2.3),
       impactX: 0,
@@ -906,6 +947,8 @@ function render(){
       const size = labelSizeForBoard(label, currentBounds(), false);
       blob.width = size.width;
       blob.height = size.height;
+      blob.blobType = size.blobType;
+      blob.blobImg = size.blobImg;
       blob.state = blob.state === "live" ? "live" : "spawning";
       const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
       if (node){
