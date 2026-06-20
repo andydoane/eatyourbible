@@ -37,6 +37,8 @@
   const BONUS_BUG_LIFE_MS = 1850;
   const BONUS_EAT_MS = 360;
   const MAIN_EAT_MS = 420;
+  const TUTORIAL_EAT_MS = 420;
+  const TUTORIAL_GO_MS = 1500;
 
 const BUG_MOTION = {
   sideAmountRatio: 0.03,
@@ -93,6 +95,10 @@ const WATER_FX = {
     reaction:null,
     overlayMessage:"",
     overlayUntil:0,
+    overlayClass:"",
+    tutorialActive:false,
+    tutorialStep:"",
+    tutorialBug:null,
     phase:"words",
     waveId:0,
     waveStatus:"idle",
@@ -128,7 +134,7 @@ const WATER_FX = {
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 1.0",
+      debugBadge: "BB 1.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -171,6 +177,10 @@ const WATER_FX = {
     state.reaction = null;
     state.overlayMessage = "";
     state.overlayUntil = 0;
+    state.overlayClass = "";
+    state.tutorialActive = false;
+    state.tutorialStep = "";
+    state.tutorialBug = null;
     state.phase = "words";
     state.waveId = 0;
     state.waveStatus = "idle";
@@ -248,8 +258,8 @@ const WATER_FX = {
     recalcField();
     updatePhase();
     updateBuildText();
+    startTutorial();
     renderFrame();
-    spawnWave();
     startLoop();
   }
 
@@ -468,6 +478,7 @@ function shiftGameTimers(deltaMs){
     shiftBugTimes(bug);
   }
 
+  shiftBugTimes(state.tutorialBug);
   shiftBugTimes(state.bonusBug);
 
   if (state.tongue && Number.isFinite(state.tongue.startedAt)){
@@ -692,6 +703,91 @@ function shiftGameTimers(deltaMs){
     }));
   }
 
+  function startTutorial() {
+    const now = performance.now();
+
+    state.tutorialActive = true;
+    state.tutorialStep = "waiting";
+    state.waveStatus = "tutorial";
+    state.bugs = [];
+    state.bonusBug = null;
+    state.tongue = null;
+    state.reaction = null;
+
+    state.tutorialBug = {
+      id: "tutorial-bug",
+      text: "",
+      correct: true,
+      tutorial: true,
+      emoji: "🐞",
+      xRatio: 0.5,
+      yRatio: 0.36,
+      bornAt: now,
+      status: "tutorial",
+      poofAt: 0,
+      selected: false,
+      eaten: false,
+      pullPoofed: false,
+      motionPhase: Math.random() * Math.PI * 2,
+      jitterSeed: Math.random() * Math.PI * 2
+    };
+
+    showOverlay("Tap the bug to eat it!", 60000);
+  }
+
+  function handleTutorialTap(id) {
+    if (!state.tutorialActive || state.tutorialStep !== "waiting") return;
+
+    const bug = state.tutorialBug;
+    if (!bug || bug.id !== id || bug.status !== "tutorial") return;
+
+    const now = performance.now();
+
+    state.tutorialStep = "eating";
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
+    state.overlayClass = "";
+    state.waveStatus = "tutorial_eating";
+    state.frogChompUntil = now + 280;
+
+    bug.status = "eating";
+    fireTongueToBug(bug, now, TUTORIAL_EAT_MS, false, 0);
+
+    scheduleAction(TUTORIAL_EAT_MS, finishTutorialEat);
+  }
+
+  function finishTutorialEat() {
+    if (!state.tutorialActive) return;
+
+    const now = performance.now();
+
+    state.tongue = null;
+    state.tutorialBug = null;
+    state.tutorialStep = "go";
+    state.waveStatus = "tutorial_go";
+    state.frogChompUntil = now + 280;
+
+    showOverlay("GO!", TUTORIAL_GO_MS, "is-go");
+
+    scheduleAction(TUTORIAL_GO_MS, finishTutorialGo);
+  }
+
+  function finishTutorialGo() {
+    if (!state.tutorialActive) return;
+
+    state.tutorialActive = false;
+    state.tutorialStep = "";
+    state.tutorialBug = null;
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
+    state.overlayClass = "";
+
+    if (!state.done && !state.bonusMode && !state.bonusIntroActive) {
+      spawnWave();
+    }
+  }
+
+
   function spawnWave(){
     updatePhase();
 
@@ -731,6 +827,11 @@ function shiftGameTimers(deltaMs){
 
   function handleBugTap(id){
     if (state.paused || state.done || state.bonusIntroActive) return;
+
+    if (state.tutorialActive){
+      handleTutorialTap(id);
+      return;
+    }
 
     if (state.bonusMode){
       handleBonusTap(id);
@@ -903,9 +1004,10 @@ function showReaction(type){
   };
 }
 
-  function showOverlay(message, ms){
+  function showOverlay(message, ms, extraClass = ""){
     state.overlayMessage = message;
     state.overlayUntil = performance.now() + ms;
+    state.overlayClass = extraClass;
   }
 
 function updateChosenBugSmokePoofs(now){
@@ -926,6 +1028,7 @@ function updateChosenBugSmokePoofs(now){
     maybePoofBug(bug);
   }
 
+  maybePoofBug(state.tutorialBug);
   maybePoofBug(state.bonusBug);
 }
 
@@ -1212,6 +1315,9 @@ function addBugPoof(bug, now = performance.now()){
     if (state.done) return;
 
     state.done = true;
+    state.tutorialActive = false;
+    state.tutorialStep = "";
+    state.tutorialBug = null;
     state.bonusMode = false;
     state.bonusIntroActive = false;
     state.bonusBug = null;
@@ -1290,8 +1396,10 @@ function addBugPoof(bug, now = performance.now()){
     effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now);
     reactionLayer.innerHTML = renderReaction(now);
 
+    const overlayClass = state.overlayClass ? ` ${escapeHtml(state.overlayClass)}` : "";
+
     overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
-      ? `<div class="bb-overlay-bubble">${escapeHtml(state.overlayMessage)}</div>`
+      ? `<div class="bb-overlay-bubble${overlayClass}">${escapeHtml(state.overlayMessage)}</div>`
       : "";
 
     const showBonusIntro = state.bonusIntroActive && now < state.bonusIntroUntil;
@@ -1310,6 +1418,10 @@ function addBugPoof(bug, now = performance.now()){
     items.push(renderBugButton(bug, now, false));
   }
 
+    if (state.tutorialBug){
+      items.push(renderBugButton(state.tutorialBug, now, false));
+    }
+
     if (state.bonusBug){
       items.push(renderBugButton(state.bonusBug, now, true));
     }
@@ -1320,11 +1432,14 @@ function addBugPoof(bug, now = performance.now()){
 function renderBugButton(bug, now, isBonus){
   const p = getBugPoint(bug, now);
   const motion = getBugMotionState(bug, now, isBonus);
+  const isTutorial = !!bug.tutorial;
   const statusClass = bug.status === "poof" ? " is-poof" : bug.status === "eating" ? " is-eating" : "";
   const bonusClass = isBonus ? " bb-bug--bonus" : "";
   const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
-  const word = isBonus ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
-  const disabled = (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
+  const word = isBonus || isTutorial ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
+  const disabled = isTutorial
+    ? state.tutorialStep !== "waiting" ? " disabled" : ""
+    : (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
 
   const x = p.x + motion.swayX;
   const y = p.y;
