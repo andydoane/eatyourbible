@@ -19,6 +19,21 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   const BONUS_TIME_LIMIT_MS = 30000;
   const CORRECT_TAP_LOCK_MS = 180;
   const MAX_STATIC_PAINT_SPLATS = 60;
+
+  const STATIC_PAINT_BLOB_SHAPES = [
+    "./verse_splat_images/verse_spalt_paint_blob_1.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_2.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_3.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_4.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_5.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_6.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_7.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_8.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_9.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_10.svg",
+    "./verse_splat_images/verse_spalt_paint_blob_11.svg"
+  ];
+
   let muted = false;
 
   const $ = (s, root=document) => root.querySelector(s);
@@ -453,7 +468,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 1.4",
+    debugBadge: "VS 1.5",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1100,20 +1115,22 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
       const distance = rand(0, baseSpread);
       const x = clamp(center.x + Math.cos(angle) * distance, 0, bounds.width);
       const y = clamp(center.y + Math.sin(angle) * distance, 0, bounds.height);
-      const size = clamp(blob.height * rand(0.14, 0.34), 10, 38);
-      const wide = Math.random() < 0.42;
-      const shape = Math.random() < 0.34 ? "blob" : "dot";
+      const size = clamp(blob.height * rand(0.18, 0.42), 13, 48);
+      const wide = Math.random() < 0.36;
+      const useSvgBlob = Math.random() < 0.74;
+      const svgShape = STATIC_PAINT_BLOB_SHAPES[Math.floor(Math.random() * STATIC_PAINT_BLOB_SHAPES.length)] || STATIC_PAINT_BLOB_SHAPES[0];
       const shadeAmount = Math.random() < 0.5 ? rand(0.04, 0.12) : -rand(0.04, 0.12);
 
       state.paintSplats.push({
         xRatio: bounds.width ? x / bounds.width : 0.5,
         yRatio: bounds.height ? y / bounds.height : 0.5,
-        w: wide ? size * rand(1.25, 1.85) : size,
-        h: wide ? size * rand(0.72, 1.04) : size * rand(0.88, 1.18),
+        w: wide ? size * rand(1.16, 1.62) : size,
+        h: wide ? size * rand(0.74, 1.08) : size * rand(0.88, 1.18),
         color: adjustHexColor(blob.color, shadeAmount),
         opacity: rand(0.42, 0.66),
-        rot: rand(-38, 38),
-        shape
+        rot: rand(-180, 180),
+        shape: useSvgBlob ? "svg" : "dot",
+        blobImg: svgShape
       });
     }
 
@@ -1123,24 +1140,31 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
 
     renderStaticPaintSplats();
   }
-
+  
   function renderStaticPaintSplats() {
     const layer = $("#vspPaintLayer");
     if (!layer) return;
 
-    layer.innerHTML = state.paintSplats.map((splat) => `
-      <span class="vsp-static-paint-splat is-${splat.shape}"
-        style="
-          left:${(splat.xRatio * 100).toFixed(2)}%;
-          top:${(splat.yRatio * 100).toFixed(2)}%;
-          width:${splat.w.toFixed(1)}px;
-          height:${splat.h.toFixed(1)}px;
-          background:${splat.color};
-          opacity:${splat.opacity.toFixed(2)};
-          transform:translate(-50%, -50%) rotate(${splat.rot.toFixed(1)}deg);
-        ">
-      </span>
-    `).join("");
+    layer.innerHTML = state.paintSplats.map((splat) => {
+      const maskStyle = splat.shape === "svg" && splat.blobImg
+        ? `--vsp-paint-mask:url('${splat.blobImg}');`
+        : "";
+
+      return `
+        <span class="vsp-static-paint-splat is-${splat.shape}"
+          style="
+            left:${(splat.xRatio * 100).toFixed(2)}%;
+            top:${(splat.yRatio * 100).toFixed(2)}%;
+            width:${splat.w.toFixed(1)}px;
+            height:${splat.h.toFixed(1)}px;
+            background:${splat.color};
+            opacity:${splat.opacity.toFixed(2)};
+            transform:translate(-50%, -50%) rotate(${splat.rot.toFixed(1)}deg);
+            ${maskStyle}
+          ">
+        </span>
+      `;
+    }).join("");
   }
 
 

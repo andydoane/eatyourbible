@@ -324,8 +324,20 @@ body{overflow:hidden}
   pointer-events: none;
 }
 
-.vsp-static-paint-splat.is-blob {
-  border-radius: 58% 42% 49% 51% / 46% 55% 45% 54%;
+.vsp-static-paint-splat.is-dot {
+  border-radius: 999px;
+}
+
+.vsp-static-paint-splat.is-svg {
+  border-radius: 0;
+  -webkit-mask-image: var(--vsp-paint-mask);
+  mask-image: var(--vsp-paint-mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
 }
 
 .vsp-effect{position:absolute;left:0;top:0;pointer-events:none;transform:translate(-50%,-50%)}
