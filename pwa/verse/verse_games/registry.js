@@ -191,19 +191,4 @@ window.EXTERNAL_VERSE_GAMES = [
       modes: ["easy", "medium", "hard"]
     }
   },
-    {
-    enabled: true,
-    manifest: {
-      id: "dino_dash_2",
-      title: "Dino Dash 2",
-      description: "Tap the next correct word as fast as you can.",
-      icon: "🔄",
-      cardColor: "#7f66c6",
-      cardTextColor: "#ffffff",
-      launchUrl: "./verse_games/dino_dash_2/index.html",
-      visibleInCarousel: false,
-      progressType: "standard",
-      modes: ["easy", "medium", "hard"]
-    }
-  },
 ];
