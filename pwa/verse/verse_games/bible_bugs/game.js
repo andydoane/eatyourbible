@@ -157,7 +157,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.4",
+      debugBadge: "BB 2.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1525,6 +1525,25 @@
     });
   }
 
+  function renderBonusHud() {
+    const score = Math.max(0, Number(state.bonusScore) || 0);
+    const multiplier = Math.max(1, Number(state.bonusMultiplier) || 1);
+    const multiplierClass = multiplier >= 3 ? " is-three" : multiplier >= 2 ? " is-two" : "";
+    const multiplierHtml = multiplier > 1
+      ? `<span class="bb-bonus-hud-multiplier${multiplierClass}">${multiplier}X</span>`
+      : "";
+
+    return `
+      <div class="bb-bonus-hud-card" aria-label="Bonus score ${score}">
+        <img class="bb-bonus-hud-bug" src="${escapeHtml(BUG_IMAGE_PATHS[3])}" alt="" aria-hidden="true">
+        <span class="bb-bonus-hud-x">×</span>
+        <span class="bb-bonus-hud-score">${score}</span>
+        ${multiplierHtml}
+      </div>
+    `;
+  }
+
+
   function renderFrame() {
     const field = document.getElementById("bbField");
     const waterSvg = document.getElementById("bbWaterWaveSvg");
@@ -1558,7 +1577,8 @@
     bonusIntro.classList.toggle("is-open", showBonusIntro);
     bonusIntro.setAttribute("aria-hidden", showBonusIntro ? "false" : "true");
 
-    statusPill.textContent = getStatusText(now);
+    statusPill.classList.toggle("is-bonus-hud", state.bonusMode);
+    statusPill.innerHTML = state.bonusMode ? renderBonusHud() : escapeHtml(getStatusText(now));
   }
 
   function renderOverlay(now, overlay) {
