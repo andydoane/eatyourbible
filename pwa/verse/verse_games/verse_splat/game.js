@@ -506,7 +506,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.2",
+    debugBadge: "VS 2.3",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1209,6 +1209,23 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     chip.textContent = `Painted ${state.coveredCells.size}/${coverageGridTotal()}`;
   }
 
+  function coverageScorePopupClass(added) {
+    if (added >= 5) return "is-rainbow";
+    if (added >= 3) return "is-teal";
+    return "is-basic";
+  }
+
+  function spawnCoverageScorePopup(added, center) {
+    if (!added || added < 1 || !center) return;
+
+    const popupClass = coverageScorePopupClass(added);
+    const markup = `<div class="vsp-score-popup ${popupClass}">+${added}</div>`;
+    const node = effectNodeAt(center.x, center.y, markup, "#vspEffectLayer");
+
+    if (node) setTimeout(() => node.remove(), 950);
+  }
+
+
   function updatePaintCoverage() {
     const bounds = currentBounds();
     state.coveredCells = new Set();
@@ -1232,6 +1249,7 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     if (!layer || !blob) return;
 
     const center = blobCenterPx(blob, "#vspPaintLayer");
+    const coveredBefore = state.coveredCells.size;
     const bounds = currentBounds();
     const boardMin = Math.max(1, Math.min(bounds.width, bounds.height));
     const svgShape = STATIC_PAINT_BLOB_SHAPES[Math.floor(Math.random() * STATIC_PAINT_BLOB_SHAPES.length)] || STATIC_PAINT_BLOB_SHAPES[0];
@@ -1285,6 +1303,9 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
 
     renderStaticPaintSplats();
     updatePaintCoverage();
+
+    const coveredAdded = state.coveredCells.size - coveredBefore;
+    spawnCoverageScorePopup(coveredAdded, center);
   }
   
   function renderStaticPaintSplats() {

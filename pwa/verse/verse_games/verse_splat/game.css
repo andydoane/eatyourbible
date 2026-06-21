@@ -505,43 +505,76 @@ body{overflow:hidden}
 .vsp-end-stat{font-size:clamp(16px,4vw,22px);font-weight:800;line-height:1.15;opacity:.96;color:var(--vsp-white)}
 
 .vsp-score-popup {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 7;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 10px 18px 12px;
+  border-radius: 24px;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(.85);
   font-family: var(--vsp-font-display);
-  font-size: clamp(34px, 11vw, 76px);
-  line-height: .92;
+  font-size: clamp(30px, 8vw, 58px);
+  line-height: .9;
   letter-spacing: .01em;
   color: #ffffff;
+  background: #333333;
   text-shadow:
-    0 5px 0 rgba(0, 0, 0, .22),
-    0 10px 22px rgba(0, 0, 0, .22);
+    0 3px 0 rgba(0, 0, 0, .32),
+    0 7px 16px rgba(0, 0, 0, .34);
+  box-shadow:
+    0 7px 0 rgba(0, 0, 0, .18),
+    0 14px 24px rgba(0, 0, 0, .18);
+  transform-origin: center center;
   opacity: 0;
-  animation: vspScorePopup .72s cubic-bezier(.18, .9, .16, 1) forwards;
+  animation: vspScorePopup .78s cubic-bezier(.18, .9, .16, 1) forwards;
+}
+
+.vsp-score-popup.is-basic {
+  background: #333333;
+}
+
+.vsp-score-popup.is-teal {
+  background: #40b9c5;
+}
+
+.vsp-score-popup.is-rainbow {
+  background: linear-gradient(90deg, #ff5a51, #ffa351, #ffc751, #a7cb6f, #40b9c5, #7f66c6, #ff5a51);
+  background-size: 240% 100%;
+  animation:
+    vspScorePopup .78s cubic-bezier(.18, .9, .16, 1) forwards,
+    vspScoreRainbow .42s linear infinite;
 }
 
 @keyframes vspScorePopup {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(.65) rotate(-4deg)
+    transform: scale(.58) rotate(-5deg) translateY(4px);
   }
 
-  22% {
+  18% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.08) rotate(2deg)
+    transform: scale(1.12) rotate(2deg) translateY(0);
   }
 
-  70% {
+  68% {
     opacity: 1;
-    transform: translate(-50%, -58%) scale(1) rotate(0deg)
+    transform: scale(1) rotate(0deg) translateY(-10px);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -70%) scale(.92) rotate(0deg)
+    transform: scale(.92) rotate(0deg) translateY(-28px);
+  }
+}
+
+@keyframes vspScoreRainbow {
+  0% {
+    background-position: 0% 50%
+  }
+
+  100% {
+    background-position: 240% 50%
   }
 }
 
