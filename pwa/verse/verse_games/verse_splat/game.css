@@ -785,6 +785,52 @@ body{overflow:hidden}
   }
 }
 
+.vsp-tutorial-go-popup {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 32px 22px;
+  border-radius: 30px;
+  background: linear-gradient(90deg, #ff5a51, #ffa351, #ffc751, #a7cb6f, #40b9c5, #7f66c6, #ff5a51);
+  background-size: 240% 100%;
+  color: #ffffff;
+  font-family: var(--vsp-font-display);
+  font-size: clamp(58px, 18vw, 118px);
+  line-height: .9;
+  text-shadow:
+    0 5px 0 rgba(0, 0, 0, .26),
+    0 12px 26px rgba(0, 0, 0, .26);
+  box-shadow:
+    0 9px 0 rgba(0, 0, 0, .20),
+    0 18px 32px rgba(0, 0, 0, .22);
+  animation:
+    vspTutorialGoPop .72s cubic-bezier(.18, .9, .16, 1) forwards,
+    vspScoreRainbow .55s linear infinite;
+}
+
+@keyframes vspTutorialGoPop {
+  0% {
+    opacity: 0;
+    transform: scale(.58) rotate(-5deg)
+  }
+
+  28% {
+    opacity: 1;
+    transform: scale(1.12) rotate(2deg)
+  }
+
+  78% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg)
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(.94) rotate(0deg)
+  }
+}
+
 @keyframes vspShake {
 
   0%,

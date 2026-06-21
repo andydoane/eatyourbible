@@ -201,6 +201,11 @@ const MODE_CONFIG = {
     paintSplats: [],
     coveredCells: new Set(),
     wrongCountThisField: 0,
+
+    tutorialActive: false,
+    tutorialStep: "",
+    tutorialPending: false,
+
     rafId: 0,
     lastTs: 0,
     fieldRect: null,
@@ -291,6 +296,9 @@ const shuffle = window.VerseGameShell.shuffle;
     state.paintSplats = [];
     state.coveredCells = new Set();
     state.wrongCountThisField = 0;
+    state.tutorialActive = false;
+    state.tutorialStep = "";
+    state.tutorialPending = false;
     state.lastTs = 0;
     state.inputLockedUntil = 0;
     state.shakeKey = 0;
@@ -526,7 +534,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.8",
+    debugBadge: "VS 2.9",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -915,6 +923,9 @@ function render(){
 
   function startMode(mode){
     resetForMode(mode);
+    state.tutorialActive = true;
+    state.tutorialStep = "tap";
+    state.tutorialPending = false;
     setScreen("game");
   }
 
@@ -1183,6 +1194,117 @@ function render(){
       }
     });
   }
+
+  function makeTutorialBlob(label, centerYRatio) {
+    const bounds = currentBounds();
+    const shape = BLOB_SHAPES.long;
+    const height = clamp(bounds.height * 0.13, 62, 96);
+    const width = Math.min(height * shape.ratio, bounds.width * 0.84);
+    const color = BLOB_COLORS[state.blobs.length % BLOB_COLORS.length] || BLOB_COLORS[0];
+
+    return {
+      id: state.nextBlobId++,
+      label,
+      normalizedLabel: normalizeWord(label),
+      isCorrect: true,
+      tutorial: true,
+      color: color.fill,
+      textColor: color.text,
+      x: bounds.width ? clamp((bounds.width - width) / 2, 0, bounds.width) / bounds.width : 0.5,
+      y: bounds.height ? clamp((bounds.height * centerYRatio) - (height / 2), 0, bounds.height - height) / bounds.height : centerYRatio,
+      vx: 0,
+      vy: 0,
+      width,
+      height,
+      blobType: shape.type,
+      blobImg: shape.src,
+      wobblePhase: Math.random() * Math.PI * 2,
+      wobbleSpeed: rand(1.0, 1.7),
+      impactX: 0,
+      impactY: 0,
+      state: "live"
+    };
+  }
+
+  function startTutorialStep(step) {
+    state.tutorialStep = step;
+    state.tutorialPending = false;
+    state.blobs = [];
+
+    if (step === "tap") {
+      state.blobs.push(makeTutorialBlob("TAP TO SPLAT", 0.50));
+    }
+
+    if (step === "fill") {
+      state.blobs.push(makeTutorialBlob("TRY TO FILL IN", 0.42));
+      state.blobs.push(makeTutorialBlob("THE SQUARES", 0.58));
+    }
+
+    renderBlobNodes();
+  }
+
+  function spawnTutorialGoPopup() {
+    const center = viewportCenterPx("#vspFrontEffectLayer");
+    const node = effectNodeAt(center.x, center.y, `<div class="vsp-tutorial-go-popup">GO!</div>`, "#vspFrontEffectLayer");
+
+    if (node) setTimeout(() => node.remove(), 760);
+  }
+
+  function clearTutorialPaintAndStartGame() {
+    state.tutorialActive = false;
+    state.tutorialStep = "";
+    state.tutorialPending = false;
+    state.blobs = [];
+    state.paintSplats = [];
+    state.coveredCells = new Set();
+
+    renderBlobNodes();
+    renderStaticPaintSplats();
+    updatePaintCoverage();
+
+    spawnInitialField();
+    startGameLoop();
+  }
+
+  function handleTutorialBlobTap(blobId) {
+    if (!state.tutorialActive || state.tutorialPending) return;
+
+    const blob = state.blobs.find(entry => entry.id === blobId);
+    if (!blob) return;
+
+    addStaticPaintSplats(blob, false, true);
+    spawnSplatEffect(blob);
+    spawnParticleBurst(blob);
+    removeBlobById(blob.id);
+    renderBlobNodes();
+
+    if (state.tutorialStep === "tap") {
+      state.tutorialPending = true;
+
+      setTimeout(() => {
+        if (!state.tutorialActive || state.screen !== "game") return;
+        startTutorialStep("fill");
+      }, 360);
+
+      return;
+    }
+
+    if (state.tutorialStep === "fill" && !state.blobs.length) {
+      state.tutorialPending = true;
+
+      setTimeout(() => {
+        if (!state.tutorialActive || state.screen !== "game") return;
+
+        spawnTutorialGoPopup();
+
+        setTimeout(() => {
+          if (!state.tutorialActive || state.screen !== "game") return;
+          clearTutorialPaintAndStartGame();
+        }, 760);
+      }, 360);
+    }
+  }
+
 
   function spawnInitialField(){
     const correct = currentCorrectLabel();
@@ -1700,6 +1822,12 @@ function spawnWrongFaceParticleBurst(){
 
   async function handleBlobTap(blobId){
     if (state.menuOpen || state.helpOpen || state.screen !== "game" || state.busy) return;
+
+    if (state.tutorialActive){
+      handleTutorialBlobTap(blobId);
+      return;
+    }
+
     const blob = state.blobs.find(entry => entry.id === blobId);
     if (!blob) return;
     if (blob.isCorrect) await handleCorrectTap(blob);
@@ -1753,6 +1881,12 @@ function spawnWrongFaceParticleBurst(){
     const dt = state.lastTs ? Math.min((ts - state.lastTs) / 1000, 0.032) : 0.016;
     state.lastTs = ts;
     state.blobs.forEach(blob => {
+      if (blob.tutorial){
+        blob.wobblePhase += dt * blob.wobbleSpeed * 2.2;
+        updateBlobDom(blob);
+        return;
+      }
+
       updateBlobMotion(blob, dt, bounds);
       updateBlobDom(blob);
     });
@@ -2033,6 +2167,18 @@ function spawnWrongFaceParticleBurst(){
     fitSplatBuildText();
     renderStaticPaintSplats();
     updatePaintCoverage();
+
+    if (state.tutorialActive){
+      if (!state.blobs.length && !state.tutorialPending){
+        startTutorialStep(state.tutorialStep || "tap");
+      } else {
+        renderBlobNodes();
+      }
+
+      startGameLoop();
+      return;
+    }
+
     if (!state.blobs.length) spawnInitialField();
     else renderBlobNodes();
     startGameLoop();
