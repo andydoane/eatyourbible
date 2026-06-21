@@ -215,6 +215,13 @@ const MODE_CONFIG = {
     bonusRemainingMs: BONUS_TIME_LIMIT_MS,
     bonusScore: 0,
 
+    coverageResultPercent: 0,
+    coverageResultBarPercent: 0,
+    coverageResultPhase: "bar",
+    coverageResultRafId: 0,
+    coverageResultTimers: [],
+    coverageResultContinuePending: false,
+
     medalAlreadyEarned: false,
     medalMessage: "",
     medalSubmessage: ""
@@ -259,6 +266,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.screen = screen;
     render();
     if (screen === "game") afterGameScreenRender();
+    if (screen === "coverage_result") afterCoverageResultRender();
     if (screen === "bonus") afterBonusScreenRender();
   }
 
@@ -289,6 +297,12 @@ const shuffle = window.VerseGameShell.shuffle;
     state.bonusStartedAt = 0;
     state.bonusRemainingMs = BONUS_TIME_LIMIT_MS;
     state.bonusScore = 0;
+    state.coverageResultPercent = 0;
+    state.coverageResultBarPercent = 0;
+    state.coverageResultPhase = "bar";
+    state.coverageResultRafId = 0;
+    state.coverageResultTimers = [];
+    state.coverageResultContinuePending = false;
     state.medalAlreadyEarned = false;
     state.medalMessage = "";
     state.medalSubmessage = "";
@@ -506,7 +520,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.3",
+    debugBadge: "VS 2.4",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -612,6 +626,168 @@ function gameplayShell({ bonus=false }){
     return gameplayShell({ bonus:true });
   }
 
+  function coveragePercentScore() {
+    return clamp(Math.round((state.coveredCells.size / Math.max(1, coverageGridTotal())) * 100), 0, 100);
+  }
+
+  function coverageResultCardClass(percent) {
+    if (percent >= 91) return "is-score-rainbow";
+    if (percent >= 81) return "is-score-teal";
+    if (percent >= 71) return "is-score-green";
+    if (percent >= 61) return "is-score-orange";
+    if (percent >= 51) return "is-score-red";
+    return "is-score-low";
+  }
+
+  function coverageRainbowSplatHtml() {
+    const pieces = [
+      { color: "#ff5a51", rot: -14, scale: 1.00 },
+      { color: "#ffa351", rot: 10, scale: .96 },
+      { color: "#ffc751", rot: 28, scale: .90 },
+      { color: "#a7cb6f", rot: -34, scale: .92 },
+      { color: "#40b9c5", rot: 44, scale: .88 },
+      { color: "#7f66c6", rot: -52, scale: .86 }
+    ];
+
+    return `
+      <div class="vsp-coverage-result-splat" aria-hidden="true">
+        ${pieces.map((piece) => `
+          <span class="vsp-coverage-result-splat-piece"
+            style="--piece-color:${piece.color};--piece-rot:${piece.rot}deg;--piece-scale:${piece.scale};">
+            ${SPLAT_SVG}
+          </span>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function renderCoverageResultScreen() {
+    const percent = state.coverageResultPercent;
+    const barPercent = clamp(state.coverageResultBarPercent, 0, percent);
+    const cardClass = coverageResultCardClass(percent);
+    const showSplat = state.coverageResultPhase === "splat" || state.coverageResultPhase === "card";
+    const showCard = state.coverageResultPhase === "card";
+
+    return `
+      <div class="vsp-coverage-result-screen" id="vspCoverageResultScreen">
+        <div class="vsp-coverage-result-stage">
+          <div class="vsp-coverage-result-title">Painting Score</div>
+
+          <div class="vsp-coverage-result-progress" aria-label="Painting coverage">
+            <div class="vsp-coverage-result-fill" id="vspCoverageResultFill" style="width:${barPercent}%"></div>
+            <div class="vsp-coverage-result-percent" id="vspCoverageResultPercent">${barPercent}%</div>
+          </div>
+
+          <div class="vsp-coverage-result-splat-slot">
+            ${showSplat ? coverageRainbowSplatHtml() : ""}
+          </div>
+
+          ${showCard ? `
+            <button class="vsp-coverage-result-card ${cardClass}" data-action="coverage-result-continue" type="button">
+              <div class="vsp-coverage-result-card-score">${percent}%</div>
+              <div class="vsp-coverage-result-card-copy">Tap to Continue</div>
+            </button>
+          ` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function clearCoverageResultTimers() {
+    if (state.coverageResultRafId) {
+      cancelAnimationFrame(state.coverageResultRafId);
+      state.coverageResultRafId = 0;
+    }
+
+    for (const timer of state.coverageResultTimers) {
+      clearTimeout(timer);
+    }
+
+    state.coverageResultTimers = [];
+  }
+
+  function afterCoverageResultRender() {
+    const screen = $("#vspCoverageResultScreen");
+    if (!screen || screen.dataset.started === "1") return;
+    if (state.coverageResultPhase !== "bar") return;
+
+    screen.dataset.started = "1";
+
+    const target = clamp(state.coverageResultPercent, 0, 100);
+    const fill = $("#vspCoverageResultFill");
+    const label = $("#vspCoverageResultPercent");
+    const duration = 1550;
+    const started = performance.now();
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function step(now) {
+      const t = clamp((now - started) / duration, 0, 1);
+      const value = Math.round(target * easeOutCubic(t));
+
+      state.coverageResultBarPercent = value;
+
+      if (fill) fill.style.width = `${value}%`;
+      if (label) label.textContent = `${value}%`;
+
+      if (t < 1) {
+        state.coverageResultRafId = requestAnimationFrame(step);
+        return;
+      }
+
+      state.coverageResultRafId = 0;
+      state.coverageResultBarPercent = target;
+
+      const splatTimer = setTimeout(() => {
+        state.coverageResultPhase = "splat";
+        render();
+
+        const cardTimer = setTimeout(() => {
+          state.coverageResultPhase = "card";
+          render();
+        }, 850);
+
+        state.coverageResultTimers.push(cardTimer);
+      }, 180);
+
+      state.coverageResultTimers.push(splatTimer);
+    }
+
+    state.coverageResultRafId = requestAnimationFrame(step);
+  }
+
+  function startCoverageResultCeremony() {
+    updatePaintCoverage();
+
+    state.coverageResultPercent = coveragePercentScore();
+    state.coverageResultBarPercent = 0;
+    state.coverageResultPhase = "bar";
+    state.coverageResultContinuePending = false;
+
+    setScreen("coverage_result");
+  }
+
+  async function continueAfterCoverageResult() {
+    if (state.coverageResultContinuePending) return;
+    if (state.coverageResultPhase !== "card") return;
+
+    state.coverageResultContinuePending = true;
+    clearCoverageResultTimers();
+
+    state.bonusIntroVisible = true;
+    setScreen("bonus");
+
+    await sleep(1200);
+
+    if (state.screen !== "bonus") return;
+
+    state.bonusIntroVisible = false;
+    render();
+    afterBonusScreenRender();
+  }
+
 function renderEndScreen(){
   window.VerseGameShell.renderCompleteScreen({
     app,
@@ -636,6 +812,8 @@ function render(){
     renderModeScreen();
   } else if (state.screen === "game"){
     app.innerHTML = gameplayShell({ bonus:false });
+  } else if (state.screen === "coverage_result"){
+    app.innerHTML = renderCoverageResultScreen();
   } else if (state.screen === "bonus_intro"){
     app.innerHTML = gameplayShell({ bonus:true });
   } else if (state.screen === "bonus"){
@@ -653,6 +831,7 @@ function render(){
     app.querySelectorAll("[data-action='close-help']").forEach(btn => btn.onclick = closeHelp);
     app.querySelectorAll("[data-action='play-again']").forEach(btn => btn.onclick = () => setScreen("mode"));
     app.querySelectorAll("[data-action='exit-game']").forEach(btn => btn.onclick = () => window.VerseGameBridge.exitGame());
+    app.querySelectorAll("[data-action='coverage-result-continue']").forEach(btn => btn.onclick = continueAfterCoverageResult);
 
     if (state.screen === "game" || state.screen === "bonus"){
       wireSharedGameMenu();
@@ -1701,6 +1880,7 @@ function spawnWrongFaceParticleBurst(){
   function stopLoops(){
     stopGameLoop();
     stopBonusLoop();
+    clearCoverageResultTimers();
   }
 
   function bonusBlobCenterPx(blob, layerSelector="#vspEffectLayer"){
@@ -1769,14 +1949,7 @@ function spawnWrongFaceParticleBurst(){
     state.medalMessage = wasAlreadyCompleted ? `You finished ${state.mode} again.` : `${medalEmojiForMode(state.mode)} earned!`;
     state.medalSubmessage = wasAlreadyCompleted ? "The medal was already yours, but the splats were still worth it." : "Your verse progress, stars, and BibloPet flow have been updated.";
 
-    state.bonusIntroVisible = true;
-    setScreen("bonus");
-    render();
-    afterBonusScreenRender();
-    await sleep(1200);
-    state.bonusIntroVisible = false;
-    render();
-    afterBonusScreenRender();
+    startCoverageResultCeremony();
   }
 
   function finishBonusRound(){
