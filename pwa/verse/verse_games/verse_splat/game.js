@@ -75,10 +75,9 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
     correct: [
       "verse_splat_correct_1.mp3",
       "verse_splat_correct_2.mp3",
-      "verse_splat_correct_3.mp3",
-      "verse_splat_correct_4.mp3",
-      "verse_splat_correct_5.mp3"
+      "verse_splat_correct_3.mp3"
     ],
+    wrong: "verse_splat_wrong.mp3",
     streak: "verse_splat_streak.mp3",
     paintScore: "verse_splat_paint_score.mp3",
     start: "verse_splat_start.mp3",
@@ -167,6 +166,10 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
 
   function playCorrectSound(){
     playVerseSplatSoundGroup("correct", 0.88);
+  }
+
+  function playWrongSound(){
+    playVerseSplatSoundFile(VERSE_SPLAT_SOUNDS.wrong, 0.9);
   }
 
   function playStreakSound(){
@@ -669,7 +672,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.5",
+    debugBadge: "VS 3.6",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -2144,6 +2147,7 @@ function spawnWrongFaceParticleBurst(){
   async function handleWrongTap(blob){
     if (state.busy) return;
     state.busy = true;
+    playWrongSound();
     spawnWrongFaceSplat();
     spawnWrongFaceParticleBurst();
     removeBlobById(blob.id);
