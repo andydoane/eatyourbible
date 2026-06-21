@@ -19,9 +19,29 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   const BONUS_TIME_LIMIT_MS = 30000;
   const CORRECT_TAP_LOCK_MS = 180;
   const MAX_STATIC_PAINT_SPLATS = 96;
-  const COVERAGE_GRID_COLS = 6;
-  const COVERAGE_GRID_ROWS = 8;
-  const COVERAGE_GRID_TOTAL = COVERAGE_GRID_COLS * COVERAGE_GRID_ROWS;
+
+  function coverageGridSize(){
+    const opportunities = Math.max(1, state.segments.length || 1);
+
+    if (opportunities <= 15){
+      return { cols: 6, rows: 8 };
+    }
+
+    if (opportunities <= 21){
+      return { cols: 7, rows: 9 };
+    }
+
+    if (opportunities <= 28){
+      return { cols: 8, rows: 10 };
+    }
+
+    return { cols: 9, rows: 11 };
+  }
+
+  function coverageGridTotal(){
+    const grid = coverageGridSize();
+    return grid.cols * grid.rows;
+  }
 
   const STATIC_PAINT_BLOB_SHAPES = [
     "./verse_splat_images/verse_splat_paint_blob_1.svg",
@@ -486,7 +506,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 1.9",
+    debugBadge: "VS 2.0",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -566,10 +586,10 @@ function gameplayShell({ bonus=false }){
           <div class="vsp-board" id="vspBoard">
             <div class="vsp-board-topbar">
               <button class="vsp-menu-pill" id="vspMenuPill" data-action="open-menu" aria-label="Open game menu" type="button">☰</button>
-              ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : `<div class="vsp-coverage-chip" id="vspCoverageChip">Painted ${state.coveredCells.size}/${COVERAGE_GRID_TOTAL}</div>`}
+              ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : `<div class="vsp-coverage-chip" id="vspCoverageChip">Painted ${state.coveredCells.size}/${coverageGridTotal()}</div>`}
             </div>
             <div class="vsp-board-main" id="vspBoardMain">
-              <div class="vsp-grid-layer" id="vspGridLayer" style="--vsp-grid-cols:${COVERAGE_GRID_COLS};--vsp-grid-rows:${COVERAGE_GRID_ROWS};"></div>
+              <div class="vsp-grid-layer" id="vspGridLayer" style="--vsp-grid-cols:${coverageGridSize().cols};--vsp-grid-rows:${coverageGridSize().rows};"></div>
               <div class="vsp-coverage-layer" id="vspCoverageLayer"></div>
               <div class="vsp-paint-layer" id="vspPaintLayer"></div>
               <div class="vsp-flash-layer ${state.flashKey ? 'is-active' : ''}" id="vspFlashLayer"></div>
@@ -1134,17 +1154,18 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
   function markCellsForPaintSplat(splat, bounds) {
     if (!splat || !bounds.width || !bounds.height) return;
 
-    const cellW = bounds.width / COVERAGE_GRID_COLS;
-    const cellH = bounds.height / COVERAGE_GRID_ROWS;
+    const grid = coverageGridSize();
+    const cellW = bounds.width / grid.cols;
+    const cellH = bounds.height / grid.rows;
     const cx = splat.xRatio * bounds.width;
     const cy = splat.yRatio * bounds.height;
     const rx = Math.max(1, splat.w / 2);
     const ry = Math.max(1, splat.h / 2);
 
-    const minCol = clamp(Math.floor((cx - rx) / cellW), 0, COVERAGE_GRID_COLS - 1);
-    const maxCol = clamp(Math.floor((cx + rx) / cellW), 0, COVERAGE_GRID_COLS - 1);
-    const minRow = clamp(Math.floor((cy - ry) / cellH), 0, COVERAGE_GRID_ROWS - 1);
-    const maxRow = clamp(Math.floor((cy + ry) / cellH), 0, COVERAGE_GRID_ROWS - 1);
+    const minCol = clamp(Math.floor((cx - rx) / cellW), 0, grid.cols - 1);
+    const maxCol = clamp(Math.floor((cx + rx) / cellW), 0, grid.cols - 1);
+    const minRow = clamp(Math.floor((cy - ry) / cellH), 0, grid.rows - 1);
+    const maxRow = clamp(Math.floor((cy + ry) / cellH), 0, grid.rows - 1);
 
     for (let row = minRow; row <= maxRow; row++) {
       for (let col = minCol; col <= maxCol; col++) {
@@ -1164,16 +1185,18 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     const layer = $("#vspCoverageLayer");
     if (!layer) return;
 
+    const grid = coverageGridSize();
+
     layer.innerHTML = Array.from(state.coveredCells).map((key) => {
       const [col, row] = key.split(",").map(Number);
 
       return `
         <span class="vsp-coverage-cell"
           style="
-            left:${((col / COVERAGE_GRID_COLS) * 100).toFixed(3)}%;
-            top:${((row / COVERAGE_GRID_ROWS) * 100).toFixed(3)}%;
-            width:${(100 / COVERAGE_GRID_COLS).toFixed(3)}%;
-            height:${(100 / COVERAGE_GRID_ROWS).toFixed(3)}%;
+            left:${((col / grid.cols) * 100).toFixed(3)}%;
+            top:${((row / grid.rows) * 100).toFixed(3)}%;
+            width:${(100 / grid.cols).toFixed(3)}%;
+            height:${(100 / grid.rows).toFixed(3)}%;
           ">
         </span>
       `;
