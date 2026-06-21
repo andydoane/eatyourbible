@@ -334,6 +334,15 @@ body{overflow:hidden}
   font-family:var(--vsp-font-main);
 }
 
+.vsp-bonus-blob .vsp-blob-body {
+  filter:
+    drop-shadow(0 7px 0 rgba(0, 0, 0, .16)) drop-shadow(0 13px 18px rgba(0, 0, 0, .18));
+}
+
+.vsp-bonus-blob .vsp-blob-body::before {
+  display: none;
+}
+
 .vsp-blob.is-tutorial .vsp-blob-label {
   font-family: var(--vsp-font-display);
   font-weight: 400;
@@ -838,6 +847,44 @@ body{overflow:hidden}
   100% {
     opacity: 0;
     transform: scale(.94) rotate(0deg)
+  }
+}
+
+.vsp-bonus-continue-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 14;
+  transform: translateX(-50%);
+  border: none;
+  border-radius: 999px;
+  padding: 15px 26px 18px;
+  background: #ffffff;
+  color: #333333;
+  font-family: var(--vsp-font-display);
+  font-size: clamp(24px, 6vw, 42px);
+  line-height: 1;
+  letter-spacing: .01em;
+  box-shadow:
+    0 8px 0 rgba(0, 0, 0, .18),
+    0 16px 28px rgba(0, 0, 0, .22);
+  cursor: pointer;
+  animation: vspBonusContinuePop .42s cubic-bezier(.18, .9, .16, 1) both;
+}
+
+.vsp-bonus-continue-prompt:active {
+  transform: translateX(-50%) translateY(2px);
+}
+
+@keyframes vspBonusContinuePop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(18px) scale(.82)
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1)
   }
 }
 

@@ -222,6 +222,7 @@ const MODE_CONFIG = {
     bonusRemainingMs: BONUS_TIME_LIMIT_MS,
     bonusScore: 0,
     bonusEnding: false,
+    bonusAwaitingContinue: false,
     bonusColorQueue: [],
 
     coverageResultPercent: 0,
@@ -310,6 +311,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.bonusRemainingMs = BONUS_TIME_LIMIT_MS;
     state.bonusScore = 0;
     state.bonusEnding = false;
+    state.bonusAwaitingContinue = false;
     state.bonusColorQueue = [];
     state.coverageResultPercent = 0;
     state.coverageResultBarPercent = 0;
@@ -534,7 +536,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.0",
+    debugBadge: "VS 3.1",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -766,6 +768,7 @@ function gameplayShell({ bonus=false }){
     clearCoverageResultTimers();
 
     state.bonusIntroVisible = true;
+    state.bonusAwaitingContinue = false;
     setScreen("bonus");
 
     await sleep(1200);
@@ -826,6 +829,7 @@ function render(){
     app.querySelectorAll("[data-action='play-again']").forEach(btn => btn.onclick = () => setScreen("mode"));
     app.querySelectorAll("[data-action='exit-game']").forEach(btn => btn.onclick = () => window.VerseGameBridge.exitGame());
     app.querySelectorAll("[data-action='coverage-result-continue']").forEach(btn => btn.onclick = continueAfterCoverageResult);
+    app.querySelectorAll("[data-action='bonus-continue']").forEach(btn => btn.onclick = continueFromBonusArtwork);
 
     if (state.screen === "game" || state.screen === "bonus"){
       wireSharedGameMenu();
@@ -1804,6 +1808,7 @@ function spawnWrongFaceParticleBurst(){
     updatePhase();
     appendBuildProgress();
     if (state.phase === "complete"){
+      await sleep(650);
       await completeMainGame();
       state.busy = false;
       return;
@@ -2155,10 +2160,31 @@ function spawnWrongFaceParticleBurst(){
     startCoverageResultCeremony();
   }
 
+  function continueFromBonusArtwork() {
+    if (!state.bonusAwaitingContinue) return;
+    setScreen("end");
+  }
+
+  function showBonusContinuePrompt() {
+    const boardMain = $("#vspBoardMain");
+    if (!boardMain || $("#vspBonusContinuePrompt")) return;
+
+    boardMain.insertAdjacentHTML("beforeend", `
+      <button class="vsp-bonus-continue-prompt" id="vspBonusContinuePrompt" data-action="bonus-continue" type="button">
+        Tap to Continue
+      </button>
+    `);
+
+    const button = $("#vspBonusContinuePrompt");
+    if (button) button.onclick = continueFromBonusArtwork;
+  }
+
+
   async function finishBonusRound(){
     if (state.bonusEnding) return;
 
     state.bonusEnding = true;
+    state.bonusAwaitingContinue = true;
     stopBonusLoop();
 
     const liveBlobs = state.bonusBlobs.filter(blob => blob.alive);
@@ -2169,12 +2195,7 @@ function spawnWrongFaceParticleBurst(){
 
     renderBonusBlobNodes();
     renderStaticPaintSplats();
-
-    await sleep(BONUS_MASTERPIECE_PAUSE_MS);
-
-    if (state.screen !== "bonus") return;
-
-    setScreen("end");
+    showBonusContinuePrompt();
   }
 
   function afterGameScreenRender(){
