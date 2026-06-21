@@ -520,7 +520,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.5",
+    debugBadge: "VS 2.6",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -763,6 +763,11 @@ function gameplayShell({ bonus=false }){
     afterBonusScreenRender();
   }
 
+  function finalScoreMessage() {
+    return `Painted ${state.coverageResultPercent}% • Bonus blobs: ${state.bonusScore}`;
+  }
+
+
 function renderEndScreen(){
   window.VerseGameShell.renderCompleteScreen({
     app,
@@ -771,7 +776,7 @@ function renderEndScreen(){
     verseId: ctx.verseId,
     gameId: GAME_ID,
     completion: state.completionResult,
-    gameMessage: `Bonus blobs splatted: ${state.bonusScore}`,
+    gameMessage: finalScoreMessage(),
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
     onPlayAgain: () => setScreen("mode"),
