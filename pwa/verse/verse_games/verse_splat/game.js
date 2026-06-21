@@ -538,7 +538,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.2",
+    debugBadge: "VS 3.3",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1201,11 +1201,15 @@ function render(){
     });
   }
 
-  function hasStreakRewardBlob() {
-    return state.blobs.some(blob => blob.streakReward && (blob.state === "live" || blob.state === "spawning"));
+  function hasStreakRewardBlob(streakValue) {
+    return state.blobs.some(blob =>
+      blob.streakReward &&
+      blob.streakValue === streakValue &&
+      (blob.state === "live" || blob.state === "spawning")
+    );
   }
 
-  function makeStreakRewardBlob() {
+  function makeStreakRewardBlob(streakValue) {
     const bounds = currentBounds();
     const shape = BLOB_SHAPES.normal;
     const height = clamp(bounds.height * 0.13, 66, 104);
@@ -1217,10 +1221,11 @@ function render(){
 
     return {
       id: state.nextBlobId++,
-      label: "STREAK X 5",
-      normalizedLabel: "streakx5",
+      label: `STREAK X ${streakValue}`,
+      normalizedLabel: `streakx${streakValue}`,
       isCorrect: false,
       streakReward: true,
+      streakValue,
       color: "#ff5a51",
       textColor: "#ffffff",
       x: point.x,
@@ -1239,13 +1244,14 @@ function render(){
     };
   }
 
-  function spawnStreakRewardBlob() {
+  function spawnStreakRewardBlob(streakValue) {
     if (state.screen !== "game") return;
     if (state.tutorialActive) return;
     if (state.phase !== "words") return;
-    if (hasStreakRewardBlob()) return;
+    if (![5, 10, 15].includes(streakValue)) return;
+    if (hasStreakRewardBlob(streakValue)) return;
 
-    state.blobs.push(makeStreakRewardBlob());
+    state.blobs.push(makeStreakRewardBlob(streakValue));
     renderBlobNodes();
     releaseSpawningBlobsSoon();
   }
@@ -1981,9 +1987,8 @@ function spawnWrongFaceParticleBurst(){
     }
     refillFieldAfterCorrect();
 
-    if (wasVerseWordPhase && state.phase === "words" && state.correctStreak >= 5){
-      state.correctStreak = 0;
-      spawnStreakRewardBlob();
+    if (wasVerseWordPhase && state.phase === "words" && [5, 10, 15].includes(state.correctStreak)){
+      spawnStreakRewardBlob(state.correctStreak);
     }
 
     state.busy = false;
