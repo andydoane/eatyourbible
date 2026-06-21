@@ -534,7 +534,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.9",
+    debugBadge: "VS 3.0",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1055,7 +1055,7 @@ function render(){
     const blobImg = blob.blobImg || BLOB_SHAPES.normal.src;
 
     return `
-      <div class="vsp-blob vsp-blob--word vsp-blob--${blobType} ${blob.state === 'spawning' ? 'is-spawning' : ''}" data-blob-id="${blob.id}" role="button" tabindex="0" aria-label="${escapeHtml(blob.label)}" style="width:${blob.width}px;height:${blob.height}px;">
+      <div class="vsp-blob vsp-blob--word vsp-blob--${blobType} ${blob.state === 'spawning' ? 'is-spawning' : ''} ${blob.tutorial ? 'is-tutorial' : ''}" data-blob-id="${blob.id}" role="button" tabindex="0" aria-label="${escapeHtml(blob.label)}" style="width:${blob.width}px;height:${blob.height}px;">
         <div class="vsp-blob-body" style="--vsp-blob-mask:url('${blobImg}');--vsp-blob-fill:${blob.color};--vsp-blob-text:${blob.textColor};color:${blob.textColor};">
           <span class="vsp-blob-label">${escapeHtml(blob.label)}</span>
         </div>
@@ -1195,12 +1195,14 @@ function render(){
     });
   }
 
-  function makeTutorialBlob(label, centerYRatio) {
+  function makeTutorialBlob(label, options = {}) {
     const bounds = currentBounds();
     const shape = BLOB_SHAPES.long;
     const height = clamp(bounds.height * 0.13, 62, 96);
     const width = Math.min(height * shape.ratio, bounds.width * 0.84);
-    const color = BLOB_COLORS[state.blobs.length % BLOB_COLORS.length] || BLOB_COLORS[0];
+    const color = options.color || BLOB_COLORS[state.blobs.length % BLOB_COLORS.length] || BLOB_COLORS[0];
+    const centerXRatio = options.centerXRatio ?? 0.5;
+    const centerYRatio = options.centerYRatio ?? 0.5;
 
     return {
       id: state.nextBlobId++,
@@ -1210,7 +1212,7 @@ function render(){
       tutorial: true,
       color: color.fill,
       textColor: color.text,
-      x: bounds.width ? clamp((bounds.width - width) / 2, 0, bounds.width) / bounds.width : 0.5,
+      x: bounds.width ? clamp((bounds.width * centerXRatio) - (width / 2), 0, bounds.width - width) / bounds.width : 0.5,
       y: bounds.height ? clamp((bounds.height * centerYRatio) - (height / 2), 0, bounds.height - height) / bounds.height : centerYRatio,
       vx: 0,
       vy: 0,
@@ -1232,12 +1234,25 @@ function render(){
     state.blobs = [];
 
     if (step === "tap") {
-      state.blobs.push(makeTutorialBlob("TAP TO SPLAT", 0.50));
+      state.blobs.push(makeTutorialBlob("TAP TO SPLAT", {
+        centerXRatio: 0.50,
+        centerYRatio: 0.50,
+        color: BLOB_COLORS[0]
+      }));
     }
 
     if (step === "fill") {
-      state.blobs.push(makeTutorialBlob("TRY TO FILL IN", 0.42));
-      state.blobs.push(makeTutorialBlob("THE SQUARES", 0.58));
+      state.blobs.push(makeTutorialBlob("TRY TO FILL IN", {
+        centerXRatio: 0.32,
+        centerYRatio: 0.27,
+        color: BLOB_COLORS[2]
+      }));
+
+      state.blobs.push(makeTutorialBlob("THE SQUARES", {
+        centerXRatio: 0.68,
+        centerYRatio: 0.73,
+        color: BLOB_COLORS[4]
+      }));
     }
 
     renderBlobNodes();
