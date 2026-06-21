@@ -526,7 +526,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.6",
+    debugBadge: "VS 2.8",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -609,8 +609,8 @@ function gameplayShell({ bonus=false }){
               ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : `<div class="vsp-coverage-chip" id="vspCoverageChip">Painted ${state.coveredCells.size}/${coverageGridTotal()}</div>`}
             </div>
             <div class="vsp-board-main" id="vspBoardMain">
-              <div class="vsp-grid-layer" id="vspGridLayer" style="--vsp-grid-cols:${coverageGridSize().cols};--vsp-grid-rows:${coverageGridSize().rows};"></div>
-              <div class="vsp-coverage-layer" id="vspCoverageLayer"></div>
+              ${bonus ? "" : `<div class="vsp-grid-layer" id="vspGridLayer" style="--vsp-grid-cols:${coverageGridSize().cols};--vsp-grid-rows:${coverageGridSize().rows};"></div>`}
+              ${bonus ? "" : `<div class="vsp-coverage-layer" id="vspCoverageLayer"></div>`}
               <div class="vsp-paint-layer" id="vspPaintLayer"></div>
               <div class="vsp-flash-layer ${state.flashKey ? 'is-active' : ''}" id="vspFlashLayer"></div>
               <div class="vsp-back-effect-layer" id="vspBackEffectLayer"></div>
@@ -770,7 +770,7 @@ function gameplayShell({ bonus=false }){
   }
 
   function finalScoreMessage() {
-    return `Painted ${state.coverageResultPercent}% • Bonus blobs: ${state.bonusScore}`;
+    return `Painted ${state.coverageResultPercent}%`;
   }
 
 
@@ -1409,7 +1409,7 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     return clamp(Math.floor(60 / opportunities), 2, 5);
   }
 
-  function addStaticPaintSplats(blob, showScorePopup=true) {
+  function addStaticPaintSplats(blob, showScorePopup=true, updateCoverageScore=true) {
     const layer = $("#vspPaintLayer");
     if (!layer || !blob) return;
 
@@ -1467,10 +1467,13 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     }
 
     renderStaticPaintSplats();
-    updatePaintCoverage();
 
-    const coveredAdded = state.coveredCells.size - coveredBefore;
-    if (showScorePopup) spawnCoverageScorePopup(coveredAdded, center);
+    if (updateCoverageScore) {
+      updatePaintCoverage();
+
+      const coveredAdded = state.coveredCells.size - coveredBefore;
+      if (showScorePopup) spawnCoverageScorePopup(coveredAdded, center);
+    }
   }
   
   function renderStaticPaintSplats() {
@@ -1943,7 +1946,7 @@ function spawnWrongFaceParticleBurst(){
 
     const center = bonusBlobCenterPx(blob, "#vspBackEffectLayer");
 
-    addStaticPaintSplats(blob, false);
+    addStaticPaintSplats(blob, false, false);
     spawnSplatEffect(blob, center, "#vspBackEffectLayer");
     spawnParticleBurst(blob, center, "#vspBackEffectLayer");
 
@@ -1963,7 +1966,7 @@ function spawnWrongFaceParticleBurst(){
     const blob = state.bonusBlobs.find(entry => entry.id === id);
     if (!blob || !blob.alive) return;
 
-    splatBonusBlob(blob, true);
+    splatBonusBlob(blob, false);
     ensureBonusBlobCount();
   }
 
