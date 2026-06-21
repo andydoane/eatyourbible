@@ -201,6 +201,7 @@ const MODE_CONFIG = {
     paintSplats: [],
     coveredCells: new Set(),
     wrongCountThisField: 0,
+    correctStreak: 0,
 
     tutorialActive: false,
     tutorialStep: "",
@@ -297,6 +298,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.paintSplats = [];
     state.coveredCells = new Set();
     state.wrongCountThisField = 0;
+    state.correctStreak = 0;
     state.tutorialActive = false;
     state.tutorialStep = "";
     state.tutorialPending = false;
@@ -536,7 +538,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.1",
+    debugBadge: "VS 3.2",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1059,7 +1061,7 @@ function render(){
     const blobImg = blob.blobImg || BLOB_SHAPES.normal.src;
 
     return `
-      <div class="vsp-blob vsp-blob--word vsp-blob--${blobType} ${blob.state === 'spawning' ? 'is-spawning' : ''} ${blob.tutorial ? 'is-tutorial' : ''}" data-blob-id="${blob.id}" role="button" tabindex="0" aria-label="${escapeHtml(blob.label)}" style="width:${blob.width}px;height:${blob.height}px;">
+      <div class="vsp-blob vsp-blob--word vsp-blob--${blobType} ${blob.state === 'spawning' ? 'is-spawning' : ''} ${blob.tutorial ? 'is-tutorial' : ''} ${blob.streakReward ? 'is-streak-reward' : ''}" data-blob-id="${blob.id}" role="button" tabindex="0" aria-label="${escapeHtml(blob.label)}" style="width:${blob.width}px;height:${blob.height}px;">
         <div class="vsp-blob-body" style="--vsp-blob-mask:url('${blobImg}');--vsp-blob-fill:${blob.color};--vsp-blob-text:${blob.textColor};color:${blob.textColor};">
           <span class="vsp-blob-label">${escapeHtml(blob.label)}</span>
         </div>
@@ -1198,6 +1200,56 @@ function render(){
       }
     });
   }
+
+  function hasStreakRewardBlob() {
+    return state.blobs.some(blob => blob.streakReward && (blob.state === "live" || blob.state === "spawning"));
+  }
+
+  function makeStreakRewardBlob() {
+    const bounds = currentBounds();
+    const shape = BLOB_SHAPES.normal;
+    const height = clamp(bounds.height * 0.13, 66, 104);
+    const width = Math.min(height * shape.ratio, bounds.width * 0.78);
+    const velocityMag = 0.22 * MODE_CONFIG[state.mode].speedMultiplier;
+    const angle = rand(0, Math.PI * 2);
+    const existing = state.blobs.filter(blob => blob.state === "live" || blob.state === "spawning");
+    const point = safeSpawnPoint({ width, height }, existing);
+
+    return {
+      id: state.nextBlobId++,
+      label: "STREAK X 5",
+      normalizedLabel: "streakx5",
+      isCorrect: false,
+      streakReward: true,
+      color: "#ff5a51",
+      textColor: "#ffffff",
+      x: point.x,
+      y: point.y,
+      vx: Math.cos(angle) * velocityMag,
+      vy: Math.sin(angle) * velocityMag,
+      width,
+      height,
+      blobType: shape.type,
+      blobImg: shape.src,
+      wobblePhase: Math.random() * Math.PI * 2,
+      wobbleSpeed: rand(1.35, 2.35),
+      impactX: 0,
+      impactY: 0,
+      state: "spawning"
+    };
+  }
+
+  function spawnStreakRewardBlob() {
+    if (state.screen !== "game") return;
+    if (state.tutorialActive) return;
+    if (state.phase !== "words") return;
+    if (hasStreakRewardBlob()) return;
+
+    state.blobs.push(makeStreakRewardBlob());
+    renderBlobNodes();
+    releaseSpawningBlobsSoon();
+  }
+
 
   function makeTutorialBlob(label, options = {}) {
     const bounds = currentBounds();
@@ -1339,7 +1391,7 @@ function render(){
   }
 
   function refillFieldAfterCorrect(){
-    const survivors = state.blobs.filter(blob => blob.state === "live");
+    const survivors = state.blobs.filter(blob => blob.state === "live" && !blob.streakReward);
     const correct = currentCorrectLabel();
     const labels = uniqueLabels([correct, ...decoysForCurrentPhase(correct)]).slice(0, 3);
     const chosenLabels = shuffle(labels).slice(0, 3);
@@ -1710,6 +1762,112 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     if (node) setTimeout(() => node.remove(), 620);
   }
 
+  function addRainbowStaticPaintSplats(blob) {
+    const layer = $("#vspPaintLayer");
+    if (!layer || !blob) return;
+
+    const center = blobCenterPx(blob, "#vspPaintLayer");
+    const coveredBefore = state.coveredCells.size;
+    const bounds = currentBounds();
+    const boardMin = Math.max(1, Math.min(bounds.width, bounds.height));
+    const baseAngle = rand(0, Math.PI * 2);
+    const centerSize = Math.max(1, blob.height * 0.92);
+    const circleCount = 10;
+    const spread = clamp(blob.height * 1.12 + boardMin * 0.055, 68, 165);
+    const svgShape = STATIC_PAINT_BLOB_SHAPES[Math.floor(Math.random() * STATIC_PAINT_BLOB_SHAPES.length)] || STATIC_PAINT_BLOB_SHAPES[0];
+
+    function pushRainbowPaintMark({ x, y, w, h, shape, blobImg = null, opacity = 1, rot = 0, color }) {
+      state.paintSplats.push({
+        xRatio: bounds.width ? clamp(x, 0, bounds.width) / bounds.width : 0.5,
+        yRatio: bounds.height ? clamp(y, 0, bounds.height) / bounds.height : 0.5,
+        w,
+        h,
+        color,
+        opacity,
+        rot,
+        shape,
+        blobImg
+      });
+    }
+
+    pushRainbowPaintMark({
+      x: center.x,
+      y: center.y,
+      w: centerSize,
+      h: centerSize,
+      shape: "svg",
+      blobImg: svgShape,
+      opacity: 1,
+      rot: rand(-180, 180),
+      color: BLOB_COLORS[0].fill
+    });
+
+    for (let i = 0; i < circleCount; i++) {
+      const color = BLOB_COLORS[i % BLOB_COLORS.length].fill;
+      const angle = baseAngle + ((Math.PI * 2) / circleCount) * i + rand(-0.22, 0.22);
+      const distance = rand(spread * 0.42, spread * 1.14);
+      const dotSize = clamp(blob.height * rand(0.16, 0.36), 14, 48);
+      const x = center.x + Math.cos(angle) * distance;
+      const y = center.y + Math.sin(angle) * distance;
+
+      pushRainbowPaintMark({
+        x,
+        y,
+        w: dotSize * rand(0.92, 1.18),
+        h: dotSize * rand(0.92, 1.18),
+        shape: "dot",
+        opacity: rand(0.88, 1.00),
+        rot: 0,
+        color
+      });
+    }
+
+    renderStaticPaintSplats();
+    updatePaintCoverage();
+
+    const coveredAdded = state.coveredCells.size - coveredBefore;
+    spawnCoverageScorePopup(coveredAdded, center);
+  }
+
+  function spawnRainbowSplatEffect(blob) {
+    const center = blobCenterPx(blob, "#vspBackEffectLayer");
+    const pieces = BLOB_COLORS.map((color, index) => {
+      const rot = (-28 + index * 12).toFixed(1);
+      const scale = (1.02 - index * 0.035).toFixed(3);
+
+      return `
+        <span class="vsp-streak-splat-piece" style="--piece-color:${color.fill};--piece-rot:${rot}deg;--piece-scale:${scale};">
+          ${SPLAT_SVG}
+        </span>
+      `;
+    }).join("");
+
+    const markup = `
+      <div class="vsp-streak-splat-burst">
+        ${pieces}
+      </div>
+    `;
+
+    const node = effectNodeAt(center.x, center.y, markup, "#vspBackEffectLayer");
+    if (node) setTimeout(() => node.remove(), 720);
+  }
+
+  function handleStreakRewardTap(blob) {
+    if (state.busy) return;
+
+    state.busy = true;
+    state.inputLockedUntil = performance.now() + CORRECT_TAP_LOCK_MS;
+
+    addRainbowStaticPaintSplats(blob);
+    spawnRainbowSplatEffect(blob);
+    spawnParticleBurst(blob);
+    removeBlobById(blob.id);
+    renderBlobNodes();
+
+    state.busy = false;
+  }
+
+
   function spawnPoofEffect(blob){
     const center = blobCenterPx(blob);
     const markup = `
@@ -1797,6 +1955,9 @@ function spawnWrongFaceParticleBurst(){
 
   async function handleCorrectTap(blob){
     if (state.busy) return;
+
+    const wasVerseWordPhase = state.phase === "words";
+
     state.busy = true;
     state.inputLockedUntil = performance.now() + CORRECT_TAP_LOCK_MS;
     addStaticPaintSplats(blob);
@@ -1805,6 +1966,11 @@ function spawnWrongFaceParticleBurst(){
     removeBlobById(blob.id);
     state.progressIndex += 1;
     state.wrongCountThisField = 0;
+
+    if (wasVerseWordPhase){
+      state.correctStreak += 1;
+    }
+
     updatePhase();
     appendBuildProgress();
     if (state.phase === "complete"){
@@ -1814,6 +1980,12 @@ function spawnWrongFaceParticleBurst(){
       return;
     }
     refillFieldAfterCorrect();
+
+    if (wasVerseWordPhase && state.phase === "words" && state.correctStreak >= 5){
+      state.correctStreak = 0;
+      spawnStreakRewardBlob();
+    }
+
     state.busy = false;
   }
 
@@ -1825,6 +1997,7 @@ function spawnWrongFaceParticleBurst(){
     removeBlobById(blob.id);
     triggerBuildShake();
     triggerWrongFlash();
+    state.correctStreak = 0;
     state.wrongCountThisField += 1;
     if (MODE_CONFIG[state.mode].rollbackCount){
       await animateHardRollback(MODE_CONFIG[state.mode].rollbackCount);
@@ -1850,6 +2023,12 @@ function spawnWrongFaceParticleBurst(){
 
     const blob = state.blobs.find(entry => entry.id === blobId);
     if (!blob) return;
+
+    if (blob.streakReward){
+      handleStreakRewardTap(blob);
+      return;
+    }
+
     if (blob.isCorrect) await handleCorrectTap(blob);
     else await handleWrongTap(blob);
   }
