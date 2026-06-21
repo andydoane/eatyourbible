@@ -506,7 +506,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.0",
+    debugBadge: "VS 2.1",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1206,7 +1206,7 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
   function updateCoverageHud() {
     const chip = $("#vspCoverageChip");
     if (!chip) return;
-    chip.textContent = `Painted ${state.coveredCells.size}/${COVERAGE_GRID_TOTAL}`;
+    chip.textContent = `Painted ${state.coveredCells.size}/${coverageGridTotal()}`;
   }
 
   function updatePaintCoverage() {
