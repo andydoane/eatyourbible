@@ -1,3 +1,19 @@
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Titan One";
+  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root{
   --vsp-bg:#f2f2f2;
   --vsp-build:#333333;
@@ -11,6 +27,8 @@
   --vsp-white:#ffffff;
   --vsp-border:rgba(0,0,0,.08);
   --vsp-shadow:0 8px 20px rgba(0,0,0,.14);
+  --vsp-font-main:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --vsp-font-display:"Titan One", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
 html,body{height:100%;min-height:100svh;background:var(--vsp-bg)}
@@ -27,7 +45,7 @@ body{overflow:hidden}
   overflow:hidden;
   color:var(--vm-white);
   text-align:center;
-  font-family:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family:var(--vsp-font-main);
 }
 
 .vsp-mode-shell{
@@ -205,7 +223,7 @@ body{overflow:hidden}
   font-weight:900;
   font-size:15px;
   border:none;
-  font-family:inherit;
+  font-family:var(--vsp-font-main);
   box-shadow:none;
 }
 .vsp-menu-pill{
@@ -313,7 +331,7 @@ body{overflow:hidden}
   white-space:nowrap;
   transform-origin:center center;
   user-select:none;
-  font-family:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family:var(--vsp-font-main);
 }
 
 .vsp-blob--compact .vsp-blob-label{
@@ -485,6 +503,47 @@ body{overflow:hidden}
 .vsp-bonus-score{font-size:clamp(16px,4vw,22px);font-weight:800;color:#333}
 
 .vsp-end-stat{font-size:clamp(16px,4vw,22px);font-weight:800;line-height:1.15;opacity:.96;color:var(--vsp-white)}
+
+.vsp-score-popup {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 7;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(.85);
+  font-family: var(--vsp-font-display);
+  font-size: clamp(34px, 11vw, 76px);
+  line-height: .92;
+  letter-spacing: .01em;
+  color: #ffffff;
+  text-shadow:
+    0 5px 0 rgba(0, 0, 0, .22),
+    0 10px 22px rgba(0, 0, 0, .22);
+  opacity: 0;
+  animation: vspScorePopup .72s cubic-bezier(.18, .9, .16, 1) forwards;
+}
+
+@keyframes vspScorePopup {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.65) rotate(-4deg)
+  }
+
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08) rotate(2deg)
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -58%) scale(1) rotate(0deg)
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -70%) scale(.92) rotate(0deg)
+  }
+}
 
 @keyframes vspShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 @keyframes vspRemove{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px) scale(.8)}}
