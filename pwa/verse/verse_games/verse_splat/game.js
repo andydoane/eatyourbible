@@ -538,7 +538,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.3",
+    debugBadge: "VS 3.4",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -629,7 +629,7 @@ function gameplayShell({ bonus=false }){
               <div class="vsp-blob-layer" id="vspBlobLayer"></div>
               <div class="vsp-effect-layer" id="vspEffectLayer"></div>
               <div class="vsp-front-effect-layer" id="vspFrontEffectLayer"></div>
-              ${bonus && state.bonusIntroVisible ? `<div class="vsp-bonus-intro"><div><div class="vsp-bonus-title">MAKE A MESS!</div><div class="vsp-bonus-copy">Splat blobs and paint the board!</div></div></div>` : ''}
+              ${bonus && state.bonusIntroVisible ? `<div class="vsp-bonus-intro"><div class="vsp-bonus-rainbow-popup">Make a Mess</div></div>` : ''}
             </div>
           </div>
         </div>
