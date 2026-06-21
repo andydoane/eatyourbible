@@ -520,7 +520,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 2.4",
+    debugBadge: "VS 2.5",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -639,52 +639,34 @@ function gameplayShell({ bonus=false }){
     return "is-score-low";
   }
 
-  function coverageRainbowSplatHtml() {
-    const pieces = [
-      { color: "#ff5a51", rot: -14, scale: 1.00 },
-      { color: "#ffa351", rot: 10, scale: .96 },
-      { color: "#ffc751", rot: 28, scale: .90 },
-      { color: "#a7cb6f", rot: -34, scale: .92 },
-      { color: "#40b9c5", rot: 44, scale: .88 },
-      { color: "#7f66c6", rot: -52, scale: .86 }
-    ];
-
-    return `
-      <div class="vsp-coverage-result-splat" aria-hidden="true">
-        ${pieces.map((piece) => `
-          <span class="vsp-coverage-result-splat-piece"
-            style="--piece-color:${piece.color};--piece-rot:${piece.rot}deg;--piece-scale:${piece.scale};">
-            ${SPLAT_SVG}
-          </span>
-        `).join("")}
-      </div>
-    `;
+  function coverageResultMessage(percent) {
+    if (percent >= 91) return "Masterpiece!";
+    if (percent >= 81) return "A Work of Art!";
+    if (percent >= 71) return "Colorific!";
+    if (percent >= 61) return "Paint Party!";
+    if (percent >= 51) return "Splat-tastic!";
+    return "What a Mess!";
   }
 
   function renderCoverageResultScreen() {
     const percent = state.coverageResultPercent;
     const barPercent = clamp(state.coverageResultBarPercent, 0, percent);
     const cardClass = coverageResultCardClass(percent);
-    const showSplat = state.coverageResultPhase === "splat" || state.coverageResultPhase === "card";
     const showCard = state.coverageResultPhase === "card";
 
     return `
       <div class="vsp-coverage-result-screen" id="vspCoverageResultScreen">
         <div class="vsp-coverage-result-stage">
-          <div class="vsp-coverage-result-title">Painting Score</div>
+          <div class="vsp-coverage-result-title">PAINTING SCORE</div>
 
           <div class="vsp-coverage-result-progress" aria-label="Painting coverage">
             <div class="vsp-coverage-result-fill" id="vspCoverageResultFill" style="width:${barPercent}%"></div>
             <div class="vsp-coverage-result-percent" id="vspCoverageResultPercent">${barPercent}%</div>
           </div>
 
-          <div class="vsp-coverage-result-splat-slot">
-            ${showSplat ? coverageRainbowSplatHtml() : ""}
-          </div>
-
           ${showCard ? `
             <button class="vsp-coverage-result-card ${cardClass}" data-action="coverage-result-continue" type="button">
-              <div class="vsp-coverage-result-card-score">${percent}%</div>
+              <div class="vsp-coverage-result-card-message">${coverageResultMessage(percent)}</div>
               <div class="vsp-coverage-result-card-copy">Tap to Continue</div>
             </button>
           ` : ""}
@@ -740,19 +722,12 @@ function gameplayShell({ bonus=false }){
       state.coverageResultRafId = 0;
       state.coverageResultBarPercent = target;
 
-      const splatTimer = setTimeout(() => {
-        state.coverageResultPhase = "splat";
+      const cardTimer = setTimeout(() => {
+        state.coverageResultPhase = "card";
         render();
+      }, 260);
 
-        const cardTimer = setTimeout(() => {
-          state.coverageResultPhase = "card";
-          render();
-        }, 850);
-
-        state.coverageResultTimers.push(cardTimer);
-      }, 180);
-
-      state.coverageResultTimers.push(splatTimer);
+      state.coverageResultTimers.push(cardTimer);
     }
 
     state.coverageResultRafId = requestAnimationFrame(step);
