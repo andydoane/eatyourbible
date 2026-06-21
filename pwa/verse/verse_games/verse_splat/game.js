@@ -687,7 +687,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.8",
+    debugBadge: "VS 3.9",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -2609,6 +2609,10 @@ function spawnWrongFaceParticleBurst(){
     stopBonusLoop();
 
     const liveBlobs = state.bonusBlobs.filter(blob => blob.alive);
+
+    if (liveBlobs.length){
+      playCorrectSound();
+    }
 
     for (const blob of liveBlobs){
       splatBonusBlob(blob, false);
