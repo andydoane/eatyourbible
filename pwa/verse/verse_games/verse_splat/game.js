@@ -19,6 +19,9 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   const BONUS_TIME_LIMIT_MS = 30000;
   const CORRECT_TAP_LOCK_MS = 180;
   const MAX_STATIC_PAINT_SPLATS = 96;
+  const COVERAGE_GRID_COLS = 6;
+  const COVERAGE_GRID_ROWS = 8;
+  const COVERAGE_GRID_TOTAL = COVERAGE_GRID_COLS * COVERAGE_GRID_ROWS;
 
   const STATIC_PAINT_BLOB_SHAPES = [
     "./verse_splat_images/verse_splat_paint_blob_1.svg",
@@ -174,6 +177,7 @@ const MODE_CONFIG = {
     blobs: [],
     nextBlobId: 1,
     paintSplats: [],
+    coveredCells: new Set(),
     wrongCountThisField: 0,
     rafId: 0,
     lastTs: 0,
@@ -253,6 +257,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.blobs = [];
     state.nextBlobId = 1;
     state.paintSplats = [];
+    state.coveredCells = new Set();
     state.wrongCountThisField = 0;
     state.lastTs = 0;
     state.inputLockedUntil = 0;
@@ -481,7 +486,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 1.8",
+    debugBadge: "VS 1.9",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -561,9 +566,11 @@ function gameplayShell({ bonus=false }){
           <div class="vsp-board" id="vspBoard">
             <div class="vsp-board-topbar">
               <button class="vsp-menu-pill" id="vspMenuPill" data-action="open-menu" aria-label="Open game menu" type="button">☰</button>
-              ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : ''}
+              ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : `<div class="vsp-coverage-chip" id="vspCoverageChip">Painted ${state.coveredCells.size}/${COVERAGE_GRID_TOTAL}</div>`}
             </div>
             <div class="vsp-board-main" id="vspBoardMain">
+              <div class="vsp-grid-layer" id="vspGridLayer" style="--vsp-grid-cols:${COVERAGE_GRID_COLS};--vsp-grid-rows:${COVERAGE_GRID_ROWS};"></div>
+              <div class="vsp-coverage-layer" id="vspCoverageLayer"></div>
               <div class="vsp-paint-layer" id="vspPaintLayer"></div>
               <div class="vsp-flash-layer ${state.flashKey ? 'is-active' : ''}" id="vspFlashLayer"></div>
               <div class="vsp-back-effect-layer" id="vspBackEffectLayer"></div>
@@ -1109,6 +1116,89 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
   };
 }
 
+  function coverageCellKey(col, row) {
+    return `${col},${row}`;
+  }
+
+  function ellipseTouchesRect(cx, cy, rx, ry, left, top, right, bottom) {
+    if (cx >= left && cx <= right && cy >= top && cy <= bottom) return true;
+
+    const nearestX = clamp(cx, left, right);
+    const nearestY = clamp(cy, top, bottom);
+    const nx = (nearestX - cx) / Math.max(1, rx);
+    const ny = (nearestY - cy) / Math.max(1, ry);
+
+    return (nx * nx + ny * ny) <= 1;
+  }
+
+  function markCellsForPaintSplat(splat, bounds) {
+    if (!splat || !bounds.width || !bounds.height) return;
+
+    const cellW = bounds.width / COVERAGE_GRID_COLS;
+    const cellH = bounds.height / COVERAGE_GRID_ROWS;
+    const cx = splat.xRatio * bounds.width;
+    const cy = splat.yRatio * bounds.height;
+    const rx = Math.max(1, splat.w / 2);
+    const ry = Math.max(1, splat.h / 2);
+
+    const minCol = clamp(Math.floor((cx - rx) / cellW), 0, COVERAGE_GRID_COLS - 1);
+    const maxCol = clamp(Math.floor((cx + rx) / cellW), 0, COVERAGE_GRID_COLS - 1);
+    const minRow = clamp(Math.floor((cy - ry) / cellH), 0, COVERAGE_GRID_ROWS - 1);
+    const maxRow = clamp(Math.floor((cy + ry) / cellH), 0, COVERAGE_GRID_ROWS - 1);
+
+    for (let row = minRow; row <= maxRow; row++) {
+      for (let col = minCol; col <= maxCol; col++) {
+        const left = col * cellW;
+        const top = row * cellH;
+        const right = left + cellW;
+        const bottom = top + cellH;
+
+        if (ellipseTouchesRect(cx, cy, rx, ry, left, top, right, bottom)) {
+          state.coveredCells.add(coverageCellKey(col, row));
+        }
+      }
+    }
+  }
+
+  function renderCoverageCells() {
+    const layer = $("#vspCoverageLayer");
+    if (!layer) return;
+
+    layer.innerHTML = Array.from(state.coveredCells).map((key) => {
+      const [col, row] = key.split(",").map(Number);
+
+      return `
+        <span class="vsp-coverage-cell"
+          style="
+            left:${((col / COVERAGE_GRID_COLS) * 100).toFixed(3)}%;
+            top:${((row / COVERAGE_GRID_ROWS) * 100).toFixed(3)}%;
+            width:${(100 / COVERAGE_GRID_COLS).toFixed(3)}%;
+            height:${(100 / COVERAGE_GRID_ROWS).toFixed(3)}%;
+          ">
+        </span>
+      `;
+    }).join("");
+  }
+
+  function updateCoverageHud() {
+    const chip = $("#vspCoverageChip");
+    if (!chip) return;
+    chip.textContent = `Painted ${state.coveredCells.size}/${COVERAGE_GRID_TOTAL}`;
+  }
+
+  function updatePaintCoverage() {
+    const bounds = currentBounds();
+    state.coveredCells = new Set();
+
+    for (const splat of state.paintSplats) {
+      markCellsForPaintSplat(splat, bounds);
+    }
+
+    renderCoverageCells();
+    updateCoverageHud();
+  }
+
+
   function staticPaintSplatsPerCorrectTap() {
     const opportunities = Math.max(1, state.segments.length || 1);
     return clamp(Math.floor(60 / opportunities), 2, 5);
@@ -1171,6 +1261,7 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     }
 
     renderStaticPaintSplats();
+    updatePaintCoverage();
   }
   
   function renderStaticPaintSplats() {
@@ -1652,6 +1743,8 @@ function spawnWrongFaceParticleBurst(){
   function afterGameScreenRender(){
     if (state.menuOpen || state.helpOpen) return;
     fitSplatBuildText();
+    renderStaticPaintSplats();
+    updatePaintCoverage();
     if (!state.blobs.length) spawnInitialField();
     else renderBlobNodes();
     startGameLoop();
