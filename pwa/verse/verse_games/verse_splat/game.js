@@ -62,6 +62,137 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   let muted = false;
   let lastBoardPressAt = 0;
 
+  const VERSE_SPLAT_SOUND_BASE = "./verse_splat_sounds/";
+
+  const VERSE_SPLAT_SOUNDS = {
+    pop: [
+      "verse_splat_pop_1.mp3",
+      "verse_splat_pop_2.mp3",
+      "verse_splat_pop_3.mp3",
+      "verse_splat_pop_4.mp3",
+      "verse_splat_pop_5.mp3"
+    ],
+    correct: [
+      "verse_splat_correct_1.mp3",
+      "verse_splat_correct_2.mp3",
+      "verse_splat_correct_3.mp3",
+      "verse_splat_correct_4.mp3",
+      "verse_splat_correct_5.mp3"
+    ],
+    streak: "verse_splat_streak.mp3",
+    paintScore: "verse_splat_paint_score.mp3",
+    start: "verse_splat_start.mp3",
+    positive: "verse_splat_positive.mp3"
+  };
+
+  const verseSplatSoundCache = new Map();
+  const verseSplatLastSoundByGroup = {};
+  let verseSplatAudioUnlocked = false;
+
+  function verseSplatSoundSrc(file){
+    return `${VERSE_SPLAT_SOUND_BASE}${file}`;
+  }
+
+  function primeVerseSplatSound(file){
+    if (!file) return null;
+
+    const src = verseSplatSoundSrc(file);
+
+    if (!verseSplatSoundCache.has(src)){
+      const audio = new Audio(src);
+      audio.preload = "auto";
+      verseSplatSoundCache.set(src, audio);
+    }
+
+    return verseSplatSoundCache.get(src);
+  }
+
+  function unlockVerseSplatAudio(){
+    if (verseSplatAudioUnlocked) return;
+
+    verseSplatAudioUnlocked = true;
+
+    Object.values(VERSE_SPLAT_SOUNDS).flat().forEach(file => {
+      primeVerseSplatSound(file);
+    });
+  }
+
+  document.addEventListener("pointerdown", unlockVerseSplatAudio, { capture:true, once:true });
+  document.addEventListener("touchstart", unlockVerseSplatAudio, { capture:true, once:true });
+  document.addEventListener("keydown", unlockVerseSplatAudio, { capture:true, once:true });
+
+  function chooseVerseSplatSound(groupName){
+    const group = VERSE_SPLAT_SOUNDS[groupName];
+    if (!Array.isArray(group) || !group.length) return group || null;
+
+    let choices = group;
+
+    if (group.length > 1 && verseSplatLastSoundByGroup[groupName]){
+      choices = group.filter(file => file !== verseSplatLastSoundByGroup[groupName]);
+    }
+
+    const file = choices[Math.floor(Math.random() * choices.length)] || group[0];
+    verseSplatLastSoundByGroup[groupName] = file;
+
+    return file;
+  }
+
+  function playVerseSplatSoundFile(file, volume=1){
+    if (muted || !file) return;
+
+    try {
+      unlockVerseSplatAudio();
+
+      const base = primeVerseSplatSound(file);
+      if (!base) return;
+
+      const audio = base.cloneNode(true);
+      audio.volume = volume;
+      audio.currentTime = 0;
+
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === "function"){
+        playPromise.catch(() => {});
+      }
+    } catch (err) {}
+  }
+
+  function playVerseSplatSoundGroup(groupName, volume=1){
+    playVerseSplatSoundFile(chooseVerseSplatSound(groupName), volume);
+  }
+
+  function playPopSound(){
+    playVerseSplatSoundGroup("pop", 0.72);
+  }
+
+  function playCorrectSound(){
+    playVerseSplatSoundGroup("correct", 0.88);
+  }
+
+  function playStreakSound(){
+    playVerseSplatSoundFile(VERSE_SPLAT_SOUNDS.streak, 0.95);
+  }
+
+  function playPaintScoreSound(){
+    playVerseSplatSoundFile(VERSE_SPLAT_SOUNDS.paintScore, 0.92);
+  }
+
+  function playStartSound(){
+    playVerseSplatSoundFile(VERSE_SPLAT_SOUNDS.start, 0.92);
+  }
+
+  function playPositiveSound(){
+    playVerseSplatSoundFile(VERSE_SPLAT_SOUNDS.positive, 0.9);
+  }
+
+  function playSpawnPopSoundForCount(count=1){
+    const total = Math.max(0, Math.min(count, 4));
+
+    for (let i = 0; i < total; i++){
+      setTimeout(() => playPopSound(), i * 48);
+    }
+  }
+
   const $ = (s, root=document) => root.querySelector(s);
   const escapeHtml = (str) => String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#39;");
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -538,7 +669,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.4",
+    debugBadge: "VS 3.5",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -742,6 +873,7 @@ function gameplayShell({ bonus=false }){
 
       const cardTimer = setTimeout(() => {
         state.coverageResultPhase = "card";
+        playPositiveSound();
         render();
       }, 260);
 
@@ -759,6 +891,7 @@ function gameplayShell({ bonus=false }){
     state.coverageResultPhase = "bar";
     state.coverageResultContinuePending = false;
 
+    playPaintScoreSound();
     setScreen("coverage_result");
   }
 
@@ -766,10 +899,13 @@ function gameplayShell({ bonus=false }){
     if (state.coverageResultContinuePending) return;
     if (state.coverageResultPhase !== "card") return;
 
+    playPopSound();
+
     state.coverageResultContinuePending = true;
     clearCoverageResultTimers();
 
     state.bonusIntroVisible = true;
+    playStartSound();
     state.bonusAwaitingContinue = false;
     setScreen("bonus");
 
@@ -1253,6 +1389,7 @@ function render(){
 
     state.blobs.push(makeStreakRewardBlob(streakValue));
     renderBlobNodes();
+    playStreakSound();
     releaseSpawningBlobsSoon();
   }
 
@@ -1318,9 +1455,12 @@ function render(){
     }
 
     renderBlobNodes();
+    playSpawnPopSoundForCount(state.blobs.length);
   }
 
   function spawnTutorialGoPopup() {
+    playStartSound();
+
     const center = viewportCenterPx("#vspFrontEffectLayer");
     const node = effectNodeAt(center.x, center.y, `<div class="vsp-tutorial-go-popup">GO!</div>`, "#vspFrontEffectLayer");
 
@@ -1348,6 +1488,8 @@ function render(){
 
     const blob = state.blobs.find(entry => entry.id === blobId);
     if (!blob) return;
+
+    playCorrectSound();
 
     addStaticPaintSplats(blob, false, true);
     spawnSplatEffect(blob);
@@ -1393,6 +1535,7 @@ function render(){
       state.blobs.push(blob);
     });
     renderBlobNodes();
+    playSpawnPopSoundForCount(labels.length);
     releaseSpawningBlobsSoon();
   }
 
@@ -1410,6 +1553,7 @@ function render(){
       state.blobs.push(makeBlob({ label, isCorrect: normalizeWord(label) === normalizeWord(correct), preserveColor:newColors[i] }));
     }
     renderBlobNodes();
+    playSpawnPopSoundForCount(needed);
     releaseSpawningBlobsSoon();
   }
 
@@ -1864,6 +2008,8 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     state.busy = true;
     state.inputLockedUntil = performance.now() + CORRECT_TAP_LOCK_MS;
 
+    playCorrectSound();
+
     addRainbowStaticPaintSplats(blob);
     spawnRainbowSplatEffect(blob);
     spawnParticleBurst(blob);
@@ -1966,6 +2112,7 @@ function spawnWrongFaceParticleBurst(){
 
     state.busy = true;
     state.inputLockedUntil = performance.now() + CORRECT_TAP_LOCK_MS;
+    playCorrectSound();
     addStaticPaintSplats(blob);
     spawnSplatEffect(blob);
     spawnParticleBurst(blob);
@@ -2192,11 +2339,15 @@ function spawnWrongFaceParticleBurst(){
 
     state.bonusBlobs = state.bonusBlobs.filter(blob => blob.alive);
 
+    let spawned = 0;
+
     while (state.bonusBlobs.length < BONUS_BLOB_COUNT) {
       state.bonusBlobs.push(makeBonusBlob());
+      spawned += 1;
     }
 
     renderBonusBlobNodes();
+    playSpawnPopSoundForCount(spawned);
   }
 
   function spawnBonusBlobs() {
@@ -2208,6 +2359,7 @@ function spawnWrongFaceParticleBurst(){
     }
 
     renderBonusBlobNodes();
+    playSpawnPopSoundForCount(BONUS_BLOB_COUNT);
   }
 
   function tickBonus(ts) {
@@ -2304,6 +2456,8 @@ function spawnWrongFaceParticleBurst(){
     const blob = state.bonusBlobs.find(entry => entry.id === id);
     if (!blob || !blob.alive) return;
 
+    playCorrectSound();
+
     splatBonusBlob(blob, false);
     ensureBonusBlobCount();
   }
@@ -2346,6 +2500,9 @@ function spawnWrongFaceParticleBurst(){
 
   function continueFromBonusArtwork() {
     if (!state.bonusAwaitingContinue) return;
+
+    playPopSound();
+
     setScreen("end");
   }
 
