@@ -687,7 +687,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.7",
+    debugBadge: "VS 3.8",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -933,6 +933,7 @@ function gameplayShell({ bonus=false }){
 
     state.coverageResultContinuePending = true;
     clearCoverageResultTimers();
+    clearPaintForBonusRound();
 
     state.bonusIntroVisible = true;
     playStartSound();
@@ -947,6 +948,16 @@ function gameplayShell({ bonus=false }){
     render();
     afterBonusScreenRender();
   }
+
+  function clearPaintForBonusRound() {
+    state.paintSplats = [];
+    state.coveredCells = new Set();
+
+    renderStaticPaintSplats();
+    renderCoverageCells();
+    updateCoverageHud();
+  }
+
 
   function finalScoreMessage() {
     return `Painted ${state.coverageResultPercent}%`;
