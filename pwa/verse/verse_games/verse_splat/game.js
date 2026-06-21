@@ -63,8 +63,13 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   let lastBoardPressAt = 0;
 
   const VERSE_SPLAT_SOUND_BASE = "./verse_splat_sounds/";
+  const SHARED_UI_SOUND_BASE = "../../ui_audio/";
 
   const VERSE_SPLAT_SOUNDS = {
+    uiTap: [
+      `${SHARED_UI_SOUND_BASE}ui_sound_pop_1.mp3`,
+      `${SHARED_UI_SOUND_BASE}ui_sound_pop_2.mp3`
+    ],
     pop: [
       "verse_splat_pop_1.mp3",
       "verse_splat_pop_2.mp3",
@@ -89,7 +94,13 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   let verseSplatAudioUnlocked = false;
 
   function verseSplatSoundSrc(file){
-    return `${VERSE_SPLAT_SOUND_BASE}${file}`;
+    const value = String(file || "");
+
+    if (value.includes("/") || value.startsWith("http") || value.startsWith("data:")){
+      return value;
+    }
+
+    return `${VERSE_SPLAT_SOUND_BASE}${value}`;
   }
 
   function primeVerseSplatSound(file){
@@ -158,6 +169,10 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
 
   function playVerseSplatSoundGroup(groupName, volume=1){
     playVerseSplatSoundFile(chooseVerseSplatSound(groupName), volume);
+  }
+
+  function playSharedUiPopSound(){
+    playVerseSplatSoundGroup("uiTap", 0.45);
   }
 
   function playPopSound(){
@@ -672,14 +687,20 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.6",
+    debugBadge: "VS 3.7",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
-    onBack: () => window.VerseGameBridge.exitGame(),
-    onStart: () => setScreen("mode")
+    onBack: () => {
+      playSharedUiPopSound();
+      window.VerseGameBridge.exitGame();
+    },
+    onStart: () => {
+      playSharedUiPopSound();
+      setScreen("mode");
+    }
   });
 }
 
@@ -692,8 +713,14 @@ function renderModeScreen(){
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
     backLabel: "Back to Verse Splat title",
-    onBack: () => setScreen("intro"),
-    onSelect: startMode
+    onBack: () => {
+      playSharedUiPopSound();
+      setScreen("intro");
+    },
+    onSelect: (mode) => {
+      playSharedUiPopSound();
+      startMode(mode);
+    }
   });
 }
 
@@ -937,9 +964,18 @@ function renderEndScreen(){
     gameMessage: finalScoreMessage(),
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
-    onPlayAgain: () => setScreen("mode"),
-    onMoreGames: () => window.VerseGameBridge.exitGame(),
-    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+    onPlayAgain: () => {
+      playSharedUiPopSound();
+      setScreen("mode");
+    },
+    onMoreGames: () => {
+      playSharedUiPopSound();
+      window.VerseGameBridge.exitGame();
+    },
+    onChangeVerse: () => {
+      playSharedUiPopSound();
+      window.VerseGameBridge.returnToTitle();
+    }
   });
 }
 
@@ -964,11 +1000,32 @@ function render(){
 }
 
   function bindScreenEvents(){
-    app.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => startMode(btn.dataset.mode));
-    app.querySelectorAll("[data-action='show-help-intro']").forEach(btn => btn.onclick = () => { state.helpBackMode = false; state.helpOpen = true; render(); });
-    app.querySelectorAll("[data-action='close-help']").forEach(btn => btn.onclick = closeHelp);
-    app.querySelectorAll("[data-action='play-again']").forEach(btn => btn.onclick = () => setScreen("mode"));
-    app.querySelectorAll("[data-action='exit-game']").forEach(btn => btn.onclick = () => window.VerseGameBridge.exitGame());
+    app.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => {
+      playSharedUiPopSound();
+      startMode(btn.dataset.mode);
+    });
+
+    app.querySelectorAll("[data-action='show-help-intro']").forEach(btn => btn.onclick = () => {
+      playSharedUiPopSound();
+      state.helpBackMode = false;
+      state.helpOpen = true;
+      render();
+    });
+
+    app.querySelectorAll("[data-action='close-help']").forEach(btn => btn.onclick = () => {
+      playSharedUiPopSound();
+      closeHelp();
+    });
+
+    app.querySelectorAll("[data-action='play-again']").forEach(btn => btn.onclick = () => {
+      playSharedUiPopSound();
+      setScreen("mode");
+    });
+
+    app.querySelectorAll("[data-action='exit-game']").forEach(btn => btn.onclick = () => {
+      playSharedUiPopSound();
+      window.VerseGameBridge.exitGame();
+    });
     app.querySelectorAll("[data-action='coverage-result-continue']").forEach(btn => btn.onclick = continueAfterCoverageResult);
     app.querySelectorAll("[data-action='bonus-continue']").forEach(btn => btn.onclick = continueFromBonusArtwork);
 
@@ -986,9 +1043,11 @@ function render(){
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
+        if (!muted) playSharedUiPopSound();
         return muted;
       },
       onHowToPlay: () => {
+        playSharedUiPopSound();
         state.helpBackMode = true;
         state.menuOpen = false;
         state.helpOpen = true;
@@ -1002,6 +1061,7 @@ function render(){
         window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
       },
       onModeSelect: () => {
+        playSharedUiPopSound();
         state.menuOpen = false;
         state.helpOpen = false;
         state.helpBackMode = false;
@@ -1010,11 +1070,14 @@ function render(){
         setScreen("mode");
       },
       onExit: () => {
+        playSharedUiPopSound();
         stopLoops();
         window.VerseGameBridge.exitGame();
       },
       onOpen: () => {
         if (state.busy) return false;
+
+        playSharedUiPopSound();
 
         state.menuOpen = true;
         state.helpOpen = false;
@@ -1022,9 +1085,11 @@ function render(){
         stopLoops();
       },
       onClose: () => {
+        playSharedUiPopSound();
         closeMenu();
       },
       onBackFromHelp: () => {
+        playSharedUiPopSound();
         state.helpOpen = false;
         state.menuOpen = true;
         state.helpBackMode = false;
