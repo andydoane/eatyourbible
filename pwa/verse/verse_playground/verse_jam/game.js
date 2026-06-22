@@ -2335,7 +2335,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 1.6",
+      debugBadge: "VJ 1.7",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -2365,11 +2365,55 @@
       onSelect: (mode) => {
         primeHtmlAudio();
         unlockAudioFromGesture();
-        state.screen = "game";
-        beginRun(mode);
+        selectedMode = mode;
+        setScreen("headphones");
       }
     });
   }
+
+  function renderHeadphonesWarning() {
+    app.innerHTML = `
+      <main class="versejam-headphones-screen">
+        <section class="versejam-headphones-card" aria-label="Wireless headphones delay warning">
+          <div class="versejam-headphones-images" aria-hidden="true">
+            <img
+              class="versejam-headphones-earbud"
+              src="./verse_jam_images/verse_jam_earbud.png"
+              alt=""
+            >
+            <img
+              class="versejam-headphones-earbud is-flipped"
+              src="./verse_jam_images/verse_jam_earbud.png"
+              alt=""
+            >
+          </div>
+
+          <div class="versejam-headphones-title">HEADS UP!</div>
+
+          <div class="versejam-headphones-copy">
+            <p>Some wireless headphones have a delay.</p>
+            <p>If the beat feels late, try your phone's speaker or wired headphones.</p>
+          </div>
+
+          <button class="versejam-headphones-button" type="button" id="verseJamHeadphonesGotIt">
+            Got it!
+          </button>
+        </section>
+      </main>
+    `;
+
+    const button = document.getElementById("verseJamHeadphonesGotIt");
+
+    if (button) {
+      button.addEventListener("click", () => {
+        primeHtmlAudio();
+        unlockAudioFromGesture();
+        state.screen = "game";
+        beginRun(selectedMode);
+      }, { once: true });
+    }
+  }
+
 
   function renderEnd() {
     const seconds = (totalElapsedMs() / 1000).toFixed(1);
@@ -2414,6 +2458,7 @@
   function render() {
     if (state.screen === "intro") return renderIntro();
     if (state.screen === "mode") return renderMode();
+    if (state.screen === "headphones") return renderHeadphonesWarning();
     if (state.screen === "end") return renderEnd();
   }
 

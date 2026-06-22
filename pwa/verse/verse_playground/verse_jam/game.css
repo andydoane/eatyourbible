@@ -115,6 +115,130 @@ body{
   gap: 10px;
 }
 
+.versejam-headphones-screen {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  color: var(--vj-text);
+  background: transparent;
+}
+
+.versejam-headphones-card {
+  width: min(430px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.versejam-headphones-images {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.versejam-headphones-earbud {
+  width: clamp(74px, 24vw, 116px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .28));
+}
+
+.versejam-headphones-earbud.is-flipped {
+  transform: scaleX(-1);
+}
+
+.versejam-headphones-title {
+  border-radius: 999px;
+  padding: 10px 20px 12px;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(1.8rem, 10vw, 3rem);
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: .035em;
+  color: #333333;
+  background: linear-gradient(180deg, #fff4a9, #ffe27a);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, .24), inset 0 -5px 0 rgba(0, 0, 0, .12);
+}
+
+.versejam-headphones-copy {
+  max-width: 360px;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(1.12rem, 5vw, 1.45rem);
+  line-height: 1.14;
+  font-weight: 800;
+  color: #fff7e8;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .18);
+}
+
+.versejam-headphones-copy p {
+  margin: 0 0 10px;
+}
+
+.versejam-headphones-copy p:last-child {
+  margin-bottom: 0;
+}
+
+.versejam-headphones-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 13px 28px 15px;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(1.35rem, 7vw, 2rem);
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: .035em;
+  color: #fff7e8;
+  background: linear-gradient(180deg, #9dff8d, #28b85f);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, .26), inset 0 -6px 0 rgba(0, 0, 0, .16);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.versejam-headphones-button:active {
+  transform: translateY(2px) scale(.98);
+  box-shadow: 0 9px 18px rgba(0, 0, 0, .24), inset 0 -4px 0 rgba(0, 0, 0, .16);
+}
+
+@media (max-height:600px) {
+  .versejam-headphones-screen {
+    padding: 12px;
+  }
+
+  .versejam-headphones-card {
+    gap: 10px;
+  }
+
+  .versejam-headphones-earbud {
+    width: clamp(58px, 19vw, 82px);
+  }
+
+  .versejam-headphones-title {
+    padding: 8px 17px 10px;
+    font-size: clamp(1.45rem, 8vw, 2.25rem);
+  }
+
+  .versejam-headphones-copy {
+    font-size: clamp(1rem, 4.5vw, 1.18rem);
+    line-height: 1.08;
+  }
+
+  .versejam-headphones-copy p {
+    margin-bottom: 7px;
+  }
+
+  .versejam-headphones-button {
+    padding: 10px 24px 12px;
+    font-size: clamp(1.15rem, 6vw, 1.55rem);
+  }
+}
+
 .versejam-build-wrap{
   flex:0 0 auto;
 }
