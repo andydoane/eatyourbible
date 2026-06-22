@@ -1549,7 +1549,7 @@
     if (!audioCtx || muted || !currentRound().pad) return;
     const when = audioCtx.currentTime + 0.06;
     PAD_NOTES.forEach((midi) => {
-      playTone({ midi, when, duration: secondsPerBeat() * 7.5, volume: 0.025, type: "sine" });
+      playTone({ midi, when, duration: secondsPerBeat() * 7.5, volume: 0.025, type: "triangle" });
     });
   }
 
