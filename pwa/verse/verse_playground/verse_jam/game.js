@@ -20,8 +20,9 @@
   };
 
   const MODES = [
-    { id: "beginner", label: "Beginner" },
-    { id: "advanced", label: "Advanced" }
+    { id: "slow", label: "Slow" },
+    { id: "medium", label: "Medium" },
+    { id: "fast", label: "Fast" }
   ];
 
   const INTRO_WORDS = ["tap", "the", "words", "match", "my", "beat"];
@@ -136,22 +137,29 @@
   };
 
   const ROUND_CONFIGS_BY_MODE = {
-    beginner: [
+    slow: [
       { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
       { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
       { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
       { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
     ],
 
-    advanced: [
+    medium: [
       { name: "Warmup", bpm: 100, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
       { name: "Jam", bpm: 104, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
       { name: "Faster", bpm: 112, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
       { name: "Finale", bpm: 120, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
+    ],
+
+    fast: [
+      { name: "Warmup", bpm: 108, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
+      { name: "Jam", bpm: 112, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
+      { name: "Faster", bpm: 120, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
+      { name: "Finale", bpm: 128, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
     ]
   };
 
-  const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.beginner;
+  const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.slow;
 
   const CHUNK_RHYTHMS = {
     1: [[0]],
@@ -642,11 +650,11 @@
 
   function selectedModeId() {
     if (typeof selectedMode === "string") return selectedMode;
-    return selectedMode?.id || "beginner";
+    return selectedMode?.id || "slow";
   }
 
   function currentRoundConfigs() {
-    return ROUND_CONFIGS_BY_MODE[selectedModeId()] || ROUND_CONFIGS_BY_MODE.beginner;
+    return ROUND_CONFIGS_BY_MODE[selectedModeId()] || ROUND_CONFIGS_BY_MODE.slow;
   }
 
   function currentRound() {
@@ -2327,7 +2335,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 1.1",
+      debugBadge: "VJ 1.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
