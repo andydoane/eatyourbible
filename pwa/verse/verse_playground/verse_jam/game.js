@@ -48,7 +48,7 @@
   ];
 
   const REFERENCE_CADENCE_NOTES = [60, 64, 67];
-  const PAD_NOTES = [48, 55, 60];
+  const PAD_NOTES = [55, 60, 67];
 
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
 
@@ -2400,7 +2400,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 1.9",
+      debugBadge: "VJ 2.0",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
