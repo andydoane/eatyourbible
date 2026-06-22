@@ -231,6 +231,7 @@
   let soundBitLoadPromise = null;
   const soundBitBuffers = {};
   const activeAudioSources = new Set();
+  let soundBitBag = [];
 
   function audioContextConstructor() {
     return window.AudioContext || window.webkitAudioContext;
@@ -647,6 +648,7 @@
     state.chunkIndex = 0;
     state.roundIndex = 0;
     state.currentButtons = [];
+    soundBitBag = [];
     state.acceptingInput = false;
     state.busy = false;
     state.completed = false;
@@ -746,7 +748,11 @@
   function randomSoundBit() {
     if (state.roundIndex === 0) return null;
 
-    return SOUND_BITS[Math.floor(Math.random() * SOUND_BITS.length)] || SOUND_BITS[0];
+    if (!soundBitBag.length) {
+      soundBitBag = shuffle(SOUND_BITS.slice());
+    }
+
+    return soundBitBag.pop() || SOUND_BITS[0];
   }
 
   function makeSoundBitButton(sequenceOrder = 0) {
@@ -828,8 +834,8 @@
     }
 
     // Later rounds mix generated clap fillers with recorded voice fillers.
-    // 60% clap keeps the rhythmic clap feel; 40% voice adds excitement.
-    return Math.random() < 0.6
+    // 50/50 keeps the clap feel while making voice bits feel more present.
+    return Math.random() < 0.5
       ? makeClapButton(sequenceOrder)
       : makeSoundBitButton(sequenceOrder);
   }
@@ -850,7 +856,17 @@
       return randomIntInclusive(0, 2);
     }
 
-    // 5-8 words already have enough rhythmic variety.
+    if (wordCount === 5) {
+      // 5 words can sometimes take 1 filler while still preserving rests.
+      return Math.random() < 0.45 ? 1 : 0;
+    }
+
+    if (wordCount === 6) {
+      // 6 words are already fairly dense, so add a filler only rarely.
+      return Math.random() < 0.25 ? 1 : 0;
+    }
+
+    // 7-8 words already have enough rhythmic density.
     return 0;
   }
 
@@ -937,6 +953,36 @@
 
         // W - W F | W - W F
         ["word", "rest", "word", "filler", "word", "rest", "word", "filler"]
+      ],
+
+      // 5 words + 1 filler = 6 hits, still leaving rests.
+      "5_1": [
+        // W - W F | W - W W
+        ["word", "rest", "word", "filler", "word", "rest", "word", "word"],
+
+        // W W - W | F W - W
+        ["word", "word", "rest", "word", "filler", "word", "rest", "word"],
+
+        // W F W - | W W - W
+        ["word", "filler", "word", "rest", "word", "word", "rest", "word"],
+
+        // W W W - | W F - W
+        ["word", "word", "word", "rest", "word", "filler", "rest", "word"]
+      ],
+
+      // 6 words + 1 filler = 7 hits, preserving at least one rest.
+      "6_1": [
+        // W W - W | F W W W
+        ["word", "word", "rest", "word", "filler", "word", "word", "word"],
+
+        // W F W W | W - W W
+        ["word", "filler", "word", "word", "word", "rest", "word", "word"],
+
+        // W W W - | W F W W
+        ["word", "word", "word", "rest", "word", "filler", "word", "word"],
+
+        // W W W F | W W - W
+        ["word", "word", "word", "filler", "word", "word", "rest", "word"]
       ]
     };
 
@@ -2461,7 +2507,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.2",
+      debugBadge: "VJ 2.3",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
