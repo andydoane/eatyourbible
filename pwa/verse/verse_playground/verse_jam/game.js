@@ -1,4 +1,4 @@
-(async function(){
+(async function () {
   const app = document.getElementById("app");
   if (app) app.classList.add("vm-shell");
 
@@ -10,14 +10,14 @@
   const HELP_OVERLAY_ID = "verseJamHelpOverlay";
   const BUILD_AREA = "large";
 
-const GAME_THEME = {
-  bg: "transparent",
-  accent: "#8df7ff",
-  helpTitleBg: "#8df7ff",
-  helpTitleColor: "#221447",
-  helpCloseBg: "#ffe27a",
-  helpCloseColor: "#221447"
-};
+  const GAME_THEME = {
+    bg: "transparent",
+    accent: "#8df7ff",
+    helpTitleBg: "#8df7ff",
+    helpTitleColor: "#221447",
+    helpCloseBg: "#ffe27a",
+    helpCloseColor: "#221447"
+  };
 
   const MODES = [
     { id: "beginner", label: "Beginner" },
@@ -30,23 +30,23 @@ const GAME_THEME = {
   const INTRO_RHYTHM_OFFSETS = [0, 1, 2, 4, 5, 6];
 
   const BASE_MELODIES = [
-  // Original: gentle rise and return
-  [60, 62, 64, 67, 69, 72, 69, 67, 64, 62, 60, 67],
+    // Original: gentle rise and return
+    [60, 62, 64, 67, 69, 72, 69, 67, 64, 62, 60, 67],
 
-  // Simple arch
-  [60, 64, 67, 72, 69, 67, 64, 62, 60, 64, 67, 60],
+    // Simple arch
+    [60, 64, 67, 72, 69, 67, 64, 62, 60, 64, 67, 60],
 
-  // Bouncy call-and-response
-  [60, 67, 64, 69, 67, 72, 69, 64, 67, 62, 60, 67],
+    // Bouncy call-and-response
+    [60, 67, 64, 69, 67, 72, 69, 64, 67, 62, 60, 67],
 
-  // Playful step-up and landing
-  [60, 62, 67, 64, 69, 67, 72, 69, 67, 64, 62, 60],
+    // Playful step-up and landing
+    [60, 62, 67, 64, 69, 67, 72, 69, 67, 64, 62, 60],
 
-  // Higher sparkle
-  [67, 69, 72, 69, 67, 64, 67, 72, 69, 67, 64, 60]
-];
+    // Higher sparkle
+    [67, 69, 72, 69, 67, 64, 67, 72, 69, 67, 64, 60]
+  ];
 
-const REFERENCE_CADENCE_NOTES = [60, 64, 67];
+  const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const PAD_NOTES = [48, 55, 60];
 
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
@@ -135,23 +135,23 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
     }
   };
 
-const ROUND_CONFIGS_BY_MODE = {
-  beginner: [
-    { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
-    { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
-    { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
-    { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
-  ],
+  const ROUND_CONFIGS_BY_MODE = {
+    beginner: [
+      { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
+      { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
+      { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
+      { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
+    ],
 
-  advanced: [
-    { name: "Warmup", bpm: 100, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
-    { name: "Jam", bpm: 104, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
-    { name: "Faster", bpm: 112, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
-    { name: "Finale", bpm: 120, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
-  ]
-};
+    advanced: [
+      { name: "Warmup", bpm: 100, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
+      { name: "Jam", bpm: 104, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
+      { name: "Faster", bpm: 112, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
+      { name: "Finale", bpm: 120, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
+    ]
+  };
 
-const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.beginner;
+  const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.beginner;
 
   const CHUNK_RHYTHMS = {
     1: [[0]],
@@ -166,37 +166,37 @@ const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.beginner;
 
   const PERFECT_BEAT_TOLERANCE = 0.24;
 
-// Let players tap a little before TAP! so a nearly-on-beat press is not ignored.
-const EARLY_INPUT_WINDOW_MS = 250;
+  // Let players tap a little before TAP! so a nearly-on-beat press is not ignored.
+  const EARLY_INPUT_WINDOW_MS = 250;
 
-// Volume balance
-const COUNTDOWN_BEEP_VOLUME = 0.060;
-const COUNTDOWN_GO_VOLUME = 0.075;
+  // Volume balance
+  const COUNTDOWN_BEEP_VOLUME = 0.060;
+  const COUNTDOWN_GO_VOLUME = 0.075;
 
-const BUTTON_POP_IN_NOTE_VOLUME = 0.400;
+  const BUTTON_POP_IN_NOTE_VOLUME = 0.400;
 
-const ROUND_ONE_WORD_NOTE_VOLUME = 0.260;
+  const ROUND_ONE_WORD_NOTE_VOLUME = 0.260;
 
-const DEFAULT_WORD_NOTE_VOLUME = 0.135;
+  const DEFAULT_WORD_NOTE_VOLUME = 0.135;
 
-const DRUM_MASTER_VOLUME = 2.000;
+  const DRUM_MASTER_VOLUME = 2.000;
 
-// Green voice/shout filler buttons: Boom!, Hey!, Woo!, Yeah!, Yo!
-// 1.0 = original MP3 volume.
-// Try 0.75 if too loud, 1.25 if too quiet.
-const VOICE_SOUND_BIT_VOLUME = 0.350;
+  // Green voice/shout filler buttons: Boom!, Hey!, Woo!, Yeah!, Yo!
+  // 1.0 = original MP3 volume.
+  // Try 0.75 if too loud, 1.25 if too quiet.
+  const VOICE_SOUND_BIT_VOLUME = 0.350;
 
-// TEMP DEV TOOL: live volume tuning.
-// These start from the constants above, but can be changed with the in-game mixer.
-const volumeTuning = {
-  countdownBeep: COUNTDOWN_BEEP_VOLUME,
-  countdownGo: COUNTDOWN_GO_VOLUME,
-  buttonPopIn: BUTTON_POP_IN_NOTE_VOLUME,
-  roundOneWord: ROUND_ONE_WORD_NOTE_VOLUME,
-  defaultWord: DEFAULT_WORD_NOTE_VOLUME,
-  
-  drumMaster: DRUM_MASTER_VOLUME
-};
+  // TEMP DEV TOOL: live volume tuning.
+  // These start from the constants above, but can be changed with the in-game mixer.
+  const volumeTuning = {
+    countdownBeep: COUNTDOWN_BEEP_VOLUME,
+    countdownGo: COUNTDOWN_GO_VOLUME,
+    buttonPopIn: BUTTON_POP_IN_NOTE_VOLUME,
+    roundOneWord: ROUND_ONE_WORD_NOTE_VOLUME,
+    defaultWord: DEFAULT_WORD_NOTE_VOLUME,
+
+    drumMaster: DRUM_MASTER_VOLUME
+  };
 
   let selectedMode = null;
   let muted = false;
@@ -206,6 +206,10 @@ const volumeTuning = {
   let beatTimer = null;
   let padTimer = null;
   let musicGeneration = 0;
+  let gameplayGeneration = 0;
+  let gameplayWatchdogTimer = null;
+  let lastGameplayActivityAt = 0;
+  let recoveringFromStuckGameplay = false;
   let audioUnlocked = false;
   let htmlAudioEl = null;
   let htmlAudioPrimed = false;
@@ -214,11 +218,11 @@ const volumeTuning = {
   const soundBitBuffers = {};
   const activeAudioSources = new Set();
 
-  function audioContextConstructor(){
+  function audioContextConstructor() {
     return window.AudioContext || window.webkitAudioContext;
   }
 
-  function createHtmlAudioElement(){
+  function createHtmlAudioElement() {
     if (htmlAudioEl) return htmlAudioEl;
 
     htmlAudioEl = document.createElement("audio");
@@ -232,7 +236,7 @@ const volumeTuning = {
     return htmlAudioEl;
   }
 
-  function primeHtmlAudio(){
+  function primeHtmlAudio() {
     if (htmlAudioPrimed) return Promise.resolve(true);
     if (htmlAudioPrimePromise) return htmlAudioPrimePromise;
 
@@ -262,9 +266,9 @@ const volumeTuning = {
       const tryPlay = () => {
         const playPromise = audio.play();
 
-        if (playPromise?.then){
+        if (playPromise?.then) {
           playPromise
-            .then(() => {})
+            .then(() => { })
             .catch(err => {
               console.warn("Verse Jam: silent audio prime rejected", err);
               finish(false);
@@ -287,7 +291,7 @@ const volumeTuning = {
           finish(false);
         };
 
-        if (audio.readyState >= 3){
+        if (audio.readyState >= 3) {
           tryPlay();
         } else {
           audio.oncanplay = tryPlay;
@@ -297,7 +301,7 @@ const volumeTuning = {
         fallbackId = setTimeout(() => {
           finish(false);
         }, 1800);
-      } catch(err){
+      } catch (err) {
         console.warn("Verse Jam: silent audio prime exception", err);
         finish(false);
       }
@@ -306,14 +310,14 @@ const volumeTuning = {
     return htmlAudioPrimePromise;
   }
 
-function createAudioGraph(){
-  if (audioCtx){
-    if (masterGain) masterGain.gain.value = muted ? 0 : 0.72;
-    return;
-  }
+  function createAudioGraph() {
+    if (audioCtx) {
+      if (masterGain) masterGain.gain.value = muted ? 0 : 0.72;
+      return;
+    }
 
     const AudioCtor = audioContextConstructor();
-    if (!AudioCtor){
+    if (!AudioCtor) {
       console.warn("Verse Jam: Web Audio is not available in this browser.");
       return;
     }
@@ -334,15 +338,15 @@ function createAudioGraph(){
     compressor.connect(audioCtx.destination);
   }
 
-  function unlockAudioFromGesture(){
+  function unlockAudioFromGesture() {
     primeHtmlAudio();
     createAudioGraph();
 
     if (!audioCtx || !masterGain) return;
 
-    if (audioCtx.state !== "running"){
+    if (audioCtx.state !== "running") {
       const resumePromise = audioCtx.resume();
-      if (resumePromise?.catch){
+      if (resumePromise?.catch) {
         resumePromise.catch(err => {
           console.warn("Verse Jam: audio resume failed", err);
         });
@@ -364,7 +368,7 @@ function createAudioGraph(){
 
       trackAudioSource(source);
       source.start(0);
-    } catch (err){}
+    } catch (err) { }
 
     audioUnlocked = true;
 
@@ -372,7 +376,7 @@ function createAudioGraph(){
     loadSoundBitBuffers();
   }
 
-  function installAudioUnlockHandlers(){
+  function installAudioUnlockHandlers() {
     const unlock = () => {
       primeHtmlAudio();
       unlockAudioFromGesture();
@@ -428,17 +432,129 @@ function createAudioGraph(){
     state.sleepIds.push(id);
   });
 
-  function clearSleeps(){
+  function clearSleeps() {
     state.sleepIds.forEach(id => clearTimeout(id));
     state.sleepIds = [];
   }
 
-  function waitUntilAudioTime(targetTime){
+  function waitUntilAudioTime(targetTime) {
     if (!audioCtx) return Promise.resolve();
     return sleep(Math.max(0, (targetTime - audioCtx.currentTime) * 1000));
   }
 
-  function trackAudioSource(source){
+  function beginGameplayFlow() {
+    gameplayGeneration += 1;
+    noteGameplayActivity();
+    return gameplayGeneration;
+  }
+
+  function isGameplayFlowActive(flowId) {
+    return (
+      flowId === gameplayGeneration &&
+      state.screen === "game" &&
+      !state.completed &&
+      !state.paused
+    );
+  }
+
+  function noteGameplayActivity() {
+    lastGameplayActivityAt = performance.now();
+  }
+
+  function stopGameplayWatchdog() {
+    if (gameplayWatchdogTimer) {
+      clearInterval(gameplayWatchdogTimer);
+      gameplayWatchdogTimer = null;
+    }
+  }
+
+  function startGameplayWatchdog() {
+    stopGameplayWatchdog();
+    noteGameplayActivity();
+
+    gameplayWatchdogTimer = setInterval(() => {
+      if (
+        state.screen !== "game" ||
+        state.completed ||
+        state.paused ||
+        state.menuOpen ||
+        state.helpOpen
+      ) {
+        noteGameplayActivity();
+        return;
+      }
+
+      if (!beatTimer) {
+        noteGameplayActivity();
+        return;
+      }
+
+      const hasCue = !!document.getElementById("versejamCueButton");
+      const hasWordButtons = !!document.querySelector(".versejam-word-btn");
+      const hasIntro = !!document.getElementById("versejamIntroStack");
+      const isInAllowedQuietMoment = (
+        state.phase === "intro" ||
+        state.phase === "round_transition"
+      );
+
+      if (
+        state.acceptingInput ||
+        state.busy ||
+        hasCue ||
+        hasWordButtons ||
+        hasIntro ||
+        isInAllowedQuietMoment
+      ) {
+        noteGameplayActivity();
+        return;
+      }
+
+      const quietMs = performance.now() - lastGameplayActivityAt;
+
+      if (quietMs < 2200) return;
+
+      recoverStuckGameplay();
+    }, 700);
+  }
+
+  async function recoverStuckGameplay() {
+    if (recoveringFromStuckGameplay) return;
+    if (state.screen !== "game" || state.completed || state.paused) return;
+
+    recoveringFromStuckGameplay = true;
+
+    try {
+      console.warn("Verse Jam: recovering from a stuck gameplay state.");
+
+      const flowId = beginGameplayFlow();
+
+      clearSleeps();
+      state.acceptingInput = false;
+      state.busy = false;
+      state.currentButtons = [];
+
+      const area = document.getElementById("versejamMainArea");
+      if (area) {
+        area.innerHTML = "";
+      }
+
+      await ensureAudio();
+      if (!isGameplayFlowActive(flowId)) return;
+
+      startBeatLoop();
+
+      if (!isGameplayFlowActive(flowId)) return;
+
+      await startNextPlayableGroup(flowId);
+    } catch (err) {
+      console.warn("Verse Jam: stuck gameplay recovery failed", err);
+    } finally {
+      recoveringFromStuckGameplay = false;
+      noteGameplayActivity();
+    }
+  }
+
+  function trackAudioSource(source) {
     if (!source) return source;
 
     activeAudioSources.add(source);
@@ -449,16 +565,16 @@ function createAudioGraph(){
     return source;
   }
 
-  function stopActiveAudioSources(){
+  function stopActiveAudioSources() {
     activeAudioSources.forEach((source) => {
       try {
         source.stop(0);
-      } catch (err){}
+      } catch (err) { }
     });
     activeAudioSources.clear();
   }
 
-  function escapeHtml(str){
+  function escapeHtml(str) {
     return String(str ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -467,15 +583,15 @@ function createAudioGraph(){
       .replace(/'/g, "&#39;");
   }
 
-  function normalizeWord(value){
+  function normalizeWord(value) {
     return window.VerseGameShell.normalizeWord(value);
   }
 
-  function shuffle(items){
+  function shuffle(items) {
     return window.VerseGameShell.shuffle(items);
   }
 
-  async function loadVerseJson(){
+  async function loadVerseJson() {
     if (state.verseJson) return state.verseJson;
 
     const params = window.VerseGameBridge.getLaunchParams?.() || {};
@@ -487,13 +603,13 @@ function createAudioGraph(){
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       state.verseJson = await res.json();
       return state.verseJson;
-    } catch (err){
+    } catch (err) {
       console.warn("Verse Jam could not load full verse JSON", err);
       return null;
     }
   }
 
-  function initVerseData(){
+  function initVerseData() {
     const parsed = window.VerseGameShell.parseReferenceParts(
       ctx.verseRef,
       ctx.translation,
@@ -524,42 +640,42 @@ function createAudioGraph(){
     state.startTime = performance.now();
   }
 
-function selectedModeId(){
-  if (typeof selectedMode === "string") return selectedMode;
-  return selectedMode?.id || "beginner";
-}
+  function selectedModeId() {
+    if (typeof selectedMode === "string") return selectedMode;
+    return selectedMode?.id || "beginner";
+  }
 
-function currentRoundConfigs(){
-  return ROUND_CONFIGS_BY_MODE[selectedModeId()] || ROUND_CONFIGS_BY_MODE.beginner;
-}
+  function currentRoundConfigs() {
+    return ROUND_CONFIGS_BY_MODE[selectedModeId()] || ROUND_CONFIGS_BY_MODE.beginner;
+  }
 
-function currentRound(){
-  const configs = currentRoundConfigs();
-  return configs[Math.min(state.roundIndex, configs.length - 1)];
-}
+  function currentRound() {
+    const configs = currentRoundConfigs();
+    return configs[Math.min(state.roundIndex, configs.length - 1)];
+  }
 
-  function currentLoop(){
+  function currentLoop() {
     return DRUM_LOOPS[currentRound().loop] || DRUM_LOOPS.basic;
   }
 
-  function pickPatternForCount(count){
+  function pickPatternForCount(count) {
     const patterns = CHUNK_RHYTHMS[Math.max(1, Math.min(8, count))] || CHUNK_RHYTHMS[4];
     return patterns[Math.floor(Math.random() * patterns.length)].slice();
   }
 
-  function measureAlignedLength(offsets){
+  function measureAlignedLength(offsets) {
     const last = offsets.length ? Math.max(...offsets) : 0;
     return Math.ceil((last + 1) / 4) * 4;
   }
 
-  function makeRhythmOffsets(count){
+  function makeRhythmOffsets(count) {
     if (count <= 8) return pickPatternForCount(count);
 
     const offsets = [];
     let remaining = count;
     let base = 0;
 
-    while (remaining > 0){
+    while (remaining > 0) {
       const take = Math.min(8, remaining);
       const pattern = pickPatternForCount(take);
       pattern.forEach(offset => offsets.push(base + offset));
@@ -570,331 +686,331 @@ function currentRound(){
     return offsets;
   }
 
-function makeCurrentRhythmOffsets(buttons){
-  const ordered = [...buttons].sort((a, b) => {
-    const aOrder = Number.isFinite(a.sequenceOrder) ? a.sequenceOrder : 0;
-    const bOrder = Number.isFinite(b.sequenceOrder) ? b.sequenceOrder : 0;
-    return aOrder - bOrder;
-  });
+  function makeCurrentRhythmOffsets(buttons) {
+    const ordered = [...buttons].sort((a, b) => {
+      const aOrder = Number.isFinite(a.sequenceOrder) ? a.sequenceOrder : 0;
+      const bOrder = Number.isFinite(b.sequenceOrder) ? b.sequenceOrder : 0;
+      return aOrder - bOrder;
+    });
 
-  if (ordered.length && ordered.every(button => Number.isFinite(button.rhythmOffset))){
-    return ordered.map(button => button.rhythmOffset);
+    if (ordered.length && ordered.every(button => Number.isFinite(button.rhythmOffset))) {
+      return ordered.map(button => button.rhythmOffset);
+    }
+
+    return makeRhythmOffsets(buttons.length);
   }
 
-  return makeRhythmOffsets(buttons.length);
-}
-
-function chooseActiveBaseMelody(){
-  const melody = BASE_MELODIES[Math.floor(Math.random() * BASE_MELODIES.length)];
-  state.activeBaseMelody = Array.isArray(melody) ? melody : BASE_MELODIES[0];
-}
-
-function noteForSegment(segmentIndex){
-  const melody = state.activeBaseMelody || BASE_MELODIES[0];
-  const baseNote = melody[segmentIndex % melody.length] || 60;
-  return baseNote + (state.roundIndex >= 2 ? 12 : 0);
-}
-
-function referenceNoteForOrder(sequenceOrder){
-  const baseNote = REFERENCE_CADENCE_NOTES[sequenceOrder % REFERENCE_CADENCE_NOTES.length] || 60;
-  return baseNote + (state.roundIndex >= 2 ? 12 : 0);
-}
-
-function makeClapButton(sequenceOrder = 0){
-  return {
-    id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_clap_${sequenceOrder}_${Math.floor(Math.random() * 100000)}`,
-    label: CLAP_BUTTON_LABEL,
-    segmentIndex: -1,
-    note: 60,
-    kind: "clap",
-    sequenceOrder,
-    spawned: false,
-    removing: false
-  };
-}
-
-function randomSoundBit(){
-  if (state.roundIndex === 0) return null;
-
-  return SOUND_BITS[Math.floor(Math.random() * SOUND_BITS.length)] || SOUND_BITS[0];
-}
-
-function makeSoundBitButton(sequenceOrder = 0){
-  const sound = randomSoundBit();
-
-  if (!sound){
-    return makeClapButton(sequenceOrder);
+  function chooseActiveBaseMelody() {
+    const melody = BASE_MELODIES[Math.floor(Math.random() * BASE_MELODIES.length)];
+    state.activeBaseMelody = Array.isArray(melody) ? melody : BASE_MELODIES[0];
   }
 
-  return {
-    id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_sound_${sound.id}_${sequenceOrder}_${Math.floor(Math.random() * 100000)}`,
-    label: sound.label,
-    segmentIndex: -1,
-    note: 60,
-    kind: "sound_bit",
-    soundBitId: sound.id,
-    soundBitFilename: sound.filename,
-    sequenceOrder,
-    spawned: false,
-    removing: false
-  };
-}
-
-
-function isClapButton(button){
-  return button?.kind === "clap";
-}
-
-function isSoundBitButton(button){
-  return button?.kind === "sound_bit";
-}
-
-function isRhythmFillerButton(button){
-  return isClapButton(button) || isSoundBitButton(button);
-}
-
-function playClapSound(){
-  if (!audioCtx) return;
-
-  const now = audioCtx.currentTime;
-
-  // Generated chiptune clap.
-  playTone({ midi: 72, when: now, duration: 0.055, volume: 0.13, type: "square" });
-  playTone({ midi: 84, when: now + 0.025, duration: 0.045, volume: 0.08, type: "square" });
-}
-
-function playSoundBitSound(button){
-  if (!audioCtx) return;
-
-  const now = audioCtx.currentTime;
-  const sound = SOUND_BITS.find(item => item.id === button?.soundBitId);
-
-  if (sound && playSoundBitSample(sound, now)){
-    return;
+  function noteForSegment(segmentIndex) {
+    const melody = state.activeBaseMelody || BASE_MELODIES[0];
+    const baseNote = melody[segmentIndex % melody.length] || 60;
+    return baseNote + (state.roundIndex >= 2 ? 12 : 0);
   }
 
-  // Fallback if the MP3 has not loaded yet.
-  playTone({ midi: 79, when: now, duration: 0.075, volume: 0.12, type: "square" });
-  playTone({ midi: 84, when: now + 0.055, duration: 0.085, volume: 0.09, type: "square" });
-}
-
-function playRhythmFillerSound(button){
-  if (isSoundBitButton(button)){
-    playSoundBitSound(button);
-    return;
+  function referenceNoteForOrder(sequenceOrder) {
+    const baseNote = REFERENCE_CADENCE_NOTES[sequenceOrder % REFERENCE_CADENCE_NOTES.length] || 60;
+    return baseNote + (state.roundIndex >= 2 ? 12 : 0);
   }
 
-  playClapSound();
-}
-
-function randomIntInclusive(min, max){
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function makeRhythmFillerButton(sequenceOrder = 0){
-  // Round 1 stays cleaner: only generated clap fillers.
-  if (state.roundIndex === 0){
-    return makeClapButton(sequenceOrder);
+  function makeClapButton(sequenceOrder = 0) {
+    return {
+      id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_clap_${sequenceOrder}_${Math.floor(Math.random() * 100000)}`,
+      label: CLAP_BUTTON_LABEL,
+      segmentIndex: -1,
+      note: 60,
+      kind: "clap",
+      sequenceOrder,
+      spawned: false,
+      removing: false
+    };
   }
 
-  // Later rounds mix generated clap fillers with recorded voice fillers.
-  // 60% clap keeps the rhythmic clap feel; 40% voice adds excitement.
-  return Math.random() < 0.6
-    ? makeClapButton(sequenceOrder)
-    : makeSoundBitButton(sequenceOrder);
-}
+  function randomSoundBit() {
+    if (state.roundIndex === 0) return null;
 
-function chooseFillerCountForWordCount(wordCount){
-  if (wordCount === 2){
-    // 2 words: add 1 or 2 fillers, making a 3- or 4-hit pattern.
-    return randomIntInclusive(1, 2);
+    return SOUND_BITS[Math.floor(Math.random() * SOUND_BITS.length)] || SOUND_BITS[0];
   }
 
-  if (wordCount === 3){
-    // 3 words: add 0 or 1 filler, making a 3- or 4-hit pattern.
-    return randomIntInclusive(0, 1);
+  function makeSoundBitButton(sequenceOrder = 0) {
+    const sound = randomSoundBit();
+
+    if (!sound) {
+      return makeClapButton(sequenceOrder);
+    }
+
+    return {
+      id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_sound_${sound.id}_${sequenceOrder}_${Math.floor(Math.random() * 100000)}`,
+      label: sound.label,
+      segmentIndex: -1,
+      note: 60,
+      kind: "sound_bit",
+      soundBitId: sound.id,
+      soundBitFilename: sound.filename,
+      sequenceOrder,
+      spawned: false,
+      removing: false
+    };
   }
 
-  if (wordCount === 4){
-    // 4 words: add 0, 1, or 2 fillers, making a 4-, 5-, or 6-hit pattern.
-    return randomIntInclusive(0, 2);
+
+  function isClapButton(button) {
+    return button?.kind === "clap";
   }
 
-  // 5-8 words already have enough rhythmic variety.
-  return 0;
-}
-
-function chooseFillerLayout(wordCount, fillerCount){
-  const key = `${wordCount}_${fillerCount}`;
-
-  const layouts = {
-    // 2 words + 1 filler = 3 hits
-    "2_1": [
-      ["word", "filler", "word"],
-      ["word", "word", "filler"]
-    ],
-
-    // 2 words + 2 fillers = 4 hits
-    "2_2": [
-      ["word", "filler", "word", "filler"],
-      ["word", "word", "filler", "filler"]
-    ],
-
-    // 3 words + 0 filler = 3 hits
-    "3_0": [
-      ["word", "word", "word"]
-    ],
-
-    // 3 words + 1 filler = 4 hits
-    "3_1": [
-      ["word", "filler", "word", "word"],
-      ["word", "word", "word", "filler"]
-    ],
-
-    // 4 words + 0 filler.
-    // Leave these simple; makeRhythmOffsets() can still provide 4-word variety.
-    "4_0": [
-      ["word", "word", "word", "word"]
-    ],
-
-    // 4 words + 1 filler = 5 hits with rests.
-    // W = word, F = filler, rest = quarter-note rest.
-    "4_1": [
-      // W F W - | W - W -
-      ["word", "filler", "word", "rest", "word", "rest", "word", "rest"],
-
-      // W - W - | W F W -
-      ["word", "rest", "word", "rest", "word", "filler", "word", "rest"],
-
-      // W W - - | W F W -
-      ["word", "word", "rest", "rest", "word", "filler", "word", "rest"],
-
-      // W F - - | W - W -
-      ["word", "filler", "rest", "rest", "word", "rest", "word", "rest"],
-
-      // W F - - | W W W -
-      ["word", "filler", "rest", "rest", "word", "word", "word", "rest"],
-
-      // W - W - | W - W F
-      ["word", "rest", "word", "rest", "word", "rest", "word", "filler"],
-
-      // W - W F | W - W -
-      ["word", "rest", "word", "filler", "word", "rest", "word", "rest"],
-
-      // W W - F | W - W -
-      ["word", "word", "rest", "filler", "word", "rest", "word", "rest"],
-
-      // W - W - | W W - F
-      ["word", "rest", "word", "rest", "word", "word", "rest", "filler"],
-
-      // W W - - | W - W F
-      ["word", "word", "rest", "rest", "word", "rest", "word", "filler"],
-
-      // W W - - | W W - F
-      ["word", "word", "rest", "rest", "word", "word", "rest", "filler"]
-    ],
-
-    // 4 words + 2 fillers = 6 hits with rests.
-    "4_2": [
-      // W F W F | W - W -
-      ["word", "filler", "word", "filler", "word", "rest", "word", "rest"],
-
-      // W - W - | W F W F
-      ["word", "rest", "word", "rest", "word", "filler", "word", "filler"],
-
-      // W F W - | W F W -
-      ["word", "filler", "word", "rest", "word", "filler", "word", "rest"],
-
-      // W - W F | W - W F
-      ["word", "rest", "word", "filler", "word", "rest", "word", "filler"]
-    ]
-  };
-
-  const options = layouts[key] || [Array.from({ length: wordCount }, () => "word")];
-  return options[Math.floor(Math.random() * options.length)];
-}
-
-function addRhythmFillersToChunk(buttons){
-  const realButtons = buttons.filter(Boolean);
-  const wordCount = realButtons.length;
-  const fillerCount = chooseFillerCountForWordCount(wordCount);
-
-  if (!fillerCount){
-    return realButtons.map((button, index) => ({
-      ...button,
-      sequenceOrder: Number.isFinite(button.sequenceOrder) ? button.sequenceOrder : index
-    }));
+  function isSoundBitButton(button) {
+    return button?.kind === "sound_bit";
   }
 
-  const layout = chooseFillerLayout(wordCount, fillerCount);
+  function isRhythmFillerButton(button) {
+    return isClapButton(button) || isSoundBitButton(button);
+  }
 
-  let wordIndex = 0;
-  let sequenceOrder = 0;
-  const result = [];
+  function playClapSound() {
+    if (!audioCtx) return;
 
-  layout.forEach((slot, rhythmOffset) => {
-    if (slot === "rest"){
+    const now = audioCtx.currentTime;
+
+    // Generated chiptune clap.
+    playTone({ midi: 72, when: now, duration: 0.055, volume: 0.13, type: "square" });
+    playTone({ midi: 84, when: now + 0.025, duration: 0.045, volume: 0.08, type: "square" });
+  }
+
+  function playSoundBitSound(button) {
+    if (!audioCtx) return;
+
+    const now = audioCtx.currentTime;
+    const sound = SOUND_BITS.find(item => item.id === button?.soundBitId);
+
+    if (sound && playSoundBitSample(sound, now)) {
       return;
     }
 
-    if (slot === "filler"){
+    // Fallback if the MP3 has not loaded yet.
+    playTone({ midi: 79, when: now, duration: 0.075, volume: 0.12, type: "square" });
+    playTone({ midi: 84, when: now + 0.055, duration: 0.085, volume: 0.09, type: "square" });
+  }
+
+  function playRhythmFillerSound(button) {
+    if (isSoundBitButton(button)) {
+      playSoundBitSound(button);
+      return;
+    }
+
+    playClapSound();
+  }
+
+  function randomIntInclusive(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function makeRhythmFillerButton(sequenceOrder = 0) {
+    // Round 1 stays cleaner: only generated clap fillers.
+    if (state.roundIndex === 0) {
+      return makeClapButton(sequenceOrder);
+    }
+
+    // Later rounds mix generated clap fillers with recorded voice fillers.
+    // 60% clap keeps the rhythmic clap feel; 40% voice adds excitement.
+    return Math.random() < 0.6
+      ? makeClapButton(sequenceOrder)
+      : makeSoundBitButton(sequenceOrder);
+  }
+
+  function chooseFillerCountForWordCount(wordCount) {
+    if (wordCount === 2) {
+      // 2 words: add 1 or 2 fillers, making a 3- or 4-hit pattern.
+      return randomIntInclusive(1, 2);
+    }
+
+    if (wordCount === 3) {
+      // 3 words: add 0 or 1 filler, making a 3- or 4-hit pattern.
+      return randomIntInclusive(0, 1);
+    }
+
+    if (wordCount === 4) {
+      // 4 words: add 0, 1, or 2 fillers, making a 4-, 5-, or 6-hit pattern.
+      return randomIntInclusive(0, 2);
+    }
+
+    // 5-8 words already have enough rhythmic variety.
+    return 0;
+  }
+
+  function chooseFillerLayout(wordCount, fillerCount) {
+    const key = `${wordCount}_${fillerCount}`;
+
+    const layouts = {
+      // 2 words + 1 filler = 3 hits
+      "2_1": [
+        ["word", "filler", "word"],
+        ["word", "word", "filler"]
+      ],
+
+      // 2 words + 2 fillers = 4 hits
+      "2_2": [
+        ["word", "filler", "word", "filler"],
+        ["word", "word", "filler", "filler"]
+      ],
+
+      // 3 words + 0 filler = 3 hits
+      "3_0": [
+        ["word", "word", "word"]
+      ],
+
+      // 3 words + 1 filler = 4 hits
+      "3_1": [
+        ["word", "filler", "word", "word"],
+        ["word", "word", "word", "filler"]
+      ],
+
+      // 4 words + 0 filler.
+      // Leave these simple; makeRhythmOffsets() can still provide 4-word variety.
+      "4_0": [
+        ["word", "word", "word", "word"]
+      ],
+
+      // 4 words + 1 filler = 5 hits with rests.
+      // W = word, F = filler, rest = quarter-note rest.
+      "4_1": [
+        // W F W - | W - W -
+        ["word", "filler", "word", "rest", "word", "rest", "word", "rest"],
+
+        // W - W - | W F W -
+        ["word", "rest", "word", "rest", "word", "filler", "word", "rest"],
+
+        // W W - - | W F W -
+        ["word", "word", "rest", "rest", "word", "filler", "word", "rest"],
+
+        // W F - - | W - W -
+        ["word", "filler", "rest", "rest", "word", "rest", "word", "rest"],
+
+        // W F - - | W W W -
+        ["word", "filler", "rest", "rest", "word", "word", "word", "rest"],
+
+        // W - W - | W - W F
+        ["word", "rest", "word", "rest", "word", "rest", "word", "filler"],
+
+        // W - W F | W - W -
+        ["word", "rest", "word", "filler", "word", "rest", "word", "rest"],
+
+        // W W - F | W - W -
+        ["word", "word", "rest", "filler", "word", "rest", "word", "rest"],
+
+        // W - W - | W W - F
+        ["word", "rest", "word", "rest", "word", "word", "rest", "filler"],
+
+        // W W - - | W - W F
+        ["word", "word", "rest", "rest", "word", "rest", "word", "filler"],
+
+        // W W - - | W W - F
+        ["word", "word", "rest", "rest", "word", "word", "rest", "filler"]
+      ],
+
+      // 4 words + 2 fillers = 6 hits with rests.
+      "4_2": [
+        // W F W F | W - W -
+        ["word", "filler", "word", "filler", "word", "rest", "word", "rest"],
+
+        // W - W - | W F W F
+        ["word", "rest", "word", "rest", "word", "filler", "word", "filler"],
+
+        // W F W - | W F W -
+        ["word", "filler", "word", "rest", "word", "filler", "word", "rest"],
+
+        // W - W F | W - W F
+        ["word", "rest", "word", "filler", "word", "rest", "word", "filler"]
+      ]
+    };
+
+    const options = layouts[key] || [Array.from({ length: wordCount }, () => "word")];
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  function addRhythmFillersToChunk(buttons) {
+    const realButtons = buttons.filter(Boolean);
+    const wordCount = realButtons.length;
+    const fillerCount = chooseFillerCountForWordCount(wordCount);
+
+    if (!fillerCount) {
+      return realButtons.map((button, index) => ({
+        ...button,
+        sequenceOrder: Number.isFinite(button.sequenceOrder) ? button.sequenceOrder : index
+      }));
+    }
+
+    const layout = chooseFillerLayout(wordCount, fillerCount);
+
+    let wordIndex = 0;
+    let sequenceOrder = 0;
+    const result = [];
+
+    layout.forEach((slot, rhythmOffset) => {
+      if (slot === "rest") {
+        return;
+      }
+
+      if (slot === "filler") {
+        result.push({
+          ...makeRhythmFillerButton(sequenceOrder),
+          sequenceOrder,
+          rhythmOffset
+        });
+        sequenceOrder += 1;
+        return;
+      }
+
+      const sourceButton = realButtons[wordIndex];
+      wordIndex += 1;
+
+      if (!sourceButton) return;
+
       result.push({
-        ...makeRhythmFillerButton(sequenceOrder),
+        ...sourceButton,
         sequenceOrder,
         rhythmOffset
       });
+
       sequenceOrder += 1;
-      return;
-    }
-
-    const sourceButton = realButtons[wordIndex];
-    wordIndex += 1;
-
-    if (!sourceButton) return;
-
-    result.push({
-      ...sourceButton,
-      sequenceOrder,
-      rhythmOffset
     });
 
-    sequenceOrder += 1;
-  });
+    return result;
+  }
 
-  return result;
-}
+  function getExpectedSequenceOrder() {
+    return state.correctTapBeats.length;
+  }
 
-function getExpectedSequenceOrder(){
-  return state.correctTapBeats.length;
-}
+  function isExpectedFillerTap(button) {
+    if (!isRhythmFillerButton(button)) return false;
 
-function isExpectedFillerTap(button){
-  if (!isRhythmFillerButton(button)) return false;
+    const expectedOrder = getExpectedSequenceOrder();
 
-  const expectedOrder = getExpectedSequenceOrder();
-
-  // Filler buttons are playful rhythm hits. If the next expected item
-  // is any filler, allow any remaining filler button.
-  return state.currentButtons.some(item =>
-    isRhythmFillerButton(item) && item.sequenceOrder === expectedOrder
-  );
-}
+    // Filler buttons are playful rhythm hits. If the next expected item
+    // is any filler, allow any remaining filler button.
+    return state.currentButtons.some(item =>
+      isRhythmFillerButton(item) && item.sequenceOrder === expectedOrder
+    );
+  }
 
 
-  function beatPositionNow(){
+  function beatPositionNow() {
     if (!audioCtx || !state.musicStartTime) return 0;
     return (audioCtx.currentTime - state.musicStartTime) / secondsPerBeat();
   }
 
-  function nearestBeat(value){
+  function nearestBeat(value) {
     return Math.round(value);
   }
 
-  function secondsPerBeat(){
+  function secondsPerBeat() {
     return 60 / currentRound().bpm;
   }
 
-  function getPhase(){
+  function getPhase() {
     return window.VerseGameShell.getPhaseForProgress({
       progressIndex: state.progressIndex,
       wordCount: state.words.length,
@@ -904,7 +1020,7 @@ function isExpectedFillerTap(button){
     });
   }
 
-  function fitVerseJamBuildText(){
+  function fitVerseJamBuildText() {
     if (state.buildFitDone) return;
 
     requestAnimationFrame(() => {
@@ -922,7 +1038,7 @@ function isExpectedFillerTap(button){
     });
   }
 
-  function clearBuildTextFit(text){
+  function clearBuildTextFit(text) {
     if (!text) return;
     text.style.fontSize = "";
     text.style.lineHeight = "";
@@ -937,8 +1053,8 @@ function isExpectedFillerTap(button){
     delete text.dataset.vmFitArea;
   }
 
-  function renderBuildInnerHtml(){
-    if (state.phase === "intro" || state.progressIndex <= 0){
+  function renderBuildInnerHtml() {
+    if (state.phase === "intro" || state.progressIndex <= 0) {
       return `<div class="versejam-build-text vm-build-text" id="versejamBuildText"></div>`;
     }
 
@@ -955,11 +1071,11 @@ function isExpectedFillerTap(button){
     return `<div class="${buildRender.className}" id="versejamBuildText">${buildRender.html}</div>`;
   }
 
-  function updateBuildText(){
+  function updateBuildText() {
     const text = document.getElementById("versejamBuildText");
     if (!text) return;
 
-    if (state.phase === "intro" || state.progressIndex <= 0){
+    if (state.phase === "intro" || state.progressIndex <= 0) {
       clearBuildTextFit(text);
       text.className = "versejam-build-text vm-build-text";
       text.innerHTML = "";
@@ -981,149 +1097,149 @@ function isExpectedFillerTap(button){
     fitVerseJamBuildText();
   }
 
-  function tokenizeWords(value){
+  function tokenizeWords(value) {
     return window.VerseGameShell.tokenizeVerseWords(String(value || ""));
   }
 
-function splitReferenceForJamButtons(referenceLabel){
-  const raw = String(referenceLabel || "").trim();
+  function splitReferenceForJamButtons(referenceLabel) {
+    const raw = String(referenceLabel || "").trim();
 
-  if (!raw){
+    if (!raw) {
+      return {
+        chapterColon: "",
+        verses: ""
+      };
+    }
+
+    // Handles references like:
+    // 3:16
+    // 15:22
+    // 15:3-4
+    // 15:3–4
+    const match = raw.match(/^(.+?:)\s*(.+)$/);
+
+    if (match) {
+      return {
+        chapterColon: match[1].trim(),
+        verses: match[2].trim()
+      };
+    }
+
+    // Fallback if the shell ever gives us a reference without a colon.
     return {
-      chapterColon: "",
+      chapterColon: raw,
       verses: ""
     };
   }
 
-  // Handles references like:
-  // 3:16
-  // 15:22
-  // 15:3-4
-  // 15:3–4
-  const match = raw.match(/^(.+?:)\s*(.+)$/);
+  function makeReferenceChunkButtons() {
+    const bookSegmentIndex = state.words.length;
+    const referenceSegmentIndex = state.words.length + 1;
+    const refParts = splitReferenceForJamButtons(state.referenceLabel);
 
-  if (match){
-    return {
-      chapterColon: match[1].trim(),
-      verses: match[2].trim()
-    };
-  }
+    const buttons = [];
 
-  // Fallback if the shell ever gives us a reference without a colon.
-  return {
-    chapterColon: raw,
-    verses: ""
-  };
-}
-
-function makeReferenceChunkButtons(){
-  const bookSegmentIndex = state.words.length;
-  const referenceSegmentIndex = state.words.length + 1;
-  const refParts = splitReferenceForJamButtons(state.referenceLabel);
-
-  const buttons = [];
-
-  if (state.bookLabel){
-    buttons.push({
-      id: `vj_btn_${state.roundIndex}_ref_book_${Math.floor(Math.random() * 100000)}`,
-      label: state.bookLabel,
-      segmentIndex: bookSegmentIndex,
-      note: referenceNoteForOrder(0),
-      kind: "book",
-      sequenceOrder: 0,
-      spawned: false,
-      removing: false
-    });
-  }
-
-  if (refParts.chapterColon){
-    buttons.push({
-      id: `vj_btn_${state.roundIndex}_ref_chapter_${Math.floor(Math.random() * 100000)}`,
-      label: refParts.chapterColon,
-      segmentIndex: referenceSegmentIndex,
-      note: referenceNoteForOrder(1),
-      kind: "reference_chapter",
-      sequenceOrder: 1,
-      spawned: false,
-      removing: false
-    });
-  }
-
-  if (refParts.verses){
-    buttons.push({
-      id: `vj_btn_${state.roundIndex}_ref_verses_${Math.floor(Math.random() * 100000)}`,
-      label: refParts.verses,
-      segmentIndex: referenceSegmentIndex,
-      note: referenceNoteForOrder(2),
-      kind: "reference_verses",
-      sequenceOrder: 2,
-      spawned: false,
-      removing: false
-    });
-  }
-
-  return buttons;
-}
-
-function isReferenceJamButton(button){
-  return !!button?.kind && (
-    button.kind === "book" ||
-    button.kind === "reference_chapter" ||
-    button.kind === "reference_verses"
-  );
-}
-
-function getExpectedReferenceJamKind(){
-  const bookSegmentIndex = state.words.length;
-  const referenceSegmentIndex = state.words.length + 1;
-
-  if (state.progressIndex === bookSegmentIndex){
-    return "book";
-  }
-
-  if (state.progressIndex === referenceSegmentIndex){
-    const chapterButtonStillVisible = state.currentButtons.some(
-      button => button.kind === "reference_chapter"
-    );
-
-    if (chapterButtonStillVisible){
-      return "reference_chapter";
+    if (state.bookLabel) {
+      buttons.push({
+        id: `vj_btn_${state.roundIndex}_ref_book_${Math.floor(Math.random() * 100000)}`,
+        label: state.bookLabel,
+        segmentIndex: bookSegmentIndex,
+        note: referenceNoteForOrder(0),
+        kind: "book",
+        sequenceOrder: 0,
+        spawned: false,
+        removing: false
+      });
     }
 
-    return "reference_verses";
+    if (refParts.chapterColon) {
+      buttons.push({
+        id: `vj_btn_${state.roundIndex}_ref_chapter_${Math.floor(Math.random() * 100000)}`,
+        label: refParts.chapterColon,
+        segmentIndex: referenceSegmentIndex,
+        note: referenceNoteForOrder(1),
+        kind: "reference_chapter",
+        sequenceOrder: 1,
+        spawned: false,
+        removing: false
+      });
+    }
+
+    if (refParts.verses) {
+      buttons.push({
+        id: `vj_btn_${state.roundIndex}_ref_verses_${Math.floor(Math.random() * 100000)}`,
+        label: refParts.verses,
+        segmentIndex: referenceSegmentIndex,
+        note: referenceNoteForOrder(2),
+        kind: "reference_verses",
+        sequenceOrder: 2,
+        spawned: false,
+        removing: false
+      });
+    }
+
+    return buttons;
   }
 
-  return "";
-}
-
-function isButtonExpected(button){
-  if (!button) return false;
-
-  const expectedOrder = getExpectedSequenceOrder();
-
-  if (isRhythmFillerButton(button)){
-    return isExpectedFillerTap(button);
+  function isReferenceJamButton(button) {
+    return !!button?.kind && (
+      button.kind === "book" ||
+      button.kind === "reference_chapter" ||
+      button.kind === "reference_verses"
+    );
   }
 
-  if (Number.isFinite(button.sequenceOrder)){
-    return button.sequenceOrder === expectedOrder;
+  function getExpectedReferenceJamKind() {
+    const bookSegmentIndex = state.words.length;
+    const referenceSegmentIndex = state.words.length + 1;
+
+    if (state.progressIndex === bookSegmentIndex) {
+      return "book";
+    }
+
+    if (state.progressIndex === referenceSegmentIndex) {
+      const chapterButtonStillVisible = state.currentButtons.some(
+        button => button.kind === "reference_chapter"
+      );
+
+      if (chapterButtonStillVisible) {
+        return "reference_chapter";
+      }
+
+      return "reference_verses";
+    }
+
+    return "";
   }
 
-  if (isReferenceJamButton(button)){
-    return button.kind === getExpectedReferenceJamKind();
+  function isButtonExpected(button) {
+    if (!button) return false;
+
+    const expectedOrder = getExpectedSequenceOrder();
+
+    if (isRhythmFillerButton(button)) {
+      return isExpectedFillerTap(button);
+    }
+
+    if (Number.isFinite(button.sequenceOrder)) {
+      return button.sequenceOrder === expectedOrder;
+    }
+
+    if (isReferenceJamButton(button)) {
+      return button.kind === getExpectedReferenceJamKind();
+    }
+
+    return button.segmentIndex === state.progressIndex;
   }
 
-  return button.segmentIndex === state.progressIndex;
-}
-
-  function buildChunkWordGroups(){
+  function buildChunkWordGroups() {
     const echoParts = Array.isArray(state.verseJson?.echoParts)
       ? state.verseJson.echoParts.filter(part => String(part || "").trim())
       : [];
 
-    if (!echoParts.length){
+    if (!echoParts.length) {
       const groups = [];
-      for (let i = 0; i < state.words.length; i += 6){
+      for (let i = 0; i < state.words.length; i += 6) {
         groups.push({ start: i, count: Math.min(6, state.words.length - i) });
       }
       return groups;
@@ -1139,33 +1255,33 @@ function isButtonExpected(button){
       cursor += count;
     });
 
-    if (cursor < state.words.length){
+    if (cursor < state.words.length) {
       groups.push({ start: cursor, count: state.words.length - cursor });
     }
 
     return groups.filter(group => group.count > 0);
   }
 
-function makeChunkButtons(){
-  const phase = getPhase();
-  const buttons = [];
+  function makeChunkButtons() {
+    const phase = getPhase();
+    const buttons = [];
 
-  if (phase === "words"){
-    const groups = buildChunkWordGroups();
-    const group = groups[state.chunkIndex] || { start: state.progressIndex, count: 0 };
-    const start = Math.max(state.progressIndex, group.start);
-    const end = Math.min(group.start + group.count, state.words.length);
+    if (phase === "words") {
+      const groups = buildChunkWordGroups();
+      const group = groups[state.chunkIndex] || { start: state.progressIndex, count: 0 };
+      const start = Math.max(state.progressIndex, group.start);
+      const end = Math.min(group.start + group.count, state.words.length);
 
-    for (let segmentIndex = start; segmentIndex < end; segmentIndex += 1){
-      buttons.push(makeButtonForSegment(segmentIndex));
+      for (let segmentIndex = start; segmentIndex < end; segmentIndex += 1) {
+        buttons.push(makeButtonForSegment(segmentIndex));
+      }
+    } else if (phase === "book") {
+      buttons.push(...makeReferenceChunkButtons());
+    } else if (phase === "reference") {
+      // Normally we should reach reference as part of the combined
+      // book/chapter/verse chunk above. This fallback keeps the app safe.
+      buttons.push(makeButtonForSegment(state.progressIndex));
     }
-  } else if (phase === "book"){
-    buttons.push(...makeReferenceChunkButtons());
-  } else if (phase === "reference"){
-    // Normally we should reach reference as part of the combined
-    // book/chapter/verse chunk above. This fallback keeps the app safe.
-    buttons.push(makeButtonForSegment(state.progressIndex));
-  }
 
     const sequenced = addRhythmFillersToChunk(buttons);
 
@@ -1173,9 +1289,9 @@ function makeChunkButtons(){
       ...button,
       visualOrder
     }));
-}
+  }
 
-  function makeButtonForSegment(segmentIndex){
+  function makeButtonForSegment(segmentIndex) {
     const label = state.segments[segmentIndex];
     if (!label) return null;
 
@@ -1189,7 +1305,7 @@ function makeChunkButtons(){
     };
   }
 
-  async function ensureAudio(){
+  async function ensureAudio() {
     primeHtmlAudio();
     createAudioGraph();
 
@@ -1197,10 +1313,10 @@ function makeChunkButtons(){
 
     unlockAudioFromGesture();
 
-    if (audioCtx.state !== "running"){
+    if (audioCtx.state !== "running") {
       try {
         await audioCtx.resume();
-      } catch (err){
+      } catch (err) {
         console.warn("Verse Jam: audio resume failed in ensureAudio", err);
       }
     }
@@ -1208,65 +1324,65 @@ function makeChunkButtons(){
 
   }
 
-  function setMuted(value){
+  function setMuted(value) {
     muted = !!value;
-    if (masterGain){
+    if (masterGain) {
       masterGain.gain.setValueAtTime(muted ? 0 : 0.72, audioCtx.currentTime);
     }
   }
 
-  function midiToFreq(midi){
+  function midiToFreq(midi) {
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
-function drumVolume(value = 1){
-  return Math.max(0, value) * volumeTuning.drumMaster;
-}
+  function drumVolume(value = 1) {
+    return Math.max(0, value) * volumeTuning.drumMaster;
+  }
 
-async function loadSoundBitBuffers(){
-  if (!audioCtx) return;
-  if (soundBitLoadPromise) return soundBitLoadPromise;
+  async function loadSoundBitBuffers() {
+    if (!audioCtx) return;
+    if (soundBitLoadPromise) return soundBitLoadPromise;
 
-  soundBitLoadPromise = Promise.all(SOUND_BITS.map(async (sound) => {
-    if (!sound?.filename || soundBitBuffers[sound.filename]) return;
+    soundBitLoadPromise = Promise.all(SOUND_BITS.map(async (sound) => {
+      if (!sound?.filename || soundBitBuffers[sound.filename]) return;
 
-    try {
-      const res = await fetch(`${SOUND_BIT_BASE_URL}${sound.filename}`, { cache: "force-cache" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      try {
+        const res = await fetch(`${SOUND_BIT_BASE_URL}${sound.filename}`, { cache: "force-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const arrayBuffer = await res.arrayBuffer();
-      soundBitBuffers[sound.filename] = await audioCtx.decodeAudioData(arrayBuffer);
-    } catch (err){
-      console.warn(`Verse Jam could not load sound bit: ${sound.filename}`, err);
-      soundBitBuffers[sound.filename] = null;
-    }
-  }));
+        const arrayBuffer = await res.arrayBuffer();
+        soundBitBuffers[sound.filename] = await audioCtx.decodeAudioData(arrayBuffer);
+      } catch (err) {
+        console.warn(`Verse Jam could not load sound bit: ${sound.filename}`, err);
+        soundBitBuffers[sound.filename] = null;
+      }
+    }));
 
-  return soundBitLoadPromise;
-}
+    return soundBitLoadPromise;
+  }
 
-function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = VOICE_SOUND_BIT_VOLUME){
-  if (!audioCtx || !masterGain || muted || !sound?.filename) return false;
+  function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = VOICE_SOUND_BIT_VOLUME) {
+    if (!audioCtx || !masterGain || muted || !sound?.filename) return false;
 
-  const buffer = soundBitBuffers[sound.filename];
-  if (!buffer) return false;
+    const buffer = soundBitBuffers[sound.filename];
+    if (!buffer) return false;
 
-  const source = audioCtx.createBufferSource();
-  const gain = audioCtx.createGain();
+    const source = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
 
-  source.buffer = buffer;
-  gain.gain.setValueAtTime(Math.max(0, volume), when);
+    source.buffer = buffer;
+    gain.gain.setValueAtTime(Math.max(0, volume), when);
 
-  source.connect(gain);
-  gain.connect(masterGain);
+    source.connect(gain);
+    gain.connect(masterGain);
 
-  trackAudioSource(source);
-  source.start(when);
+    trackAudioSource(source);
+    source.start(when);
 
-  return true;
-}
+    return true;
+  }
 
-  function playTone({ midi = 60, when = audioCtx?.currentTime || 0, duration = 0.22, volume = 0.16, type = "triangle" } = {}){
+  function playTone({ midi = 60, when = audioCtx?.currentTime || 0, duration = 0.22, volume = 0.16, type = "triangle" } = {}) {
     if (!audioCtx || !masterGain || muted) return;
 
     const osc = audioCtx.createOscillator();
@@ -1286,13 +1402,13 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
   }
 
 
-  function playDrum(sound, when, volume = 1, generation = musicGeneration){
+  function playDrum(sound, when, volume = 1, generation = musicGeneration) {
     if (generation !== musicGeneration) return;
 
     // Generated chiptune drums.
     if (!audioCtx || !masterGain || muted) return;
 
-    if (sound === "kick"){
+    if (sound === "kick") {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = "sine";
@@ -1309,7 +1425,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
       return;
     }
 
-    if (sound === "snare" || sound === "hat" || sound === "extra"){
+    if (sound === "snare" || sound === "hat" || sound === "extra") {
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = "square";
@@ -1325,7 +1441,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     }
   }
 
-  function scheduleDrumLoopBar(barStartTime, generation = musicGeneration){
+  function scheduleDrumLoopBar(barStartTime, generation = musicGeneration) {
     if (generation !== musicGeneration) return;
     const loop = currentLoop();
     const beatSeconds = secondsPerBeat();
@@ -1335,50 +1451,50 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     });
   }
 
-  function playWordNote(button, opts = {}){
+  function playWordNote(button, opts = {}) {
     if (!audioCtx) return;
     const now = audioCtx.currentTime;
     const round = currentRound();
     const volume = opts.volume || (state.roundIndex === 0 ? volumeTuning.roundOneWord : volumeTuning.defaultWord);
 
-  playTone({
-    midi: button.note,
-    when: now,
-    duration: 0.22,
-    volume,
-    type: state.roundIndex >= 1 ? "square" : "triangle"
-  });
+    playTone({
+      midi: button.note,
+      when: now,
+      duration: 0.22,
+      volume,
+      type: state.roundIndex >= 1 ? "square" : "triangle"
+    });
 
-    if (round.echo){
+    if (round.echo) {
       playTone({ midi: button.note + 12, when: now + secondsPerBeat() / 2, duration: 0.16, volume: volumeTuning.wordEcho, type: "triangle" });
     }
   }
 
-  function playNoNote(){
+  function playNoNote() {
     if (!audioCtx) return;
     const now = audioCtx.currentTime;
     playTone({ midi: 43, when: now, duration: 0.16, volume: 0.13, type: "sine" });
     playTone({ midi: 38, when: now + 0.07, duration: 0.13, volume: 0.08, type: "sine" });
   }
 
-  function stopMusic({ stopAudio = true } = {}){
+  function stopMusic({ stopAudio = true } = {}) {
     musicGeneration += 1;
 
-    if (beatTimer){
+    if (beatTimer) {
       clearInterval(beatTimer);
       beatTimer = null;
     }
-    if (padTimer){
+    if (padTimer) {
       clearInterval(padTimer);
       padTimer = null;
     }
 
-    if (stopAudio){
+    if (stopAudio) {
       stopActiveAudioSources();
     }
   }
 
-  function startBeatLoop({ cleanRestart = true } = {}){
+  function startBeatLoop({ cleanRestart = true } = {}) {
     stopMusic({ stopAudio: cleanRestart });
     const generation = musicGeneration;
 
@@ -1389,7 +1505,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     const tick = () => {
       if (!audioCtx || generation !== musicGeneration) return;
       const lookAhead = 0.18;
-      while (state.nextScheduledBeatTime < audioCtx.currentTime + lookAhead){
+      while (state.nextScheduledBeatTime < audioCtx.currentTime + lookAhead) {
         scheduleBeat(state.beatCount, state.nextScheduledBeatTime, generation);
         state.nextScheduledBeatTime += secondsPerBeat();
         state.beatCount += 1;
@@ -1399,17 +1515,17 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     tick();
     beatTimer = setInterval(tick, 45);
 
-    if (currentRound().pad){
+    if (currentRound().pad) {
       schedulePad(generation);
       padTimer = setInterval(() => schedulePad(generation), secondsPerBeat() * 8 * 1000);
     }
   }
 
-  function scheduleBeat(beatIndex, when, generation = musicGeneration){
+  function scheduleBeat(beatIndex, when, generation = musicGeneration) {
     if (generation !== musicGeneration) return;
     const beatInBar = beatIndex % 4;
 
-    if (beatInBar === 0){
+    if (beatInBar === 0) {
       scheduleDrumLoopBar(when, generation);
     }
 
@@ -1420,7 +1536,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     state.sleepIds.push(timeoutId);
   }
 
-  function schedulePad(generation = musicGeneration){
+  function schedulePad(generation = musicGeneration) {
     if (generation !== musicGeneration) return;
     if (!audioCtx || muted || !currentRound().pad) return;
     const when = audioCtx.currentTime + 0.06;
@@ -1429,7 +1545,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     });
   }
 
-  function pulseUi(strong){
+  function pulseUi(strong) {
     const scale = strong ? (state.roundIndex >= 1 ? 1.075 : 1.045) : (state.roundIndex >= 1 ? 1.045 : 1.025);
     document.querySelectorAll(".versejam-word-btn, .versejam-cue-button").forEach((btn) => {
       btn.style.setProperty("--vj-beat-scale", String(scale));
@@ -1445,7 +1561,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     }, 100);
   }
 
-  function setCueButton(label, cueState = "listen"){
+  function setCueButton(label, cueState = "listen") {
     const cue = document.getElementById("versejamCueButton");
     if (!cue) return;
 
@@ -1453,12 +1569,12 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     cue.className = `versejam-cue-button versejam-cue-${cueState}`;
   }
 
-  function playCountdownTone(step){
+  function playCountdownTone(step) {
     if (!audioCtx) return;
 
     const now = audioCtx.currentTime;
 
-    if (step === "go"){
+    if (step === "go") {
       playTone({ midi: 72, when: now, duration: 0.11, volume: volumeTuning.countdownGo, type: "square" });
       playTone({ midi: 76, when: now + 0.045, duration: 0.12, volume: volumeTuning.countdownGo * 0.85, type: "square" });
       playTone({ midi: 79, when: now + 0.09, duration: 0.14, volume: volumeTuning.countdownGo * 0.85, type: "square" });
@@ -1469,11 +1585,12 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     playTone({ midi, when: now, duration: 0.12, volume: volumeTuning.countdownBeep, type: "square" });
   }
 
-  async function runEchoCountdown(){
+  async function runEchoCountdown(flowId = gameplayGeneration) {
     state.phase = "countdown";
-    if (state.paused) return;
+    if (!isGameplayFlowActive(flowId)) return;
     state.acceptingInput = false;
     state.echoStartBeat = null;
+    noteGameplayActivity();
 
     const countdown = [
       { label: "3", cue: "3", tone: 3 },
@@ -1484,28 +1601,28 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
 
     const countStart = nextMeasureStartTime();
 
-    for (let i = 0; i < countdown.length; i += 1){
-      if (state.screen !== "game" || state.paused) return;
+    for (let i = 0; i < countdown.length; i += 1) {
+      if (!isGameplayFlowActive(flowId)) return;
 
       await waitUntilAudioTime(countStart + i * secondsPerBeat());
-      if (state.screen !== "game" || state.paused) return;
+      if (!isGameplayFlowActive(flowId)) return;
 
       const step = countdown[i];
       setCueButton(step.label, step.cue);
       playCountdownTone(step.tone);
+      noteGameplayActivity();
     }
 
     const echoStartTime = countStart + 4 * secondsPerBeat();
 
-    // Start accepting taps a little before the visible TAP! moment.
-    // This prevents a player from being punished for pressing just before the beat.
+    // Start accepting taps a little before TAP! so a nearly-on-beat press is not ignored.
     const earlyInputTime = Math.max(
       audioCtx.currentTime,
       echoStartTime - EARLY_INPUT_WINDOW_MS / 1000
     );
 
     await waitUntilAudioTime(earlyInputTime);
-    if (state.screen !== "game" || state.paused) return;
+    if (!isGameplayFlowActive(flowId)) return;
 
     // Keep the official rhythm start on the real downbeat for PERFECT/GROOVY timing.
     state.echoStartBeat = (echoStartTime - state.musicStartTime) / secondsPerBeat();
@@ -1513,16 +1630,18 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     // Allow input slightly early, but do not visually say TAP! yet.
     state.acceptingInput = true;
     cueNextButton();
+    noteGameplayActivity();
 
     await waitUntilAudioTime(echoStartTime);
-    if (state.screen !== "game" || state.paused) return;
+    if (!isGameplayFlowActive(flowId)) return;
 
     // Now show the visible start cue right on the beat.
     setCueButton("TAP!", "tap");
     state.phase = "play_chunk";
+    noteGameplayActivity();
   }
 
-  function nextMeasureStartTime(){
+  function nextMeasureStartTime() {
     if (!audioCtx || !state.musicStartTime) return audioCtx?.currentTime || 0;
     const elapsed = Math.max(0, audioCtx.currentTime - state.musicStartTime);
     const beat = elapsed / secondsPerBeat();
@@ -1530,12 +1649,12 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     return state.musicStartTime + nextBarBeat * secondsPerBeat();
   }
 
-  function nextMeasureDelayMs(){
+  function nextMeasureDelayMs() {
     if (!audioCtx || !state.musicStartTime) return 0;
     return Math.max(0, (nextMeasureStartTime() - audioCtx.currentTime) * 1000);
   }
 
-  function renderShellGame(){
+  function renderShellGame() {
     app.innerHTML = `
       <div class="versejam-root">
         <div class="versejam-stage">
@@ -1569,7 +1688,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     updateBuildText();
   }
 
-  function renderHelpOverlay(){
+  function renderHelpOverlay() {
     return window.VerseGameShell.helpOverlayHtml({
       id: HELP_OVERLAY_ID,
       title: "How to Play",
@@ -1581,7 +1700,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
 
 
 
-  function renderGameMenuOverlay(){
+  function renderGameMenuOverlay() {
     return window.VerseGameShell.gameMenuHtml({
       id: "verseJamGameMenuOverlay",
       title: "Verse Jam Menu",
@@ -1590,7 +1709,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     });
   }
 
-  function wireGameScreen(){
+  function wireGameScreen() {
     window.VerseGameShell.wireGameMenu({
       id: "verseJamGameMenuOverlay",
       menuButtonId: "versejamMenuPill",
@@ -1606,7 +1725,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
         state.helpBackMode = true;
         pauseGameForMenu();
         const menuOverlay = document.getElementById("verseJamGameMenuOverlay");
-        if (menuOverlay){
+        if (menuOverlay) {
           menuOverlay.classList.remove("is-open");
           menuOverlay.setAttribute("aria-hidden", "true");
         }
@@ -1638,106 +1757,124 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     });
   }
 
-function shouldPauseGameForMenu(){
-  return (
-    state.screen === "game" &&
-    !state.completed &&
-    !state.paused
-  );
-}
+  function shouldPauseGameForMenu() {
+    return (
+      state.screen === "game" &&
+      !state.completed &&
+      !state.paused
+    );
+  }
 
-function pauseGameForMenu(){
-  if (!shouldPauseGameForMenu()) return;
+  function pauseGameForMenu() {
+    if (!shouldPauseGameForMenu()) return;
 
-  state.paused = true;
-  state.resumeAfterMenu = true;
-  state.acceptingInput = false;
-  state.busy = false;
+    beginGameplayFlow();
 
-  // Cancel pending waits/countdowns/spawns/transitions.
-  clearSleeps();
+    state.paused = true;
+    state.resumeAfterMenu = true;
+    state.acceptingInput = false;
+    state.busy = false;
 
-  // Stop drums, pads, currently ringing notes, and scheduled audio.
-  stopMusic();
-}
+    // Cancel pending waits/countdowns/spawns/transitions.
+    clearSleeps();
 
-async function resumeGameFromMenu(){
-  if (!state.paused || !state.resumeAfterMenu) return;
+    // Stop drums, pads, currently ringing notes, and scheduled audio.
+    stopMusic();
+  }
 
-  state.paused = false;
-  state.resumeAfterMenu = false;
-  state.acceptingInput = false;
-  state.busy = false;
+  async function resumeGameFromMenu() {
+    if (!state.paused || !state.resumeAfterMenu) return;
 
-  if (state.screen !== "game" || state.completed) return;
+    const flowId = beginGameplayFlow();
 
-  await ensureAudio();
-  if (state.screen !== "game" || state.completed || state.paused) return;
+    state.paused = false;
+    state.resumeAfterMenu = false;
+    state.acceptingInput = false;
+    state.busy = false;
 
-  // Restart the groove cleanly.
-  startBeatLoop();
+    if (!isGameplayFlowActive(flowId)) return;
 
-  // Option A: resume by restarting the current musical prompt/chunk.
-  // Already-built verse text stays built; the current prompt is rebuilt
-  // from the current progressIndex/chunkIndex.
-  await startNextPlayableGroup();
-}
+    await ensureAudio();
+    if (!isGameplayFlowActive(flowId)) return;
 
-function stopRun(){
-  clearSleeps();
-  stopMusic();
-  state.acceptingInput = false;
-  state.busy = false;
-  state.paused = false;
-  state.resumeAfterMenu = false;
-}
+    // Restart the groove cleanly.
+    startBeatLoop();
+    startGameplayWatchdog();
+
+    // Resume by restarting the current musical prompt/chunk.
+    // Already-built verse text stays built; the current prompt is rebuilt
+    // from the current progressIndex/chunkIndex.
+    await startNextPlayableGroup(flowId);
+  }
+
+  function stopRun() {
+    beginGameplayFlow();
+    stopGameplayWatchdog();
+    clearSleeps();
+    stopMusic();
+    state.acceptingInput = false;
+    state.busy = false;
+    state.paused = false;
+    state.resumeAfterMenu = false;
+    state.currentButtons = [];
+  }
 
 
-async function beginRun(mode){
-  selectedMode = mode;
-  
+  async function beginRun(mode) {
+    selectedMode = mode;
 
-  // IMPORTANT for iPhone/Safari:
-  // Unlock audio immediately from the user's mode-button tap,
-  // before any awaited fetch or other async work.
-  await ensureAudio();
+    const flowId = beginGameplayFlow();
 
-  initVerseData();
-  chooseActiveBaseMelody();
-  state.verseJson = await loadVerseJson();
-  state.phase = "intro";
-  renderShellGame();
-  startBeatLoop();
-  await runIntroSequence();
+    // IMPORTANT for iPhone/Safari:
+    // Unlock audio immediately from the user's mode-button tap,
+    // before any awaited fetch or other async work.
+    await ensureAudio();
 
-  if (state.screen !== "game") return;
+    if (!isGameplayFlowActive(flowId)) return;
 
-  await startNextPlayableGroup();
-}
+    initVerseData();
+    chooseActiveBaseMelody();
+    state.verseJson = await loadVerseJson();
 
-  async function runIntroSequence(){
+    if (!isGameplayFlowActive(flowId)) return;
+
+    state.phase = "intro";
+    renderShellGame();
+    startBeatLoop();
+    startGameplayWatchdog();
+    await runIntroSequence(flowId);
+
+    if (!isGameplayFlowActive(flowId)) return;
+
+    await startNextPlayableGroup(flowId);
+  }
+
+  async function runIntroSequence(flowId = gameplayGeneration) {
     const area = document.getElementById("versejamMainArea");
-    if (!area) return;
+    if (!area || !isGameplayFlowActive(flowId)) return;
 
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
     const stack = document.getElementById("versejamIntroStack");
-    if (!stack) return;
+    if (!stack || !isGameplayFlowActive(flowId)) return;
+
+    noteGameplayActivity();
 
     const introOffsets = INTRO_RHYTHM_OFFSETS;
     const startAt = nextMeasureStartTime();
 
-    for (let i = 0; i < INTRO_WORDS.length; i += 1){
-      if (state.screen !== "game" || state.paused) return;
+    for (let i = 0; i < INTRO_WORDS.length; i += 1) {
+      if (!isGameplayFlowActive(flowId)) return;
       const offset = introOffsets[i] ?? i;
       const eventTime = startAt + offset * secondsPerBeat();
       await waitUntilAudioTime(eventTime);
 
-      if (state.screen !== "game" || state.paused) return;
+      if (!isGameplayFlowActive(flowId)) return;
       const el = document.createElement("div");
       el.className = `versejam-intro-word is-in${i >= 3 ? " is-response-phrase" : ""}`;
       el.textContent = INTRO_WORDS[i];
       stack.appendChild(el);
       playTone({ midi: 72 + (i % 3) * 2, when: audioCtx.currentTime, duration: 0.12, volume: 0.08, type: "triangle" });
+      noteGameplayActivity();
     }
 
     const children = Array.from(stack.children || []);
@@ -1747,37 +1884,44 @@ async function beginRun(mode){
     // Since "beat" lands on offset 6, the disappear phrase should start on offset 8.
     const introPatternLengthBeats = measureAlignedLength(introOffsets);
     const outStart = startAt + introPatternLengthBeats * secondsPerBeat();
-    for (let i = 0; i < children.length; i += 1){
-      if (state.screen !== "game" || state.paused) return;
+
+    for (let i = 0; i < children.length; i += 1) {
+      if (!isGameplayFlowActive(flowId)) return;
       const offset = introOffsets[i] ?? i;
       const eventTime = outStart + offset * secondsPerBeat();
       await waitUntilAudioTime(eventTime);
 
+      if (!isGameplayFlowActive(flowId)) return;
       children[i].classList.remove("is-in");
       children[i].classList.add("is-out");
       playTone({ midi: 60, when: audioCtx.currentTime, duration: 0.08, volume: 0.05, type: "triangle" });
+      noteGameplayActivity();
     }
 
-    if (state.screen !== "game" || state.paused) return;
-await waitUntilAudioTime(nextMeasureStartTime());
+    if (!isGameplayFlowActive(flowId)) return;
+    await waitUntilAudioTime(nextMeasureStartTime());
+    noteGameplayActivity();
   }
 
-  async function startNextPlayableGroup(){
+  async function startNextPlayableGroup(flowId = beginGameplayFlow()) {
     state.phase = "spawn_chunk";
-    if (state.paused) return;
+    if (!isGameplayFlowActive(flowId)) return;
     state.acceptingInput = false;
+    state.busy = false;
     state.currentButtons = makeChunkButtons();
     state.currentRhythmOffsets = makeCurrentRhythmOffsets(state.currentButtons);
     state.correctTapBeats = [];
     state.echoStartBeat = null;
+    noteGameplayActivity();
 
-    if (!state.currentButtons.length){
-      await handleRoundOrEnd();
+    if (!state.currentButtons.length) {
+      await handleRoundOrEnd(flowId);
       return;
     }
 
     const area = document.getElementById("versejamMainArea");
-    if (!area) return;
+    if (!area || !isGameplayFlowActive(flowId)) return;
+
     area.innerHTML = `
       <div class="versejam-button-stack" id="versejamButtonStack">
         <button class="versejam-cue-button versejam-cue-listen" id="versejamCueButton" type="button" disabled>LISTEN</button>
@@ -1785,6 +1929,7 @@ await waitUntilAudioTime(nextMeasureStartTime());
       </div>
     `;
     setCueButton("MATCH THIS BEAT", "listen");
+    noteGameplayActivity();
 
     const spawnStart = nextMeasureStartTime();
 
@@ -1794,31 +1939,34 @@ await waitUntilAudioTime(nextMeasureStartTime());
       return aOrder - bOrder;
     });
 
-    for (let i = 0; i < spawnButtons.length; i += 1){
+    for (let i = 0; i < spawnButtons.length; i += 1) {
       const button = spawnButtons[i];
       const offset = Number.isFinite(button.rhythmOffset)
         ? button.rhythmOffset
         : state.currentRhythmOffsets[i] ?? i;
 
       await waitUntilAudioTime(spawnStart + offset * secondsPerBeat());
-      if (state.screen !== "game" || state.paused) return;
+      if (!isGameplayFlowActive(flowId)) return;
 
       spawnButton(button);
+      noteGameplayActivity();
 
-      if (isRhythmFillerButton(button)){
+      if (isRhythmFillerButton(button)) {
         playRhythmFillerSound(button);
       } else {
         playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: volumeTuning.buttonPopIn, type: "triangle" });
       }
     }
 
-    if (state.screen !== "game" || state.paused) return;
-  await runEchoCountdown();
+    if (!isGameplayFlowActive(flowId)) return;
+    await runEchoCountdown(flowId);
   }
 
-  function spawnButton(button){
+  function spawnButton(button) {
     const stack = document.getElementById("versejamWordStack") || document.getElementById("versejamButtonStack");
     if (!stack) return;
+
+    noteGameplayActivity();
 
     const btn = document.createElement("button");
     btn.className = `versejam-word-btn is-spawning no-zoom${isClapButton(button) ? " is-clap-button" : ""}${isSoundBitButton(button) ? " is-sound-bit-button" : ""}`;
@@ -1833,7 +1981,7 @@ await waitUntilAudioTime(nextMeasureStartTime());
         : Number.isFinite(button.sequenceOrder)
           ? button.sequenceOrder
           : 0
-    );    
+    );
 
     btn.dataset.sequenceOrder = String(button.sequenceOrder ?? "");
     btn.dataset.buttonKind = button.kind || "word";
@@ -1843,40 +1991,45 @@ await waitUntilAudioTime(nextMeasureStartTime());
       handleButtonTap(button.id);
     });
     stack.appendChild(btn);
-    setTimeout(() => btn.classList.remove("is-spawning"), 280);
+    setTimeout(() => {
+      if (btn && btn.isConnected) {
+        btn.classList.remove("is-spawning");
+        noteGameplayActivity();
+      }
+    }, 280);
     addFloatNote(btn, isClapButton(button) ? "👏" : isSoundBitButton(button) ? "!" : "♪");
   }
 
-function cueNextButton(){
-  document.querySelectorAll(".versejam-word-btn").forEach(btn => {
-    btn.classList.remove("is-next", "is-rainbow-next");
+  function cueNextButton() {
+    document.querySelectorAll(".versejam-word-btn").forEach(btn => {
+      btn.classList.remove("is-next", "is-rainbow-next");
 
-    const button = state.currentButtons.find(item => item.id === btn.id);
+      const button = state.currentButtons.find(item => item.id === btn.id);
 
-    if (isButtonExpected(button)){
-      btn.classList.add(currentRound().cue === "rainbow" ? "is-rainbow-next" : "is-next");
-    }
-  });
-}
+      if (isButtonExpected(button)) {
+        btn.classList.add(currentRound().cue === "rainbow" ? "is-rainbow-next" : "is-next");
+      }
+    });
+  }
 
-  function getCorrectSequenceIndex(segmentIndex){
+  function getCorrectSequenceIndex(segmentIndex) {
     const ordered = state.currentButtons
       .map(item => item.segmentIndex)
       .sort((a, b) => a - b);
     return ordered.indexOf(segmentIndex);
   }
 
-  function recordCorrectTap(button){
+  function recordCorrectTap(button) {
     const sequenceIndex = getExpectedSequenceOrder();
     const beat = beatPositionNow();
 
     state.correctTapBeats.push({ sequenceIndex, beat });
   }
 
-  function isNearEchoStartGrid(beat){
+  function isNearEchoStartGrid(beat) {
     if (!Number.isFinite(beat)) return false;
 
-    if (!Number.isFinite(state.echoStartBeat)){
+    if (!Number.isFinite(state.echoStartBeat)) {
       return Math.abs(beat - nearestBeat(beat)) <= PERFECT_BEAT_TOLERANCE;
     }
 
@@ -1885,7 +2038,7 @@ function cueNextButton(){
     return Math.abs(delta - nearestShiftedMeasure) <= PERFECT_BEAT_TOLERANCE;
   }
 
-  function didTapChunkPerfectly(){
+  function didTapChunkPerfectly() {
     const taps = state.correctTapBeats
       .slice()
       .sort((a, b) => a.sequenceIndex - b.sequenceIndex);
@@ -1895,7 +2048,7 @@ function cueNextButton(){
 
     // One-button groups are allowed to score if the press starts on the
     // countdown's echo downbeat, or on the same downbeat in a later measure.
-    if (taps.length === 1){
+    if (taps.length === 1) {
       return isNearEchoStartGrid(taps[0].beat);
     }
 
@@ -1914,7 +2067,7 @@ function cueNextButton(){
     });
   }
 
-  function showPerfectSplash(){
+  function showPerfectSplash() {
     const board = document.getElementById("versejamBoard");
     if (!board) return;
 
@@ -1930,8 +2083,9 @@ function cueNextButton(){
     splash.addEventListener("animationend", () => splash.remove(), { once: true });
   }
 
-async function handleButtonTap(buttonId){
-  if (state.paused || !state.acceptingInput || state.busy) return;
+  async function handleButtonTap(buttonId) {
+    if (state.paused || !state.acceptingInput || state.busy || state.completed) return;
+    noteGameplayActivity();
 
     const button = state.currentButtons.find(item => item.id === buttonId);
     const btnEl = document.getElementById(buttonId);
@@ -1940,7 +2094,7 @@ async function handleButtonTap(buttonId){
 
     btnEl.dataset.vjPressed = "true";
 
-    if (!isButtonExpected(button)){
+    if (!isButtonExpected(button)) {
       btnEl.classList.remove("is-wrong");
       void btnEl.offsetWidth;
       btnEl.classList.add("is-wrong");
@@ -1956,7 +2110,7 @@ async function handleButtonTap(buttonId){
     recordCorrectTap(button);
     btnEl.classList.remove("is-next", "is-rainbow-next");
     btnEl.classList.add("is-removing");
-    if (isRhythmFillerButton(button)){
+    if (isRhythmFillerButton(button)) {
       playRhythmFillerSound(button);
     } else {
       playWordNote(button);
@@ -1967,83 +2121,93 @@ async function handleButtonTap(buttonId){
     await sleep(150);
     btnEl.remove();
 
-  let buildProgressChanged = false;
+    let buildProgressChanged = false;
 
-  if (isRhythmFillerButton(button)){
-    // Filler buttons are part of the rhythm pattern, but they do not
-    // add anything to the verse build area.
-    buildProgressChanged = false;
-  } else if (button.kind === "reference_chapter"){
-    // The shell build area has one combined reference segment.
-    // Tapping the chapter button is part of the musical chunk, but
-    // we wait to advance the build until the verses button is tapped.
-    buildProgressChanged = false;
-  } else {
-    state.progressIndex += 1;
-    buildProgressChanged = true;
-  }
+    if (isRhythmFillerButton(button)) {
+      // Filler buttons are part of the rhythm pattern, but they do not
+      // add anything to the verse build area.
+      buildProgressChanged = false;
+    } else if (button.kind === "reference_chapter") {
+      // The shell build area has one combined reference segment.
+      // Tapping the chapter button is part of the musical chunk, but
+      // we wait to advance the build until the verses button is tapped.
+      buildProgressChanged = false;
+    } else {
+      state.progressIndex += 1;
+      buildProgressChanged = true;
+    }
 
-  if (buildProgressChanged){
-    state.buildFitDone = false;
-    updateBuildText();
-  }
+    if (buildProgressChanged) {
+      state.buildFitDone = false;
+      updateBuildText();
+    }
 
-  state.currentButtons = state.currentButtons.filter(item => item.id !== buttonId);
+    state.currentButtons = state.currentButtons.filter(item => item.id !== buttonId);
 
-  const phase = getPhase();
-  const stillInReferenceChunk = state.currentButtons.some(isReferenceJamButton);
-  const stillInRhythmFillerChunk = state.currentButtons.some(isRhythmFillerButton);
+    const phase = getPhase();
+    const stillInReferenceChunk = state.currentButtons.some(isReferenceJamButton);
+    const stillInRhythmFillerChunk = state.currentButtons.some(isRhythmFillerButton);
 
-  if (
-    state.currentButtons.length === 0 ||
-    (!stillInReferenceChunk && !stillInRhythmFillerChunk && phase !== "words")
-  ){
-    const perfect = didTapChunkPerfectly();
+    if (
+      state.currentButtons.length === 0 ||
+      (!stillInReferenceChunk && !stillInRhythmFillerChunk && phase !== "words")
+    ) {
+      const perfect = didTapChunkPerfectly();
 
-    if (phase === "words") state.chunkIndex += 1;
+      if (phase === "words") state.chunkIndex += 1;
 
-    state.busy = false;
-    state.acceptingInput = false;
+      state.busy = false;
+      state.acceptingInput = false;
 
-    if (perfect) showPerfectSplash();
+      if (perfect) showPerfectSplash();
 
-    await sleep(perfect ? 560 : 260);
-    await startNextPlayableGroup();
-    return;
-  }
+      await sleep(perfect ? 560 : 260);
+      await startNextPlayableGroup();
+      return;
+    }
 
     state.busy = false;
     cueNextButton();
   }
 
-  async function handleRoundOrEnd(){
-    if (state.progressIndex >= state.segments.length){
+  async function handleRoundOrEnd(flowId = gameplayGeneration) {
+    if (!isGameplayFlowActive(flowId)) return;
+
+    if (state.progressIndex >= state.segments.length) {
       await markPlaygroundPracticed();
 
-    if (state.roundIndex < currentRoundConfigs().length - 1){
-      // Let the current round finish its measure before the next round's
-      // faster/different beat loop takes over.
-      await waitUntilAudioTime(nextMeasureStartTime());
+      if (!isGameplayFlowActive(flowId)) return;
 
-      state.roundIndex += 1;
-      state.progressIndex = 0;
-      state.chunkIndex = 0;
-      state.buildFitDone = false;
-      state.currentButtons = [];
-      state.phase = "intro";
+      if (state.roundIndex < currentRoundConfigs().length - 1) {
+        // Let the current round finish its measure before the next round's
+        // faster/different beat loop takes over.
+        await waitUntilAudioTime(nextMeasureStartTime());
 
-      updateRoundPill();
-      updateBuildText();
+        if (!isGameplayFlowActive(flowId)) return;
 
-      // Now restart the music cleanly at the new round tempo.
-      startBeatLoop();
+        state.roundIndex += 1;
+        state.progressIndex = 0;
+        state.chunkIndex = 0;
+        state.buildFitDone = false;
+        state.currentButtons = [];
+        state.phase = "intro";
+        noteGameplayActivity();
 
-      // We already waited for the measure boundary above, so don't make
-      // the transition wait another measure.
-      await showRoundTransition({ alreadyAligned: true });
-      await startNextPlayableGroup();
-      return;
-    }
+        updateRoundPill();
+        updateBuildText();
+
+        // Now restart the music cleanly at the new round tempo.
+        startBeatLoop();
+
+        // We already waited for the measure boundary above, so don't make
+        // the transition wait another measure.
+        await showRoundTransition({ alreadyAligned: true });
+
+        if (!isGameplayFlowActive(flowId)) return;
+
+        await startNextPlayableGroup(flowId);
+        return;
+      }
 
       state.completed = true;
       stopRun();
@@ -2051,12 +2215,12 @@ async function handleButtonTap(buttonId){
     }
   }
 
-  function updateRoundPill(){
+  function updateRoundPill() {
     const pill = document.getElementById("versejamRoundPill");
     if (pill) pill.textContent = currentRound().name;
   }
 
-  async function showRoundTransition({ alreadyAligned = false } = {}){
+  async function showRoundTransition({ alreadyAligned = false } = {}) {
     if (state.paused) return;
     const area = document.getElementById("versejamMainArea");
     if (!area) return;
@@ -2064,24 +2228,24 @@ async function handleButtonTap(buttonId){
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
     const stack = document.getElementById("versejamIntroStack");
 
-    if (!alreadyAligned){
+    if (!alreadyAligned) {
       await sleep(nextMeasureDelayMs());
     }
 
-    for (const word of message){
+    for (const word of message) {
       if (state.screen !== "game" || state.paused) return;
       const el = document.createElement("div");
       el.className = "versejam-intro-word is-in";
       el.textContent = word;
       stack.appendChild(el);
       const transitionNotes = [72, 76, 79]; // C, E, G — same C-centered sound as the main verse notes
-playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.length], when: audioCtx.currentTime, duration: 0.14, volume: 0.09, type: "square" });
+      playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.length], when: audioCtx.currentTime, duration: 0.14, volume: 0.09, type: "square" });
       await sleep(secondsPerBeat() * 1000);
     }
     await sleep(secondsPerBeat() * 2 * 1000);
   }
 
-  function explodeButton(btnEl){
+  function explodeButton(btnEl) {
     const layer = document.getElementById("versejamParticleLayer");
     const board = document.getElementById("versejamBoard");
     if (!layer || !board || !btnEl) return;
@@ -2097,7 +2261,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     const count = Math.round(20 * round.explosion);
     const spread = 78 * round.explosion;
 
-    for (let i = 0; i < count; i += 1){
+    for (let i = 0; i < count; i += 1) {
       const p = document.createElement("div");
       p.className = "versejam-pixel";
       p.style.left = `${cx}px`;
@@ -2111,7 +2275,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     }
   }
 
-  function addFloatNote(btnEl, text){
+  function addFloatNote(btnEl, text) {
     const layer = document.getElementById("versejamFloatLayer");
     const board = document.getElementById("versejamBoard");
     if (!layer || !board || !btnEl) return;
@@ -2127,7 +2291,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     el.addEventListener("animationend", () => el.remove(), { once: true });
   }
 
-  function markPlaygroundPracticed(){
+  function markPlaygroundPracticed() {
     const verseId = ctx.verseId;
     if (!verseId) return { ok: false };
 
@@ -2138,7 +2302,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
       if (!progress.verses || typeof progress.verses !== "object") progress.verses = {};
       if (!progress.version) progress.version = 1;
 
-      if (!progress.verses[verseId]){
+      if (!progress.verses[verseId]) {
         progress.verses[verseId] = {
           learnCompleted: false,
           games: {}
@@ -2148,17 +2312,17 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
       progress.verses[verseId].lastPracticedAt = Date.now();
       localStorage.setItem("verseMemoryProgress", JSON.stringify(progress));
       return { ok: true };
-    } catch (err){
+    } catch (err) {
       console.warn("Verse Jam could not mark verse as practiced", err);
       return { ok: false };
     }
   }
 
-  function totalElapsedMs(){
+  function totalElapsedMs() {
     return Math.max(1, performance.now() - state.startTime);
   }
 
-  function renderIntro(){
+  function renderIntro() {
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
@@ -2178,11 +2342,12 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     });
   }
 
-  function renderMode(){
+  function renderMode() {
     window.VerseGameShell.renderModeSelect({
       app,
       title: "Choose Your Speed",
       icon: "🥁",
+      debugBadge: "VJ 1.0",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       backLabel: "Back to Verse Jam title",
@@ -2198,7 +2363,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     });
   }
 
-  function renderEnd(){
+  function renderEnd() {
     const seconds = (totalElapsedMs() / 1000).toFixed(1);
     window.VerseGameShell.renderCompleteScreen({
       app,
@@ -2214,7 +2379,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     });
 
     const center = document.querySelector(".vm-game-center");
-    if (center){
+    if (center) {
       const note = document.createElement("div");
       note.className = "vm-game-complete-stats";
       note.textContent = `You played the verse ${currentRoundConfigs().length} times · ${seconds}s`;
@@ -2223,7 +2388,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     }
   }
 
-  function helpHtml(){
+  function helpHtml() {
     return `
       Tap the next verse word to play its note.<br><br>
       Beginner: normal starting speed.<br>
@@ -2232,13 +2397,13 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     `;
   }
 
-  function setScreen(screen){
+  function setScreen(screen) {
     state.screen = screen;
     if (screen !== "game") stopRun();
     render();
   }
 
-  function render(){
+  function render() {
     if (state.screen === "intro") return renderIntro();
     if (state.screen === "mode") return renderMode();
     if (state.screen === "end") return renderEnd();
