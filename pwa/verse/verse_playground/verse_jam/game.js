@@ -26,7 +26,10 @@
   ];
 
   const INTRO_WORDS = ["tap", "the", "words", "match", "my", "beat"];
-  const ENDING_WORDS = ["that's", "the", "end!"];
+  const ENDING_LINES = [
+    { words: ["that's", "the", "end!"], className: "" },
+    { words: ["here's", "your", "score"], className: "is-response-phrase" }
+  ];
   // Fixed rhythm for: TAP THE WORDS (rest) MATCH MY BEAT
   // Q Q Q - | Q Q Q -
   const INTRO_RHYTHM_OFFSETS = [0, 1, 2, 4, 5, 6];
@@ -2346,31 +2349,39 @@
   function playEndingSting(startAt = audioCtx?.currentTime || 0) {
     if (!audioCtx || muted) return;
 
-    // Word melody resolves G -> E -> C.
+    const beat = secondsPerBeat();
+
+    // Two phrase melody:
+    // "that's / the / end!" lifts G -> A -> G,
+    // "here's / your / score" resolves E -> D -> C.
     [
-      { midi: 67, delay: 0.00, duration: 0.16, volume: 0.050, type: "square" },
-      { midi: 64, delay: secondsPerBeat(), duration: 0.16, volume: 0.050, type: "square" },
-      { midi: 60, delay: secondsPerBeat() * 2, duration: 0.34, volume: 0.060, type: "triangle" }
+      { midi: 67, beat: 0, duration: 0.15, volume: 0.050, type: "square" },
+      { midi: 69, beat: 1, duration: 0.15, volume: 0.050, type: "square" },
+      { midi: 67, beat: 2, duration: 0.22, volume: 0.052, type: "square" },
+
+      { midi: 64, beat: 4, duration: 0.15, volume: 0.050, type: "square" },
+      { midi: 62, beat: 5, duration: 0.15, volume: 0.050, type: "square" },
+      { midi: 60, beat: 6, duration: 0.36, volume: 0.062, type: "triangle" }
     ].forEach(note => {
       playTone({
         midi: note.midi,
-        when: startAt + note.delay,
+        when: startAt + beat * note.beat,
         duration: note.duration,
         volume: note.volume,
         type: note.type
       });
     });
 
-    // Soft C-major landing under the final word.
+    // Soft C-major landing under "score."
     [
-      { midi: 48, delay: secondsPerBeat() * 2.02, duration: 1.15, volume: 0.018, type: "triangle" },
-      { midi: 52, delay: secondsPerBeat() * 2.04, duration: 1.10, volume: 0.015, type: "triangle" },
-      { midi: 55, delay: secondsPerBeat() * 2.06, duration: 1.05, volume: 0.014, type: "triangle" },
-      { midi: 60, delay: secondsPerBeat() * 2.08, duration: 1.00, volume: 0.013, type: "triangle" }
+      { midi: 48, beat: 6.02, duration: 1.30, volume: 0.020, type: "triangle" },
+      { midi: 52, beat: 6.04, duration: 1.22, volume: 0.017, type: "triangle" },
+      { midi: 55, beat: 6.06, duration: 1.16, volume: 0.016, type: "triangle" },
+      { midi: 60, beat: 6.08, duration: 1.10, volume: 0.015, type: "triangle" }
     ].forEach(note => {
       playTone({
         midi: note.midi,
-        when: startAt + note.delay,
+        when: startAt + beat * note.beat,
         duration: note.duration,
         volume: note.volume,
         type: note.type
@@ -2433,25 +2444,31 @@
     const stack = document.getElementById("versejamIntroStack");
     if (!stack) return;
 
+    const beat = secondsPerBeat();
     const startAt = nextMeasureStartTime();
 
     playEndingSting(startAt);
 
-    for (let i = 0; i < ENDING_WORDS.length; i += 1) {
-      if (!isGameplayFlowActive(flowId)) return;
+    for (let lineIndex = 0; lineIndex < ENDING_LINES.length; lineIndex += 1) {
+      const line = ENDING_LINES[lineIndex];
+      const lineStartBeat = lineIndex * 4;
 
-      const eventTime = startAt + i * secondsPerBeat();
-      await waitUntilAudioTime(eventTime);
+      for (let wordIndex = 0; wordIndex < line.words.length; wordIndex += 1) {
+        if (!isGameplayFlowActive(flowId)) return;
 
-      const el = document.createElement("div");
-      el.className = "versejam-intro-word is-in";
-      el.textContent = ENDING_WORDS[i];
-      stack.appendChild(el);
+        const eventTime = startAt + beat * (lineStartBeat + wordIndex);
+        await waitUntilAudioTime(eventTime);
 
-      noteGameplayActivity();
+        const el = document.createElement("div");
+        el.className = `versejam-intro-word is-in ${line.className}`.trim();
+        el.textContent = line.words[wordIndex];
+        stack.appendChild(el);
+
+        noteGameplayActivity();
+      }
     }
 
-    await waitUntilAudioTime(startAt + secondsPerBeat() * 4);
+    await waitUntilAudioTime(startAt + beat * 8);
   }
 
 
@@ -2584,7 +2601,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.4",
+      debugBadge: "VJ 2.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
