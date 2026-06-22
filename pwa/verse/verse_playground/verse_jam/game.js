@@ -50,6 +50,12 @@
   const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const PAD_NOTES = [48, 52, 55, 60];
 
+  // Long background pad that starts in Jam and later rounds.
+  // Kept separate from word/cue volumes because a sustained chord stacks up fast.
+  const PAD_VOLUME = 0.016;
+  const PAD_DURATION_BEATS = 7.25;
+  const PAD_WAVE_TYPE = "triangle";
+
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
 
   const SOUND_BIT_BASE_URL = "./verse_jam_sounds/";
@@ -1109,6 +1115,53 @@
     return window.VerseGameShell.tokenizeVerseWords(String(value || ""));
   }
 
+  function joinEchoPartText(first, second) {
+    return [first, second]
+      .map(part => String(part || "").trim())
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function normalizeEchoPartsForJam(rawParts) {
+    const parts = Array.isArray(rawParts)
+      ? rawParts.map(part => String(part || "").trim()).filter(Boolean)
+      : [];
+
+    if (!parts.length) return [];
+
+    const normalized = [];
+
+    for (let index = 0; index < parts.length; index += 1) {
+      const part = parts[index];
+      const wordCount = tokenizeWords(part).length;
+
+      if (!wordCount) continue;
+
+      // One-word chunks like "Behold." are too short to be a fun round.
+      // Prefer merging forward so the word becomes the start of the next phrase.
+      if (wordCount === 1 && index < parts.length - 1) {
+        parts[index + 1] = joinEchoPartText(part, parts[index + 1]);
+        continue;
+      }
+
+      // If the final echoPart is one word, merge it backward instead.
+      if (wordCount === 1 && normalized.length) {
+        normalized[normalized.length - 1] = joinEchoPartText(
+          normalized[normalized.length - 1],
+          part
+        );
+        continue;
+      }
+
+      normalized.push(part);
+    }
+
+    return normalized;
+  }
+
+
   function splitReferenceForJamButtons(referenceLabel) {
     const raw = String(referenceLabel || "").trim();
 
@@ -1241,9 +1294,7 @@
   }
 
   function buildChunkWordGroups() {
-    const echoParts = Array.isArray(state.verseJson?.echoParts)
-      ? state.verseJson.echoParts.filter(part => String(part || "").trim())
-      : [];
+    const echoParts = normalizeEchoPartsForJam(state.verseJson?.echoParts);
 
     if (!echoParts.length) {
       const groups = [];
@@ -1259,6 +1310,7 @@
     echoParts.forEach((part) => {
       const count = tokenizeWords(part).length;
       if (!count) return;
+
       groups.push({ start: cursor, count });
       cursor += count;
     });
@@ -1547,9 +1599,18 @@
   function schedulePad(generation = musicGeneration) {
     if (generation !== musicGeneration) return;
     if (!audioCtx || muted || !currentRound().pad) return;
+
     const when = audioCtx.currentTime + 0.06;
+    const duration = secondsPerBeat() * PAD_DURATION_BEATS;
+
     PAD_NOTES.forEach((midi) => {
-      playTone({ midi, when, duration: secondsPerBeat() * 7.5, volume: 0.025, type: "triangle" });
+      playTone({
+        midi,
+        when,
+        duration,
+        volume: PAD_VOLUME,
+        type: PAD_WAVE_TYPE
+      });
     });
   }
 
@@ -2400,7 +2461,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.0",
+      debugBadge: "VJ 2.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
