@@ -339,33 +339,6 @@ body{
   max-width:var(--vj-button-stack-max);
 }
 
-.versejam-button-stack.is-many-buttons {
-  max-width: min(500px, 100%);
-  gap: 8px;
-}
-
-.versejam-button-stack.is-dense-buttons {
-  max-width: min(540px, 100%);
-  gap: 7px;
-}
-
-.versejam-button-stack.is-extra-dense-buttons {
-  max-width: min(580px, 100%);
-  gap: 6px;
-}
-
-.versejam-button-stack.is-many-buttons .versejam-word-stack {
-  gap: 8px;
-}
-
-.versejam-button-stack.is-dense-buttons .versejam-word-stack {
-  gap: 7px;
-}
-
-.versejam-button-stack.is-extra-dense-buttons .versejam-word-stack {
-  gap: 6px;
-}
-
 .versejam-intro-word{
   align-self:center;
   min-width:62%;
@@ -415,26 +388,6 @@ body{
   transition:transform 90ms linear, filter 140ms ease, opacity 180ms ease, background 180ms ease;
   cursor:pointer;
   overflow:hidden;
-}
-
-.versejam-button-stack.is-many-buttons .versejam-word-btn {
-  border-radius: 22px;
-  padding: 13px 14px 15px;
-  font-size: clamp(1.08rem, 5.1vw, 1.62rem);
-}
-
-.versejam-button-stack.is-dense-buttons .versejam-word-btn {
-  border-radius: 20px;
-  padding: 11px 13px 13px;
-  font-size: clamp(1rem, 4.7vw, 1.48rem);
-  line-height: 1;
-}
-
-.versejam-button-stack.is-extra-dense-buttons .versejam-word-btn {
-  border-radius: 18px;
-  padding: 9px 12px 11px;
-  font-size: clamp(.92rem, 4.25vw, 1.34rem);
-  line-height: .98;
 }
 
 .versejam-word-btn::after{
@@ -697,27 +650,6 @@ body{
     font-size: clamp(1rem, 5.15vw, 1.38rem);
   }
 }
-
-    .versejam-button-stack.is-many-buttons,
-    .versejam-button-stack.is-dense-buttons,
-    .versejam-button-stack.is-extra-dense-buttons {
-      gap: 5px;
-    }
-  
-    .versejam-button-stack.is-many-buttons .versejam-word-stack,
-    .versejam-button-stack.is-dense-buttons .versejam-word-stack,
-    .versejam-button-stack.is-extra-dense-buttons .versejam-word-stack {
-      gap: 5px;
-    }
-  
-    .versejam-button-stack.is-many-buttons .versejam-word-btn,
-    .versejam-button-stack.is-dense-buttons .versejam-word-btn,
-    .versejam-button-stack.is-extra-dense-buttons .versejam-word-btn {
-      padding: 7px 10px 9px;
-      border-radius: 16px;
-      font-size: clamp(.84rem, 4.4vw, 1.12rem);
-      line-height: .96;
-    }
 
 .versejam-word-btn{
   touch-action:manipulation;
