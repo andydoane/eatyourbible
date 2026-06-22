@@ -439,11 +439,91 @@ body{
 
 @media (max-height:680px){
   .versejam-root{padding:8px;}
-  .versejam-stage{min-height:calc(100svh - 16px); gap:8px;}
-  .versejam-board-content{padding:10px;}
-  .versejam-main-area{padding-top:44px; padding-bottom:12px;}
+  .versejam-stage{min-height:calc(100svh - 16px); gap:7px;}
+  .versejam-board{border-radius:22px;}
+  .versejam-board-content{padding:9px;}
+  .versejam-overlay-pills{top:9px; left:9px; right:9px;}
+  .versejam-pill{padding:6px 10px; font-size:.88rem;}
+  .versejam-main-area{padding-top:38px; padding-bottom:8px;}
+  .versejam-intro-stack{gap:6px;}
+  .versejam-intro-word{
+    min-width:54%;
+    padding:9px 12px 10px;
+    border-radius:18px;
+    font-size:clamp(1rem,5.7vw,1.55rem);
+    box-shadow:0 10px 18px rgba(0,0,0,.20), inset 0 -4px 0 rgba(0,0,0,.10);
+  }
   .versejam-button-stack{gap:7px;}
+  .versejam-word-stack{gap:7px;}
+  .versejam-cue-button{padding:9px 13px 11px; font-size:clamp(1rem,4.8vw,1.38rem);}
   .versejam-word-btn{padding:11px 12px 13px; border-radius:20px;}
+}
+
+@media (max-height:600px) {
+  .versejam-root {
+    padding: 6px;
+  }
+
+  .versejam-stage {
+    min-height: calc(100svh - 12px);
+    gap: 6px;
+  }
+
+  .versejam-board {
+    border-radius: 20px;
+  }
+
+  .versejam-board-content {
+    padding: 8px;
+  }
+
+  .versejam-main-area {
+    padding-top: 34px;
+    padding-bottom: 6px;
+  }
+
+  .versejam-overlay-pills {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .versejam-pill {
+    padding: 5px 9px;
+    font-size: .8rem;
+  }
+
+  .versejam-intro-stack {
+    gap: 5px;
+  }
+
+  .versejam-intro-word {
+    min-width: 50%;
+    padding: 7px 10px 8px;
+    border-radius: 16px;
+    font-size: clamp(.92rem, 5.1vw, 1.28rem);
+    letter-spacing: .015em;
+  }
+
+  .versejam-button-stack {
+    gap: 6px;
+  }
+
+  .versejam-word-stack {
+    gap: 6px;
+  }
+
+  .versejam-cue-button {
+    padding: 8px 11px 10px;
+    font-size: clamp(.92rem, 4.4vw, 1.22rem);
+    letter-spacing: .035em;
+  }
+
+  .versejam-word-btn {
+    padding: 9px 10px 11px;
+    border-radius: 18px;
+    font-size: clamp(1rem, 5.15vw, 1.38rem);
+  }
 }
 
 .versejam-word-btn{

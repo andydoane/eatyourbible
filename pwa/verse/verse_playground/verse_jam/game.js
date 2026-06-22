@@ -8,7 +8,7 @@
   const GAME_TITLE = "Verse Jam";
   const GAME_ICON = "🎹";
   const HELP_OVERLAY_ID = "verseJamHelpOverlay";
-  const BUILD_AREA = "large";
+  const BUILD_AREA = "compact";
 
   const GAME_THEME = {
     bg: "transparent",
@@ -2335,7 +2335,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 1.2",
+      debugBadge: "VJ 1.3",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
