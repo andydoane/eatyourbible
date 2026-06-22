@@ -168,22 +168,18 @@ body{
 }
 
 .versejam-headphones-copy {
-  max-width: 360px;
+  max-width: 380px;
+  margin: 0;
   font-family: "Baloo 2", system-ui, sans-serif;
   font-size: clamp(1.12rem, 5vw, 1.45rem);
   line-height: 1.14;
   font-weight: 800;
   color: #fff7e8;
+  text-wrap: balance;
+  text-wrap: pretty;
   text-shadow: 0 2px 0 rgba(0, 0, 0, .18);
 }
 
-.versejam-headphones-copy p {
-  margin: 0 0 10px;
-}
-
-.versejam-headphones-copy p:last-child {
-  margin-bottom: 0;
-}
 
 .versejam-headphones-button {
   border: 0;
@@ -229,9 +225,6 @@ body{
     line-height: 1.08;
   }
 
-  .versejam-headphones-copy p {
-    margin-bottom: 7px;
-  }
 
   .versejam-headphones-button {
     padding: 10px 24px 12px;

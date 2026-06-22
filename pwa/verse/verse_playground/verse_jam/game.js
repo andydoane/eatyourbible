@@ -2335,7 +2335,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 1.7",
+      debugBadge: "VJ 1.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -2390,10 +2390,9 @@
 
           <div class="versejam-headphones-title">HEADS UP!</div>
 
-          <div class="versejam-headphones-copy">
-            <p>Some wireless headphones have a delay.</p>
-            <p>If the beat feels late, try your phone's speaker or wired headphones.</p>
-          </div>
+          <p class="versejam-headphones-copy">
+            Some wireless headphones have a delay. If the beat feels late, try your phone's speaker or wired headphones.
+          </p>
 
           <button class="versejam-headphones-button" type="button" id="verseJamHeadphonesGotIt">
             Got it!
