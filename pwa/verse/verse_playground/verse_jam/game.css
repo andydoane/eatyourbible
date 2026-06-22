@@ -85,12 +85,12 @@ body{
   display:flex;
   align-items:stretch;
   justify-content:center;
-  padding:12px;
+  padding:10px 0 0;
 }
 
 .versejam-stage{
   width:min(var(--vj-stage-max),100%);
-  min-height:calc(100svh - 24px);
+  min-height:calc(100svh - 10px);
   display:flex;
   flex-direction:column;
   gap:10px;
@@ -115,7 +115,7 @@ body{
   flex:1 1 auto;
   min-height:0;
   overflow:hidden;
-  border-radius:28px;
+  border-radius:0;
   background:
     linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06)),
     radial-gradient(circle at 30% 10%, rgba(141,247,255,.14), transparent 28%),
@@ -419,11 +419,11 @@ body{
 
 @media (min-width:760px){
   .versejam-root{
-    padding:18px;
+    padding:14px 0 0;
   }
 
   .versejam-stage{
-    min-height:calc(100svh - 36px);
+    min-height:calc(100svh - 14px);
     gap:14px;
   }
 
@@ -438,13 +438,13 @@ body{
 }
 
 @media (max-height:680px){
-  .versejam-root{padding:8px;}
-  .versejam-stage{min-height:calc(100svh - 16px); gap:7px;}
-  .versejam-board{border-radius:22px;}
+  .versejam-root{padding:6px 0 0;}
+  .versejam-stage{min-height:calc(100svh - 6px); gap:7px;}
+  .versejam-board{border-radius:0;}
   .versejam-board-content{padding:9px;}
   .versejam-overlay-pills{top:9px; left:9px; right:9px;}
   .versejam-pill{padding:6px 10px; font-size:.88rem;}
-  .versejam-main-area{padding-top:38px; padding-bottom:8px;}
+  .versejam-main-area{padding-top:38px; padding-bottom:6px;}
   .versejam-intro-stack{gap:6px;}
   .versejam-intro-word{
     min-width:54%;
@@ -461,16 +461,16 @@ body{
 
 @media (max-height:600px) {
   .versejam-root {
-    padding: 6px;
+    padding: 4px 0 0;
   }
 
   .versejam-stage {
-    min-height: calc(100svh - 12px);
+    min-height: calc(100svh - 4px);
     gap: 6px;
   }
 
   .versejam-board {
-    border-radius: 20px;
+    border-radius: 0;
   }
 
   .versejam-board-content {
