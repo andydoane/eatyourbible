@@ -26,6 +26,7 @@
   ];
 
   const INTRO_WORDS = ["tap", "the", "words", "match", "my", "beat"];
+  const ENDING_WORDS = ["that's", "the", "end!"];
   // Fixed rhythm for: TAP THE WORDS (rest) MATCH MY BEAT
   // Q Q Q - | Q Q Q -
   const INTRO_RHYTHM_OFFSETS = [0, 1, 2, 4, 5, 6];
@@ -146,8 +147,7 @@
     slow: [
       { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
       { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
-      { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
-      { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
+      { name: "Finale", bpm: 104, loop: "final", cue: "rainbow", explosion: 1.75, echo: false, pad: true }
     ],
 
     medium: [
@@ -2324,6 +2324,14 @@
         return;
       }
 
+      await waitUntilAudioTime(nextMeasureStartTime());
+
+      if (!isGameplayFlowActive(flowId)) return;
+
+      await showEndingSequence(flowId);
+
+      if (!isGameplayFlowActive(flowId)) return;
+
       state.completed = true;
       stopRun();
       setScreen("end");
@@ -2334,6 +2342,42 @@
     const pill = document.getElementById("versejamRoundPill");
     if (pill) pill.textContent = currentRound().name;
   }
+
+  function playEndingSting(startAt = audioCtx?.currentTime || 0) {
+    if (!audioCtx || muted) return;
+
+    // Word melody resolves G -> E -> C.
+    [
+      { midi: 67, delay: 0.00, duration: 0.16, volume: 0.050, type: "square" },
+      { midi: 64, delay: secondsPerBeat(), duration: 0.16, volume: 0.050, type: "square" },
+      { midi: 60, delay: secondsPerBeat() * 2, duration: 0.34, volume: 0.060, type: "triangle" }
+    ].forEach(note => {
+      playTone({
+        midi: note.midi,
+        when: startAt + note.delay,
+        duration: note.duration,
+        volume: note.volume,
+        type: note.type
+      });
+    });
+
+    // Soft C-major landing under the final word.
+    [
+      { midi: 48, delay: secondsPerBeat() * 2.02, duration: 1.15, volume: 0.018, type: "triangle" },
+      { midi: 52, delay: secondsPerBeat() * 2.04, duration: 1.10, volume: 0.015, type: "triangle" },
+      { midi: 55, delay: secondsPerBeat() * 2.06, duration: 1.05, volume: 0.014, type: "triangle" },
+      { midi: 60, delay: secondsPerBeat() * 2.08, duration: 1.00, volume: 0.013, type: "triangle" }
+    ].forEach(note => {
+      playTone({
+        midi: note.midi,
+        when: startAt + note.delay,
+        duration: note.duration,
+        volume: note.volume,
+        type: note.type
+      });
+    });
+  }
+
 
   function playRoundTransitionSting() {
     if (!audioCtx || muted) return;
@@ -2377,6 +2421,39 @@
       });
     });
   }
+
+  async function showEndingSequence(flowId = gameplayGeneration) {
+    if (!isGameplayFlowActive(flowId)) return;
+
+    const area = document.getElementById("versejamMainArea");
+    if (!area) return;
+
+    area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
+
+    const stack = document.getElementById("versejamIntroStack");
+    if (!stack) return;
+
+    const startAt = nextMeasureStartTime();
+
+    playEndingSting(startAt);
+
+    for (let i = 0; i < ENDING_WORDS.length; i += 1) {
+      if (!isGameplayFlowActive(flowId)) return;
+
+      const eventTime = startAt + i * secondsPerBeat();
+      await waitUntilAudioTime(eventTime);
+
+      const el = document.createElement("div");
+      el.className = "versejam-intro-word is-in";
+      el.textContent = ENDING_WORDS[i];
+      stack.appendChild(el);
+
+      noteGameplayActivity();
+    }
+
+    await waitUntilAudioTime(startAt + secondsPerBeat() * 4);
+  }
+
 
 
   async function showRoundTransition({ alreadyAligned = false } = {}) {
@@ -2507,7 +2584,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.3",
+      debugBadge: "VJ 2.4",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
