@@ -48,7 +48,7 @@
   ];
 
   const REFERENCE_CADENCE_NOTES = [60, 64, 67];
-  const PAD_NOTES = [55, 60, 67];
+  const PAD_NOTES = [62, 67, 72];
 
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
 
