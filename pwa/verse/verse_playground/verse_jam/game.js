@@ -2228,28 +2228,93 @@
     if (pill) pill.textContent = currentRound().name;
   }
 
+  function playRoundTransitionSting() {
+    if (!audioCtx || muted) return;
+
+    const now = audioCtx.currentTime;
+
+    if (state.roundIndex === 1) {
+      // Bright "time to jam!" lift: C power/pop chord with a little sparkle.
+      [
+        { midi: 60, delay: 0.000, duration: 0.42, volume: 0.055, type: "triangle" },
+        { midi: 67, delay: 0.015, duration: 0.42, volume: 0.052, type: "triangle" },
+        { midi: 72, delay: 0.030, duration: 0.46, volume: 0.050, type: "triangle" },
+        { midi: 76, delay: 0.045, duration: 0.38, volume: 0.040, type: "square" },
+        { midi: 79, delay: 0.060, duration: 0.34, volume: 0.034, type: "square" },
+        { midi: 84, delay: 0.130, duration: 0.18, volume: 0.030, type: "square" }
+      ].forEach(note => {
+        playTone({
+          midi: note.midi,
+          when: now + note.delay,
+          duration: note.duration,
+          volume: note.volume,
+          type: note.type
+        });
+      });
+
+      return;
+    }
+
+    // Later round changes stay punchy but smaller than the first jam lift.
+    [
+      { midi: 72, delay: 0.000, duration: 0.18, volume: 0.040, type: "square" },
+      { midi: 76, delay: 0.055, duration: 0.18, volume: 0.036, type: "square" },
+      { midi: 79, delay: 0.110, duration: 0.22, volume: 0.034, type: "square" }
+    ].forEach(note => {
+      playTone({
+        midi: note.midi,
+        when: now + note.delay,
+        duration: note.duration,
+        volume: note.volume,
+        type: note.type
+      });
+    });
+  }
+
+
   async function showRoundTransition({ alreadyAligned = false } = {}) {
     if (state.paused) return;
+
     const area = document.getElementById("versejamMainArea");
     if (!area) return;
-    const message = state.roundIndex === 1 ? ["nice!", "now", "jam"] : ["speed", "it", "up"];
+
+    const message = state.roundIndex === 1 ? ["time", "to", "jam!"] : ["speed", "it", "up"];
+
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
+
     const stack = document.getElementById("versejamIntroStack");
+    if (!stack) return;
 
     if (!alreadyAligned) {
       await sleep(nextMeasureDelayMs());
     }
 
+    playRoundTransitionSting();
+
     for (const word of message) {
       if (state.screen !== "game" || state.paused) return;
+
       const el = document.createElement("div");
       el.className = "versejam-intro-word is-in";
       el.textContent = word;
       stack.appendChild(el);
-      const transitionNotes = [72, 76, 79]; // C, E, G — same C-centered sound as the main verse notes
-      playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.length], when: audioCtx.currentTime, duration: 0.14, volume: 0.09, type: "square" });
+
+      // Keep the word pops light now that the transition has a fuller sting.
+      const transitionNotes = state.roundIndex === 1
+        ? [76, 79, 84]
+        : [72, 76, 79];
+
+      playTone({
+        midi: transitionNotes[(stack.children.length - 1) % transitionNotes.length],
+        when: audioCtx?.currentTime || 0,
+        duration: 0.11,
+        volume: 0.045,
+        type: "square"
+      });
+
       await sleep(secondsPerBeat() * 1000);
     }
+
     await sleep(secondsPerBeat() * 2 * 1000);
   }
 
@@ -2335,7 +2400,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 1.8",
+      debugBadge: "VJ 1.9",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
