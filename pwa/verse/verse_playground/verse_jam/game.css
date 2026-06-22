@@ -120,8 +120,8 @@ body{
 }
 
 .versejam-build{
-  background:transparent !important;
-  box-shadow:none;
+  background:rgba(255,255,255,.94) !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.65);
 }
 
 .versejam-play-wrap{
