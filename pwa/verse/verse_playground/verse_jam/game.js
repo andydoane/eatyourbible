@@ -1322,23 +1322,6 @@
     return groups.filter(group => group.count > 0);
   }
 
-  function buttonStackFitClass(buttons) {
-    const items = Array.isArray(buttons) ? buttons.filter(Boolean) : [];
-    const count = items.length;
-    const longestLabelLength = items.reduce((max, button) => {
-      return Math.max(max, String(button?.label || "").length);
-    }, 0);
-
-    const classes = [];
-
-    if (count >= 5) classes.push("is-many-buttons");
-    if (count >= 7 || longestLabelLength >= 18) classes.push("is-dense-buttons");
-    if (count >= 8 || longestLabelLength >= 26) classes.push("is-extra-dense-buttons");
-
-    return classes.join(" ");
-  }
-
-
   function makeChunkButtons() {
     const phase = getPhase();
     const buttons = [];
@@ -2008,10 +1991,8 @@
     const area = document.getElementById("versejamMainArea");
     if (!area || !isGameplayFlowActive(flowId)) return;
 
-    const stackFitClass = buttonStackFitClass(state.currentButtons);
-
     area.innerHTML = `
-      <div class="versejam-button-stack ${stackFitClass}" id="versejamButtonStack">
+      <div class="versejam-button-stack" id="versejamButtonStack">
         <button class="versejam-cue-button versejam-cue-listen" id="versejamCueButton" type="button" disabled>LISTEN</button>
         <div class="versejam-word-stack" id="versejamWordStack"></div>
       </div>
@@ -2480,7 +2461,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.3",
+      debugBadge: "VJ 2.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
