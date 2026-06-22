@@ -1,3 +1,19 @@
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Titan One";
+  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root{
   --vj-bg:#221447;
   --vj-accent:#8df7ff;
@@ -34,6 +50,7 @@ body{
   margin:0;
   overflow:hidden;
   touch-action:manipulation;
+  font-family:"Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* Verse Jam owns the full-screen background.
@@ -47,6 +64,7 @@ body{
   display:block;
   overflow:hidden;
   text-align:initial;
+  font-family:"Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background:var(--vj-page-bg);
 }
 
@@ -162,6 +180,9 @@ body{
 }
 
 .versejam-round-pill{
+  font-family:"Titan One", "Baloo 2", system-ui, sans-serif;
+  font-weight:400;
+  letter-spacing:.025em;
   background:rgba(141,247,255,.92);
 }
 
@@ -198,9 +219,11 @@ body{
   border-radius:22px;
   padding:14px 18px;
   text-align:center;
+  font-family:"Titan One", "Baloo 2", system-ui, sans-serif;
   font-size:clamp(1.25rem,7vw,2.25rem);
   line-height:1;
-  font-weight:900;
+  font-weight:400;
+  letter-spacing:.025em;
   color:#261840;
   background:linear-gradient(180deg,#fff4a9,#ffe27a);
   box-shadow:0 14px 24px rgba(0,0,0,.22), inset 0 -5px 0 rgba(0,0,0,.10);
@@ -440,7 +463,8 @@ body{
   padding:18px 26px 20px;
   font-size:clamp(2rem,13vw,4.25rem);
   line-height:.9;
-  font-weight:900;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-weight: 400;
   letter-spacing:.02em;
   color:#271841;
   text-shadow:0 2px 0 rgba(255,255,255,.45);
@@ -472,11 +496,11 @@ body{
   border:0;
   border-radius:999px;
   padding:12px 18px 14px;
-  font-family:inherit;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
   font-size:clamp(1.12rem,5vw,1.65rem);
   line-height:1;
-  font-weight:900;
-  letter-spacing:.05em;
+  font-weight: 400;
+  letter-spacing: .045em;
   color:#261840;
   text-align:center;
   transform:scale(var(--vj-beat-scale,1));
