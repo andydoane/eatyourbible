@@ -247,18 +247,7 @@
     return DEFAULT_CANVAS_COMPLETION_THRESHOLD;
   }
 
-  function currentBrushRadius(round = roundConfig()) {
-    if (Number.isFinite(round?.brushRadius)) return round.brushRadius;
-
-    const width = stageEl?.getBoundingClientRect?.().width || window.innerWidth || 0;
-    if (!width) return DEFAULT_BRUSH_RADIUS;
-
-    return clamp(
-      width * RESPONSIVE_BRUSH_WIDTH_RATIO,
-      RESPONSIVE_BRUSH_MIN,
-      RESPONSIVE_BRUSH_MAX
-    );
-  }
+      debugBadge: "SS 1.7",
 
   function dismissInstructionChip() {
     const root = document.getElementById("scrubGame");
@@ -1549,7 +1538,8 @@
     const rect = stageEl.getBoundingClientRect();
 
     const sweep = document.createElement("div");
-    sweep.className = "scrub-clean-sweep";
+    const sweepRoundId = String(roundConfig()?.id || "default").replace(/[^a-z0-9_-]/gi, "");
+    sweep.className = `scrub-clean-sweep scrub-clean-sweep-${sweepRoundId}`;
     stageEl.appendChild(sweep);
 
     const start = performance.now();

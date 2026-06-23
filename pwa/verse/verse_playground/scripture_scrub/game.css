@@ -816,58 +816,117 @@ body{
   position: absolute;
   inset: 0 auto 0 0;
   z-index: 42;
-  width: 38%;
+  width: 42%;
   pointer-events: none;
+  overflow: visible;
   background:
+    radial-gradient(circle at 52% 18%, rgba(255,255,255,.96) 0 4px, transparent 5px),
+    radial-gradient(circle at 42% 33%, rgba(255,255,255,.84) 0 7px, transparent 8px),
+    radial-gradient(circle at 66% 51%, rgba(255,255,255,.90) 0 5px, transparent 6px),
+    radial-gradient(circle at 46% 69%, rgba(255,255,255,.78) 0 8px, transparent 9px),
+    radial-gradient(circle at 59% 84%, rgba(255,255,255,.88) 0 4px, transparent 5px),
     linear-gradient(90deg,
       rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, .28) 25%,
-      rgba(255, 255, 255, .96) 50%,
-      rgba(255, 255, 255, .48) 68%,
+      rgba(255, 246, 207, .20) 16%,
+      rgba(255, 255, 255, .88) 43%,
+      rgba(216, 243, 246, .74) 58%,
+      rgba(255, 255, 255, .46) 72%,
       rgba(255, 255, 255, 0) 100%);
-  transform: translateX(-112%) scaleX(.02);
+  transform: translateX(-118%) scaleX(.2);
   transform-origin: left center;
-  clip-path: inset(0 100% 0 0);
-  mix-blend-mode: screen;
-  filter: drop-shadow(0 0 18px rgba(255,255,255,.85));
-  animation: scrubCleanSweepMove 1250ms ease-in-out both;
+  border-radius: 999px;
+  filter:
+    drop-shadow(0 0 16px rgba(255,255,255,.88))
+    drop-shadow(0 0 28px rgba(216,243,246,.58));
+  opacity: 0;
+  animation: scrubCleanSweepMove 1250ms cubic-bezier(.65, 0, .35, 1) both;
+}
+
+.scrub-clean-sweep::before,
+.scrub-clean-sweep::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.scrub-clean-sweep::before{
+  background:
+    radial-gradient(circle at 22% 22%, rgba(255,255,255,.96) 0 6px, transparent 7px),
+    radial-gradient(circle at 30% 42%, rgba(255,255,255,.78) 0 4px, transparent 5px),
+    radial-gradient(circle at 24% 61%, rgba(255,255,255,.92) 0 8px, transparent 9px),
+    radial-gradient(circle at 34% 78%, rgba(255,255,255,.72) 0 5px, transparent 6px);
+  transform: translateX(-18%);
+  animation: scrubSweepBubblesFloat 720ms ease-in-out infinite alternate;
+}
+
+.scrub-clean-sweep::after{
+  left: auto;
+  right: -10%;
+  width: 32%;
+  background:
+    linear-gradient(90deg,
+      rgba(255,255,255,0),
+      rgba(255,255,255,.72),
+      rgba(255,255,255,0));
+  filter: blur(5px);
+  opacity: .86;
+}
+
+.scrub-clean-sweep-mud{
+  background:
+    radial-gradient(circle at 52% 18%, rgba(255,255,255,.96) 0 4px, transparent 5px),
+    radial-gradient(circle at 42% 33%, rgba(255,255,255,.84) 0 7px, transparent 8px),
+    radial-gradient(circle at 66% 51%, rgba(255,255,255,.90) 0 5px, transparent 6px),
+    radial-gradient(circle at 46% 69%, rgba(255,255,255,.78) 0 8px, transparent 9px),
+    radial-gradient(circle at 59% 84%, rgba(255,255,255,.88) 0 4px, transparent 5px),
+    linear-gradient(90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 241, 189, .34) 18%,
+      rgba(255, 255, 255, .95) 44%,
+      rgba(255, 247, 220, .82) 60%,
+      rgba(255, 255, 255, .42) 74%,
+      rgba(255, 255, 255, 0) 100%);
+  filter:
+    drop-shadow(0 0 16px rgba(255,255,255,.92))
+    drop-shadow(0 0 26px rgba(255,199,81,.42));
 }
 
 @keyframes scrubCleanSweepMove {
   0% {
-    transform: translateX(-112%) scaleX(.02);
-    clip-path: inset(0 100% 0 0);
+    transform: translateX(-122%) scaleX(.28);
     opacity: 0;
   }
 
-  8% {
-    transform: translateX(-108%) scaleX(.08);
-    clip-path: inset(0 96% 0 0);
+  10% {
+    transform: translateX(-110%) scaleX(.42);
     opacity: 1;
   }
 
-  22% {
-    transform: translateX(-72%) scaleX(.42);
-    clip-path: inset(0 58% 0 0);
-    opacity: 1;
-  }
-
-  46% {
-    transform: translateX(18%) scaleX(1);
-    clip-path: inset(0 0 0 0);
+  42% {
+    transform: translateX(8%) scaleX(1);
     opacity: 1;
   }
 
   82% {
-    transform: translateX(205%) scaleX(.92);
-    clip-path: inset(0 0 0 0);
+    transform: translateX(188%) scaleX(.92);
     opacity: 1;
   }
 
   100% {
-    transform: translateX(286%) scaleX(.25);
-    clip-path: inset(0 0 0 72%);
+    transform: translateX(284%) scaleX(.38);
     opacity: 0;
+  }
+}
+
+@keyframes scrubSweepBubblesFloat {
+  from {
+    transform: translateX(-18%) translateY(-8px);
+  }
+
+  to {
+    transform: translateX(-10%) translateY(8px);
   }
 }
 
