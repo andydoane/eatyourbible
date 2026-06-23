@@ -37,6 +37,9 @@
 
   const DEFAULT_CANVAS_COMPLETION_THRESHOLD = 0.95;
   const DEFAULT_BRUSH_RADIUS = 38;
+  const RESPONSIVE_BRUSH_MIN = 34;
+  const RESPONSIVE_BRUSH_MAX = 56;
+  const RESPONSIVE_BRUSH_WIDTH_RATIO = 0.075;
 
   const ROUND_COMPLETION_THRESHOLDS = {
     mud: 0.95,
@@ -52,7 +55,7 @@
       introTitle: "Wipe off the Mud",
       icon: "🟤",
       intro: "Wipe off the mud.",
-      instruction: "Drag to wipe away the mud.",
+      instruction: "Wipe away the mud.",
       kind: "canvas",
       texture: "mud",
       rewardIcon: "✨",
@@ -245,7 +248,16 @@
   }
 
   function currentBrushRadius(round = roundConfig()) {
-    return Number.isFinite(round?.brushRadius) ? round.brushRadius : DEFAULT_BRUSH_RADIUS;
+    if (Number.isFinite(round?.brushRadius)) return round.brushRadius;
+
+    const width = stageEl?.getBoundingClientRect?.().width || window.innerWidth || 0;
+    if (!width) return DEFAULT_BRUSH_RADIUS;
+
+    return clamp(
+      width * RESPONSIVE_BRUSH_WIDTH_RATIO,
+      RESPONSIVE_BRUSH_MIN,
+      RESPONSIVE_BRUSH_MAX
+    );
   }
 
   function dismissInstructionChip() {
@@ -295,7 +307,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 1.5",
+      debugBadge: "SS 1.6",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
