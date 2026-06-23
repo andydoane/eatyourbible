@@ -67,7 +67,7 @@
       introTitle: "Clean the Paint",
       icon: "🎨",
       intro: "Clean off the paint.",
-      instruction: "Drag to scrub away the paint.",
+      instruction: "Clean the paint.",
       kind: "canvas",
       texture: "paint",
       rewardIcon: "🌈",
@@ -79,7 +79,7 @@
       introTitle: "Wipe the Fog",
       icon: "🪟",
       intro: "Wipe off the foggy window.",
-      instruction: "Drag to clear the fog.",
+      instruction: "Wipe the fog.",
       kind: "canvas",
       texture: "fog",
       rewardIcon: "☀️",
@@ -90,7 +90,7 @@
       title: "Raking Leaves",
       introTitle: "Rake the Leaves",
       icon: "🍂",
-      intro: "Rake away the leaves.",
+      intro: "Rake the leaves.",
       instruction: "Swipe through the leaves to rake them away.",
       kind: "leaves",
       rewardIcon: "🍁",
@@ -337,7 +337,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 2.6",
+      debugBadge: "SS 2.7",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1587,8 +1587,14 @@
     completionLocked = true;
     pointerDown = false;
 
+    const round = roundConfig();
+
     if (coverCanvas) {
       coverCanvas.style.pointerEvents = "none";
+    }
+
+    if (stageEl && (round.id === "mud" || round.id === "paint")) {
+      stageEl.classList.add("scrub-cleaning-up");
     }
 
     animateAutoCleanCover(() => {
@@ -1596,7 +1602,10 @@
       updateProgress(1);
       clearRemainingObjects();
 
-      if (stageEl) stageEl.classList.add("scrub-round-complete");
+      if (stageEl) {
+        stageEl.classList.remove("scrub-cleaning-up");
+        stageEl.classList.add("scrub-round-complete");
+      }
 
       launchSparkles();
       showNextRoundPill();

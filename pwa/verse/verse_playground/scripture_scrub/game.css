@@ -262,6 +262,19 @@ body{
   touch-action: none;
 }
 
+.scrub-stage.scrub-cleaning-up .scrub-scripture-card {
+  z-index: 50;
+  background: transparent;
+}
+
+.scrub-stage.scrub-cleaning-up .scrub-cover-canvas {
+  z-index: 8;
+}
+
+.scrub-stage.scrub-cleaning-up .scrub-clean-sweep {
+  z-index: 42;
+}
+
 .scrub-round-complete .scrub-scripture-card {
   z-index: 50;
 }
