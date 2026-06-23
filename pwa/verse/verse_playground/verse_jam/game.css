@@ -768,6 +768,47 @@ body {
   -webkit-user-select: none;
 }
 
+.versejam-score-splash {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  z-index: 31;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(.35) rotate(-3deg);
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(2rem, 12vw, 4.1rem);
+  line-height: .9;
+  font-weight: 400;
+  letter-spacing: .03em;
+  color: #fff7e8;
+  text-shadow:
+    0 4px 0 rgba(0, 0, 0, .28),
+    0 0 24px rgba(255, 255, 255, .28);
+  animation: vj-score-splash 900ms cubic-bezier(.18, 1.35, .3, 1) forwards;
+}
+
+@keyframes vj-score-splash {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -45%) scale(.25) rotate(-7deg);
+  }
+
+  16% {
+    opacity: 1;
+    transform: translate(-50%, -72%) scale(1.08) rotate(2deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -76%) scale(1) rotate(-1deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -102%) scale(.72) rotate(5deg);
+  }
+}
+
 .versejam-perfect-splash {
   position: absolute;
   left: 50%;

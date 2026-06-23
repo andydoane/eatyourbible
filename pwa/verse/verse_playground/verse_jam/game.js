@@ -424,6 +424,7 @@
     currentButtons: [],
     currentRhythmOffsets: [],
     correctTapBeats: [],
+    groovyScore: 0,
     echoStartBeat: null,
     activeBaseMelody: BASE_MELODIES[0],
     acceptingInput: false,
@@ -651,6 +652,7 @@
     state.chunkIndex = 0;
     state.roundIndex = 0;
     state.currentButtons = [];
+    state.groovyScore = 0;
     soundBitBag = [];
     state.acceptingInput = false;
     state.busy = false;
@@ -2144,6 +2146,66 @@
     state.correctTapBeats.push({ sequenceIndex, beat });
   }
 
+  function clampNumber(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function echoStartGridError(beat) {
+    if (!Number.isFinite(beat)) return Infinity;
+
+    if (!Number.isFinite(state.echoStartBeat)) {
+      return Math.abs(beat - nearestBeat(beat));
+    }
+
+    const delta = beat - state.echoStartBeat;
+    const nearestShiftedMeasure = Math.round(delta / 4) * 4;
+    return Math.abs(delta - nearestShiftedMeasure);
+  }
+
+  function groovyPointsForError(error) {
+    if (!Number.isFinite(error)) return 0;
+
+    const normalized = clampNumber(error / PERFECT_BEAT_TOLERANCE, 0, 1);
+    return Math.round(100 * (1 - normalized));
+  }
+
+  function calculateGroovyChunkScore() {
+    const taps = state.correctTapBeats
+      .slice()
+      .sort((a, b) => a.sequenceIndex - b.sequenceIndex);
+
+    const expected = state.currentRhythmOffsets;
+    if (!expected.length || taps.length !== expected.length) return 0;
+
+    if (taps.length === 1) {
+      const error = echoStartGridError(taps[0].beat);
+      return error <= PERFECT_BEAT_TOLERANCE ? groovyPointsForError(error) : 0;
+    }
+
+    const firstTapBeat = taps[0].beat;
+    const firstExpected = expected[0] || 0;
+    const firstError = echoStartGridError(firstTapBeat);
+
+    if (firstError > PERFECT_BEAT_TOLERANCE) return 0;
+
+    const scores = taps.map((tap, index) => {
+      if (index === 0) {
+        return groovyPointsForError(firstError);
+      }
+
+      const actualOffset = tap.beat - firstTapBeat;
+      const expectedOffset = (expected[tap.sequenceIndex] ?? tap.sequenceIndex) - firstExpected;
+      const error = Math.abs(actualOffset - expectedOffset);
+
+      return error <= PERFECT_BEAT_TOLERANCE ? groovyPointsForError(error) : 0;
+    });
+
+    return Math.round(
+      scores.reduce((sum, score) => sum + score, 0) / scores.length
+    );
+  }
+
+
   function isNearEchoStartGrid(beat) {
     if (!Number.isFinite(beat)) return false;
 
@@ -2183,6 +2245,28 @@
       const expectedOffset = (expected[tap.sequenceIndex] ?? tap.sequenceIndex) - firstExpected;
       return Math.abs(actualOffset - expectedOffset) <= PERFECT_BEAT_TOLERANCE;
     });
+  }
+
+  function showGroovySplash(points = 0) {
+    const board = document.getElementById("versejamBoard");
+    if (!board) return;
+
+    const pointSplash = document.createElement("div");
+    pointSplash.className = "versejam-score-splash";
+    pointSplash.textContent = `+${Math.max(0, points)}`;
+    board.appendChild(pointSplash);
+
+    const splash = document.createElement("div");
+    splash.className = "versejam-perfect-splash";
+    splash.textContent = "GROOVY!";
+    board.appendChild(splash);
+
+    playTone({ midi: 84, when: audioCtx.currentTime, duration: 0.12, volume: 0.12, type: "square" });
+    playTone({ midi: 88, when: audioCtx.currentTime + 0.08, duration: 0.13, volume: 0.11, type: "square" });
+    playTone({ midi: 91, when: audioCtx.currentTime + 0.16, duration: 0.15, volume: 0.10, type: "square" });
+
+    pointSplash.addEventListener("animationend", () => pointSplash.remove(), { once: true });
+    splash.addEventListener("animationend", () => splash.remove(), { once: true });
   }
 
   function showPerfectSplash() {
@@ -2270,16 +2354,20 @@
       state.currentButtons.length === 0 ||
       (!stillInReferenceChunk && !stillInRhythmFillerChunk && phase !== "words")
     ) {
-      const perfect = didTapChunkPerfectly();
+      const groovy = didTapChunkPerfectly();
+      const groovyPoints = groovy ? calculateGroovyChunkScore() : 0;
 
       if (phase === "words") state.chunkIndex += 1;
 
       state.busy = false;
       state.acceptingInput = false;
 
-      if (perfect) showPerfectSplash();
+      if (groovy) {
+        state.groovyScore += groovyPoints;
+        showGroovySplash(groovyPoints);
+      }
 
-      await sleep(perfect ? 560 : 260);
+      await sleep(groovy ? 560 : 260);
       await startNextPlayableGroup();
       return;
     }
@@ -2601,7 +2689,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.5",
+      debugBadge: "VJ 2.6",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
