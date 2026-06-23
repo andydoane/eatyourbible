@@ -223,7 +223,7 @@
     // Intro phrase tones:
     // "tap / the / words / match / my / beat"
     // This can stay louder without making GO! blast.
-    introWords: 1.5,
+    introWords: 2.0,
 
     // Between-round transition phrase tones:
     // "time / to / jam!"
