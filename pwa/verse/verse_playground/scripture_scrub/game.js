@@ -307,7 +307,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 1.7",
+      debugBadge: "SS 1.8",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
