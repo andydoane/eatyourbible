@@ -63,7 +63,7 @@
 
   // Phrase pad that starts with each playable prompt in Jam and later rounds.
   // Kept separate from word/cue volumes because a sustained chord stacks up fast.
-  const PAD_VOLUME = MIX.pad;
+  const PAD_VOLUME = 0.016;
   const PAD_GAP_BEATS = 0.25;
   const PAD_WAVE_TYPE = "triangle";
 
@@ -1704,7 +1704,7 @@
         midi,
         when,
         duration,
-        volume: PAD_VOLUME,
+        volume: MIX.pad,
         type: PAD_WAVE_TYPE
       });
     });
