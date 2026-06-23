@@ -35,16 +35,14 @@
     "#7f66c6"
   ];
 
-  const MODE_THRESHOLDS = {
-    easy: 0.66,
-    medium: 0.75,
-    hard: 0.85
-  };
+  const DEFAULT_CANVAS_COMPLETION_THRESHOLD = 0.95;
+  const DEFAULT_BRUSH_RADIUS = 38;
 
-  const BRUSH_BY_MODE = {
-    easy: 38,
-    medium: 38,
-    hard: 38
+  const ROUND_COMPLETION_THRESHOLDS = {
+    mud: 0.95,
+    paint: 0.95,
+    fog: 0.92,
+    archaeology: 0.95
   };
 
   const ROUNDS = [
@@ -187,7 +185,7 @@
   ];
 
   let verseJson = null;
-  let selectedMode = "easy";
+
   let currentRoundIndex = 0;
   let muted = false;
   let menuOpen = false;
@@ -234,22 +232,20 @@
   }
 
   function currentThreshold() {
-    return MODE_THRESHOLDS[selectedMode] || MODE_THRESHOLDS.easy;
+    return roundCompletionThreshold();
   }
 
   function roundCompletionThreshold(round = roundConfig()) {
+    if (Number.isFinite(round?.completionThreshold)) return round.completionThreshold;
+    if (Object.prototype.hasOwnProperty.call(ROUND_COMPLETION_THRESHOLDS, round?.id)) {
+      return ROUND_COMPLETION_THRESHOLDS[round.id];
+    }
     if (round?.kind === "leaves" || round?.kind === "stickers") return 1;
-    return currentThreshold();
+    return DEFAULT_CANVAS_COMPLETION_THRESHOLD;
   }
 
-  function currentBrushRadius() {
-    return BRUSH_BY_MODE[selectedMode] || BRUSH_BY_MODE.easy;
-  }
-
-  function modeLabel() {
-    if (selectedMode === "hard") return "Hard";
-    if (selectedMode === "medium") return "Medium";
-    return "Easy";
+  function currentBrushRadius(round = roundConfig()) {
+    return Number.isFinite(round?.brushRadius) ? round.brushRadius : DEFAULT_BRUSH_RADIUS;
   }
 
   async function loadVerseJson() {
@@ -279,6 +275,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
+      debugBadge: "SS 1.0",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -287,32 +284,14 @@
       backLabel: "Back to Playground",
       theme: GAME_THEME,
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onStart: beginScrubRun
     });
   }
 
-  function renderModeSelect() {
-    window.VerseGameShell.renderModeSelect({
-      app,
-      title: "Choose Your Scrub",
-      icon: "🧽✨",
-      helpHtml: helpHtml(),
-      helpOverlayId: HELP_OVERLAY_ID,
-      backLabel: "Back to intro",
-      theme: GAME_THEME,
-      modes: [
-        { id: "easy", label: "Easy" },
-        { id: "medium", label: "Medium" },
-        { id: "hard", label: "Hard" }
-      ],
-      onBack: renderTitleScreen,
-      onSelect: (mode) => {
-        selectedMode = ["easy", "medium", "hard"].includes(mode) ? mode : "easy";
-        currentRoundIndex = 0;
-        archaeologyScore = null;
-        renderRoundIntro();
-      }
-    });
+  function beginScrubRun() {
+    currentRoundIndex = 0;
+    archaeologyScore = null;
+    renderRoundIntro();
   }
 
   function renderRoundIntro() {
@@ -322,7 +301,7 @@
 
     app.innerHTML = `
       <div class="vm-game-screen scripture-scrub-root">
-        <button class="vm-game-back-pill no-zoom" id="scrubRoundBackBtn" type="button" aria-label="Back to mode select">◀</button>
+        <button class="vm-game-back-pill no-zoom" id="scrubRoundBackBtn" type="button" aria-label="Back to intro">◀</button>
         <div class="vm-game-stage scripture-scrub-round-title">
           <div class="vm-game-center">
             <div class="vm-game-icon" aria-hidden="true">${escapeHtml(round.icon)}</div>
@@ -338,7 +317,7 @@
     const backBtn = document.getElementById("scrubRoundBackBtn");
     const startBtn = document.getElementById("scrubStartRoundBtn");
 
-    if (backBtn) backBtn.onclick = currentRoundIndex === 0 ? renderModeSelect : () => {
+    if (backBtn) backBtn.onclick = currentRoundIndex === 0 ? renderTitleScreen : () => {
       currentRoundIndex = Math.max(0, currentRoundIndex - 1);
       renderRoundIntro();
     };
@@ -385,10 +364,9 @@
       title: "Scripture Scrub",
       muted,
       howToText: "How to Play",
-      modeSelectText: "Mode Select",
       exitText: "Back to Playground",
       closeText: "Keep Scrubbing",
-      showModeSelect: true
+      showModeSelect: false
     })}
 
         ${window.VerseGameShell.helpOverlayHtml({ id: HELP_OVERLAY_ID, body: helpHtml() })}
@@ -417,7 +395,6 @@
 
         window.VerseGameShell.openHelp?.(HELP_OVERLAY_ID, "back", "Back");
       },
-      onModeSelect: renderModeSelect,
       onExit: () => window.VerseGameBridge.exitGame(),
       onOpen: () => {
         menuOpen = true;
@@ -1088,7 +1065,7 @@
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
-    const count = selectedMode === "hard" ? 46 : selectedMode === "medium" ? 40 : 34;
+    const count = 40;
     const size = getCoverObjectSize("leaf", width);
     const positions = generateCoverPositions({
       count,
@@ -1154,7 +1131,7 @@
   function rakeLeavesAt(clientX, clientY) {
     const leaves = Array.from(document.querySelectorAll(".scrub-leaf:not(.is-raked)"));
     const stageWidth = stageEl?.getBoundingClientRect?.().width || 420;
-    const hitRadius = getCoverObjectSize("leaf", stageWidth) * (selectedMode === "hard" ? .46 : .54);
+    const hitRadius = getCoverObjectSize("leaf", stageWidth) * .54;
 
     for (const leaf of leaves) {
       const rect = leaf.getBoundingClientRect();
@@ -1320,7 +1297,7 @@
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
-    const count = selectedMode === "hard" ? 24 : selectedMode === "medium" ? 20 : 16;
+    const count = 20;
     const baseSize = getCoverObjectSize("sticker", width);
     const positions = generateStickerPositions(count, width, height, baseSize);
 
@@ -1410,7 +1387,7 @@
     const layer = document.getElementById("scrubBibleLayer");
     if (!layer) return;
 
-    const size = clamp(Math.min(width, height) * (selectedMode === "hard" ? .13 : selectedMode === "medium" ? .15 : .18), 62, 122);
+    const size = clamp(Math.min(width, height) * .15, 62, 122);
     const margin = Math.max(58, size * .7);
     const x = margin + Math.random() * Math.max(1, width - margin * 2);
     const y = margin + Math.random() * Math.max(1, height - margin * 2);
@@ -1676,9 +1653,7 @@
       backLabel: "Back to Playground",
       theme: GAME_THEME,
       onPlayAgain: () => {
-        currentRoundIndex = 0;
-        archaeologyScore = null;
-        renderModeSelect();
+        beginScrubRun();
       },
       onMoreGames: () => window.VerseGameBridge.exitGame()
     });
