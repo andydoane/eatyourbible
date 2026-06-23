@@ -1,9 +1,17 @@
-@font-face{
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
   font-family: "Titan One";
-  src: url("./fonts/TitanOne-Regular.ttf") format("truetype");
+  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 :root{
@@ -32,6 +40,7 @@ body{
   margin: 0;
   padding: 0;
   background: linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%);
+  font-family: "Baloo 2", system-ui, sans-serif;
 }
 
 .vm-game-screen.scripture-scrub-root{
@@ -41,6 +50,7 @@ body{
   height: 100dvh;
   width: 100%;
   background: linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%) !important;
+  font-family: "Baloo 2", system-ui, sans-serif;
 }
 
 .scripture-scrub-round-title{

@@ -262,6 +262,21 @@
     }
   }
 
+  async function waitForLocalFonts() {
+    if (!document.fonts?.load) return;
+
+    try {
+      await Promise.all([
+        document.fonts.load('1em "Baloo 2"'),
+        document.fonts.load('1em "Titan One"')
+      ]);
+
+      await document.fonts.ready;
+    } catch (err) {
+      console.warn("Scripture Scrub: local fonts did not finish loading", err);
+    }
+  }
+
   function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
@@ -275,7 +290,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 1.0",
+      debugBadge: "SS 1.2",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1694,5 +1709,6 @@
   }
 
   verseJson = await loadVerseJson();
+  await waitForLocalFonts();
   renderTitleScreen();
 })();
