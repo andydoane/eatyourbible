@@ -831,7 +831,9 @@ body{
   border-radius: 0 999px 999px 0;
   filter: drop-shadow(0 0 18px rgba(255, 255, 255, .58));
   opacity: 0;
-  animation: scrubCleanSweepMove 1250ms cubic-bezier(.65, 0, .35, 1) both;
+  animation:
+    scrubCleanSweepMove 1250ms linear both,
+    scrubCleanSweepFade 1250ms linear both;
 }
 
 .scrub-clean-sweep::before,
@@ -891,31 +893,27 @@ body{
 @keyframes scrubCleanSweepMove {
   0% {
     width: 0;
+  }
+
+  100% {
+    width: calc(100% + 260px);
+  }
+}
+
+@keyframes scrubCleanSweepFade {
+  0% {
     opacity: 0;
   }
 
-  8% {
-    width: 8%;
+  6% {
     opacity: 1;
   }
 
-  42% {
-    width: 52%;
-    opacity: 1;
-  }
-
-  78% {
-    width: calc(100% + 190px);
-    opacity: 1;
-  }
-
-  88% {
-    width: calc(100% + 210px);
+  90% {
     opacity: 1;
   }
 
   100% {
-    width: calc(100% + 230px);
     opacity: 0;
   }
 }
