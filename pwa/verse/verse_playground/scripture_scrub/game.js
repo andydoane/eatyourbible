@@ -247,7 +247,18 @@
     return DEFAULT_CANVAS_COMPLETION_THRESHOLD;
   }
 
-      debugBadge: "SS 1.7",
+  function currentBrushRadius(round = roundConfig()) {
+    if (Number.isFinite(round?.brushRadius)) return round.brushRadius;
+
+    const width = stageEl?.getBoundingClientRect?.().width || window.innerWidth || 0;
+    if (!width) return DEFAULT_BRUSH_RADIUS;
+
+    return clamp(
+      width * RESPONSIVE_BRUSH_WIDTH_RATIO,
+      RESPONSIVE_BRUSH_MIN,
+      RESPONSIVE_BRUSH_MAX
+    );
+  }
 
   function dismissInstructionChip() {
     const root = document.getElementById("scrubGame");
@@ -296,7 +307,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 1.6",
+      debugBadge: "SS 1.7",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
