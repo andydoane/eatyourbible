@@ -233,7 +233,7 @@
 
     // Little note/chime when a new verse word button pops onto the screen.
     // This can get annoying if too loud because it happens often.
-    buttonPopIn: 0.25,
+    buttonPopIn: 0.45,
 
     // Word tap tones in the first/warmup round.
     // This is louder than later word taps so the first round feels clear.
