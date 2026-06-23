@@ -216,10 +216,13 @@
     // This is separate from the "tap / the / words..." intro tones.
     countdownBeep: 0.085,
 
+    // GO! tone after the 3, 2, 1 countdown.
+    // Keep this much lower than introWords if GO feels too loud.
+    goTone: 0.35,
+
     // Intro phrase tones:
     // "tap / the / words / match / my / beat"
-    // Keep this close to transition if you want the intro phrase and
-    // between-round phrases to feel like the same musical family.
+    // This can stay louder without making GO! blast.
     introWords: 1.5,
 
     // Between-round transition phrase tones:
@@ -230,7 +233,7 @@
 
     // Little note/chime when a new verse word button pops onto the screen.
     // This can get annoying if too loud because it happens often.
-    buttonPopIn: 0.2,
+    buttonPopIn: 0.25,
 
     // Word tap tones in the first/warmup round.
     // This is louder than later word taps so the first round feels clear.
@@ -266,7 +269,7 @@
 
   // Volume balance
   const COUNTDOWN_BEEP_VOLUME = MIX.countdownBeep;
-  const COUNTDOWN_GO_VOLUME = MIX.introWords;
+  const COUNTDOWN_GO_VOLUME = MIX.goTone;
 
   const BUTTON_POP_IN_NOTE_VOLUME = MIX.buttonPopIn;
 
