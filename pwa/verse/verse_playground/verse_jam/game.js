@@ -26,10 +26,17 @@
   ];
 
   const INTRO_WORDS = ["tap", "the", "words", "match", "my", "beat"];
-  const ENDING_LINES = [
-    { words: ["that's", "the", "end!"], className: "" },
-    { words: ["here's", "your", "score"], className: "is-response-phrase" }
-  ];
+  function endingLinesForScore() {
+    return state.groovyScore > 0
+      ? [
+          { words: ["that's", "the", "end!"], className: "" },
+          { words: ["here's", "your", "score"], className: "is-response-phrase" }
+        ]
+      : [
+          { words: ["that's", "the", "end!"], className: "" },
+          { words: ["time", "to", "go"], className: "is-response-phrase" }
+        ];
+  }
   // Fixed rhythm for: TAP THE WORDS (rest) MATCH MY BEAT
   // Q Q Q - | Q Q Q -
   const INTRO_RHYTHM_OFFSETS = [0, 1, 2, 4, 5, 6];
@@ -2423,6 +2430,11 @@
 
       if (!isGameplayFlowActive(flowId)) return;
 
+      if (state.groovyScore <= 0) {
+        await finishToEndScreen();
+        return;
+      }
+
       await showGroovyScoreScreen(flowId);
       return;
     }
@@ -2554,6 +2566,43 @@
     });
   }
 
+  function playScoreRevealSparkle() {
+    if (!audioCtx || muted) return;
+
+    const now = audioCtx.currentTime + 0.03;
+
+    // Small reward sound when the score number appears.
+    [
+      { midi: 72, delay: 0.00, duration: 0.12, volume: 0.048, type: "square" },
+      { midi: 76, delay: 0.075, duration: 0.13, volume: 0.044, type: "square" },
+      { midi: 79, delay: 0.155, duration: 0.18, volume: 0.040, type: "triangle" }
+    ].forEach(note => {
+      playTone({
+        midi: note.midi,
+        when: now + note.delay,
+        duration: note.duration,
+        volume: note.volume,
+        type: note.type
+      });
+    });
+  }
+
+  async function finishToEndScreen() {
+    state.busy = false;
+    state.completed = true;
+
+    stopRun();
+    playCompletionArpeggio();
+
+    await sleep(900);
+
+    // Do not call setScreen("end") here; setScreen would call stopRun()
+    // again and can cut off the arpeggio. Render the end screen directly.
+    state.screen = "end";
+    render();
+  }
+
+
   async function showGroovyScoreScreen(flowId = gameplayGeneration) {
     if (!isGameplayFlowActive(flowId)) return;
 
@@ -2576,6 +2625,8 @@
       </section>
     `;
 
+    playScoreRevealSparkle();
+
     const button = document.getElementById("verseJamScoreContinue");
     if (!button) return;
 
@@ -2584,19 +2635,7 @@
         button.disabled = true;
         button.textContent = "Great!";
 
-        // Stop the drum/pad first, then play the musical send-off.
-        state.busy = false;
-        state.completed = true;
-        stopRun();
-
-        playCompletionArpeggio();
-
-        await sleep(900);
-
-        // Do not call setScreen("end") here; setScreen would call stopRun()
-        // again and can cut off the arpeggio. Render the end screen directly.
-        state.screen = "end";
-        render();
+        await finishToEndScreen();
 
         resolve();
       }, { once: true });
@@ -2620,8 +2659,10 @@
 
     playEndingSting(startAt);
 
-    for (let lineIndex = 0; lineIndex < ENDING_LINES.length; lineIndex += 1) {
-      const line = ENDING_LINES[lineIndex];
+    const endingLines = endingLinesForScore();
+
+    for (let lineIndex = 0; lineIndex < endingLines.length; lineIndex += 1) {
+      const line = endingLines[lineIndex];
       const lineStartBeat = lineIndex * 4;
 
       for (let wordIndex = 0; wordIndex < line.words.length; wordIndex += 1) {
@@ -2772,7 +2813,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.7",
+      debugBadge: "VJ 2.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
