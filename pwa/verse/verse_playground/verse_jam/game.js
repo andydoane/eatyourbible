@@ -63,7 +63,7 @@
 
   // Phrase pad that starts with each playable prompt in Jam and later rounds.
   // Kept separate from word/cue volumes because a sustained chord stacks up fast.
-  const PAD_VOLUME = 0.016;
+  const PAD_VOLUME = MIX.pad;
   const PAD_GAP_BEATS = 0.25;
   const PAD_WAVE_TYPE = "triangle";
 
@@ -193,22 +193,45 @@
   // Let players tap a little before TAP! so a nearly-on-beat press is not ignored.
   const EARLY_INPUT_WINDOW_MS = 250;
 
+  // Central mix balance.
+  // These are based on the Verse Jam soundboard pass.
+  const MIX = {
+    gameMaster: 1.4,
+    outputBoost: 2.45,
+
+    drumMaster: 2.0,
+    countdownBeep: 0.085,
+
+    // Intro words use the same musical level family as round transitions.
+    introWords: 1.0,
+    transition: 1.0,
+
+    buttonPopIn: 0.135,
+    warmupWord: 0.495,
+    defaultWord: 0.065,
+    voice: 0.31,
+    pad: 0.016,
+    scoreSparkle: 1.35,
+    finalArpeggio: 1.34,
+    wrongTap: 1.0,
+    clap: 1.0
+  };
+
   // Volume balance
-  const COUNTDOWN_BEEP_VOLUME = 0.060;
-  const COUNTDOWN_GO_VOLUME = 0.075;
+  const COUNTDOWN_BEEP_VOLUME = MIX.countdownBeep;
+  const COUNTDOWN_GO_VOLUME = MIX.introWords;
 
-  const BUTTON_POP_IN_NOTE_VOLUME = 0.400;
+  const BUTTON_POP_IN_NOTE_VOLUME = MIX.buttonPopIn;
 
-  const ROUND_ONE_WORD_NOTE_VOLUME = 0.260;
+  const ROUND_ONE_WORD_NOTE_VOLUME = MIX.warmupWord;
 
-  const DEFAULT_WORD_NOTE_VOLUME = 0.135;
+  const DEFAULT_WORD_NOTE_VOLUME = MIX.defaultWord;
 
-  const DRUM_MASTER_VOLUME = 2.000;
+  const DRUM_MASTER_VOLUME = MIX.drumMaster;
 
   // Green voice/shout filler buttons: Boom!, Hey!, Woo!, Yeah!, Yo!
   // 1.0 = original MP3 volume.
-  // Try 0.75 if too loud, 1.25 if too quiet.
-  const VOICE_SOUND_BIT_VOLUME = 0.350;
+  const VOICE_SOUND_BIT_VOLUME = MIX.voice;
 
   // TEMP DEV TOOL: live volume tuning.
   // These start from the constants above, but can be changed with the in-game mixer.
@@ -227,6 +250,7 @@
   let audioCtx = null;
   let masterGain = null;
   let compressor = null;
+  let outputGain = null;
   let beatTimer = null;
   let padTimer = null;
   let musicGeneration = 0;
@@ -337,7 +361,8 @@
 
   function createAudioGraph() {
     if (audioCtx) {
-      if (masterGain) masterGain.gain.value = muted ? 0 : 0.72;
+      if (masterGain) masterGain.gain.value = muted ? 0 : MIX.gameMaster;
+      if (outputGain) outputGain.gain.value = MIX.outputBoost;
       return;
     }
 
@@ -350,7 +375,7 @@
     audioCtx = new AudioCtor();
 
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = muted ? 0 : 0.72;
+    masterGain.gain.value = muted ? 0 : MIX.gameMaster;
 
     compressor = audioCtx.createDynamicsCompressor();
     compressor.threshold.value = -18;
@@ -359,8 +384,12 @@
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
+    outputGain = audioCtx.createGain();
+    outputGain.gain.value = MIX.outputBoost;
+
     masterGain.connect(compressor);
-    compressor.connect(audioCtx.destination);
+    compressor.connect(outputGain);
+    outputGain.connect(audioCtx.destination);
   }
 
   function unlockAudioFromGesture() {
@@ -807,8 +836,8 @@
     const now = audioCtx.currentTime;
 
     // Generated chiptune clap.
-    playTone({ midi: 72, when: now, duration: 0.055, volume: 0.13, type: "square" });
-    playTone({ midi: 84, when: now + 0.025, duration: 0.045, volume: 0.08, type: "square" });
+    playTone({ midi: 72, when: now, duration: 0.055, volume: 0.13 * MIX.clap, type: "square" });
+    playTone({ midi: 84, when: now + 0.025, duration: 0.045, volume: 0.08 * MIX.clap, type: "square" });
   }
 
   function playSoundBitSound(button) {
@@ -2536,7 +2565,7 @@
           midi: note.midi,
           when: startAt + beat * note.beat,
           duration: note.duration,
-          volume: note.volume,
+          volume: note.volume * MIX.transition,
           type: note.type
         });
       });
@@ -2556,7 +2585,7 @@
           midi: note.midi,
           when: startAt + beat * note.beat,
           duration: note.duration,
-          volume: note.volume,
+          volume: note.volume * MIX.transition,
           type: note.type
         });
       });
@@ -2575,7 +2604,7 @@
         midi: note.midi,
         when: startAt + beat * note.beat,
         duration: note.duration,
-        volume: note.volume,
+          volume: note.volume * MIX.transition,
         type: note.type
       });
     });
@@ -2600,7 +2629,7 @@
         midi: note.midi,
         when: now + note.delay,
         duration: note.duration,
-        volume: note.volume,
+        volume: note.volume * MIX.finalArpeggio,
         type: note.type
       });
     });
@@ -2610,7 +2639,7 @@
       midi: 91,
       when: now + 0.80,
       duration: 0.18,
-      volume: 0.030,
+      volume: 0.030 * MIX.finalArpeggio,
       type: "triangle"
     });
   }
@@ -2630,7 +2659,7 @@
         midi: note.midi,
         when: now + note.delay,
         duration: note.duration,
-        volume: note.volume,
+        volume: note.volume * MIX.scoreSparkle,
         type: note.type
       });
     });
@@ -2877,7 +2906,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.11",
+      debugBadge: "VJ 2.12",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
