@@ -133,10 +133,7 @@ body{
     calc(78px + env(safe-area-inset-top))
     clamp(16px, 4vw, 42px)
     calc(24px + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(circle at 18% 16%, rgba(255,199,81,.12), transparent 20%),
-    radial-gradient(circle at 88% 78%, rgba(64,185,197,.11), transparent 26%),
-    #ffffff;
+  background: #ffffff;
 }
 
 .scrub-ref-pill{
@@ -223,11 +220,6 @@ body{
 }
 
 .scrub-stage-fog .scrub-scripture-card {
-  filter: blur(1.45px);
-  transition: filter .28s ease;
-}
-
-.scrub-stage-fog.scrub-round-complete .scrub-scripture-card {
   filter: none;
 }
 
