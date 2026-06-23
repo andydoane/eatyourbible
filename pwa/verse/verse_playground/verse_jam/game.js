@@ -61,10 +61,10 @@
   const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const PAD_NOTES = [48, 52, 55, 60];
 
-  // Long background pad that starts in Jam and later rounds.
+  // Phrase pad that starts with each playable prompt in Jam and later rounds.
   // Kept separate from word/cue volumes because a sustained chord stacks up fast.
   const PAD_VOLUME = 0.016;
-  const PAD_DURATION_BEATS = 7.25;
+  const PAD_GAP_BEATS = 0.25;
   const PAD_WAVE_TYPE = "triangle";
 
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
@@ -1632,11 +1632,6 @@
 
     tick();
     beatTimer = setInterval(tick, 45);
-
-    if (currentRound().pad) {
-      schedulePad(generation);
-      padTimer = setInterval(() => schedulePad(generation), secondsPerBeat() * 8 * 1000);
-    }
   }
 
   function scheduleBeat(beatIndex, when, generation = musicGeneration) {
@@ -1654,12 +1649,24 @@
     state.sleepIds.push(timeoutId);
   }
 
-  function schedulePad(generation = musicGeneration) {
+  function currentPhrasePadBeats() {
+    const phraseBeats = Math.max(
+      4,
+      measureAlignedLength(state.currentRhythmOffsets || [])
+    );
+
+    return Math.max(1, phraseBeats - PAD_GAP_BEATS);
+  }
+
+  function schedulePhrasePad(startAt, generation = musicGeneration) {
     if (generation !== musicGeneration) return;
     if (!audioCtx || muted || !currentRound().pad) return;
 
-    const when = audioCtx.currentTime + 0.06;
-    const duration = secondsPerBeat() * PAD_DURATION_BEATS;
+    const when = Number.isFinite(startAt)
+      ? startAt
+      : audioCtx.currentTime + 0.06;
+
+    const duration = secondsPerBeat() * currentPhrasePadBeats();
 
     PAD_NOTES.forEach((midi) => {
       playTone({
@@ -2060,6 +2067,8 @@
 
     const spawnStart = nextMeasureStartTime();
 
+    schedulePhrasePad(spawnStart, musicGeneration);
+
     const spawnButtons = [...state.currentButtons].sort((a, b) => {
       const aOrder = Number.isFinite(a.sequenceOrder) ? a.sequenceOrder : 0;
       const bOrder = Number.isFinite(b.sequenceOrder) ? b.sequenceOrder : 0;
@@ -2392,29 +2401,37 @@
       if (!isGameplayFlowActive(flowId)) return;
 
       if (state.roundIndex < currentRoundConfigs().length - 1) {
-        // Let the current round finish its measure before the next round's
-        // faster/different beat loop takes over.
+        // Let the current round finish its measure, then create a clean break.
         await waitUntilAudioTime(nextMeasureStartTime());
 
         if (!isGameplayFlowActive(flowId)) return;
+
+        clearSleeps();
+        stopMusic();
 
         state.roundIndex += 1;
         state.progressIndex = 0;
         state.chunkIndex = 0;
         state.buildFitDone = false;
         state.currentButtons = [];
-        state.phase = "intro";
+        state.currentRhythmOffsets = [];
+        state.correctTapBeats = [];
+        state.echoStartBeat = null;
+        state.acceptingInput = false;
+        state.busy = false;
+        state.phase = "round_transition";
         noteGameplayActivity();
 
         updateRoundPill();
         updateBuildText();
 
-        // Now restart the music cleanly at the new round tempo.
-        startBeatLoop();
-
-        // We already waited for the measure boundary above, so don't make
-        // the transition wait another measure.
+        // Transition phrase happens in a break, not over the new tempo.
         await showRoundTransition({ alreadyAligned: true });
+
+        if (!isGameplayFlowActive(flowId)) return;
+
+        // Now start the new groove after the transition phrase has landed.
+        startBeatLoop();
 
         if (!isGameplayFlowActive(flowId)) return;
 
@@ -2813,7 +2830,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.8",
+      debugBadge: "VJ 2.9",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
