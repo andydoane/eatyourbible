@@ -134,6 +134,20 @@
     "scripture_scrub_leaf_red_3.png"
   ];
 
+  const PAINT_BLOB_IMAGES = [
+    "scripture_scrub_blob_1.svg",
+    "scripture_scrub_blob_2.svg",
+    "scripture_scrub_blob_3.svg",
+    "scripture_scrub_blob_4.svg",
+    "scripture_scrub_blob_5.svg",
+    "scripture_scrub_blob_6.svg",
+    "scripture_scrub_blob_7.svg",
+    "scripture_scrub_blob_8.svg",
+    "scripture_scrub_blob_9.svg",
+    "scripture_scrub_blob_10.svg",
+    "scripture_scrub_blob_11.svg"
+  ];
+
   const STICKER_EMOJIS = ["😀", "⭐", "❤️", "🌈", "🦊", "🐬", "🍇", "🎈", "🧁", "🚀", "🌻", "🦁", "🐢", "🍕"];
 
   const STICKER_WORDS = [
@@ -188,6 +202,7 @@
   ];
 
   let verseJson = null;
+  let paintBlobImages = [];
 
   let currentRoundIndex = 0;
   let muted = false;
@@ -294,6 +309,21 @@
     }
   }
 
+  async function loadPaintBlobImages() {
+    const loaded = await Promise.all(PAINT_BLOB_IMAGES.map((fileName) => new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        console.warn("Scripture Scrub: could not load paint blob image", fileName);
+        resolve(null);
+      };
+      img.src = `${IMAGE_BASE}${fileName}`;
+    })));
+
+    return loaded.filter(Boolean);
+  }
+
   function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
@@ -307,7 +337,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 2.5",
+      debugBadge: "SS 2.6",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -820,20 +850,30 @@
     const base = Math.min(width, height);
 
     const splatterCount = Math.round(clamp((width * height) / 5200, 105, 210));
-    const minRadius = clamp(base * 0.045, 28, 56);
-    const maxRadius = clamp(base * 0.135, 78, 152);
+    const minRadius = clamp(base * 0.052, 34, 68);
+    const maxRadius = clamp(base * 0.15, 92, 170);
 
     for (let i = 0; i < splatterCount; i += 1) {
       const x = Math.random() * width;
       const y = Math.random() * height;
       const r = minRadius + Math.random() * (maxRadius - minRadius);
       const color = colors[Math.floor(Math.random() * colors.length)];
+      const blob = paintBlobImages.length
+        ? paintBlobImages[Math.floor(Math.random() * paintBlobImages.length)]
+        : null;
 
-      coverCtx.beginPath();
-      coverCtx.fillStyle = color;
       coverCtx.globalAlpha = 0.92;
-      coverCtx.arc(x, y, r, 0, Math.PI * 2);
-      coverCtx.fill();
+
+      if (blob) {
+        drawPaintBlobStamp(blob, x, y, r, color);
+      } else {
+        coverCtx.beginPath();
+        coverCtx.fillStyle = color;
+        coverCtx.arc(x, y, r, 0, Math.PI * 2);
+        coverCtx.fill();
+      }
+
+      coverCtx.fillStyle = color;
 
       const dots = 4 + Math.floor(Math.random() * 8);
       for (let j = 0; j < dots; j += 1) {
@@ -850,6 +890,29 @@
     }
 
     coverCtx.globalAlpha = 1;
+  }
+
+  function drawPaintBlobStamp(blob, x, y, radius, color) {
+    const size = radius * 2.15;
+    const stampCanvas = document.createElement("canvas");
+    const stampCtx = stampCanvas.getContext("2d");
+
+    if (!stampCtx) return;
+
+    stampCanvas.width = Math.max(1, Math.round(size));
+    stampCanvas.height = Math.max(1, Math.round(size));
+
+    stampCtx.drawImage(blob, 0, 0, stampCanvas.width, stampCanvas.height);
+    stampCtx.globalCompositeOperation = "source-in";
+    stampCtx.fillStyle = color;
+    stampCtx.fillRect(0, 0, stampCanvas.width, stampCanvas.height);
+
+    coverCtx.save();
+    coverCtx.translate(x, y);
+    coverCtx.rotate(Math.random() * Math.PI * 2);
+    coverCtx.scale(1 + Math.random() * 0.28, 0.82 + Math.random() * 0.34);
+    coverCtx.drawImage(stampCanvas, -stampCanvas.width / 2, -stampCanvas.height / 2);
+    coverCtx.restore();
   }
 
   function drawFog(width, height) {
@@ -1715,6 +1778,7 @@
   }
 
   verseJson = await loadVerseJson();
+  paintBlobImages = await loadPaintBlobImages();
   await waitForLocalFonts();
   renderTitleScreen();
 })();
