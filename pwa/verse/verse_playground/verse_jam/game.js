@@ -194,26 +194,73 @@
   const EARLY_INPUT_WINDOW_MS = 250;
 
   // Central mix balance.
-  // These are based on the Verse Jam soundboard pass.
+  // Higher numbers = louder. Lower numbers = quieter.
+  // Most individual sound values are relative multipliers or direct volumes.
+  // gameMaster and outputBoost affect the entire game.
   const MIX = {
+    // Whole-game volume before the compressor.
+    // Raise this if the entire game feels too quiet.
+    // Lower this first if the whole game distorts or feels harsh.
     gameMaster: 1.4,
+
+    // Final whole-game boost after the compressor.
+    // This is the "make everything louder" control.
+    // Be careful: high values can make the game feel compressed or crunchy.
     outputBoost: 2.45,
 
+    // All drum sounds: kick, snare, hats, extra percussion.
+    // This does not affect word tones, pads, voice bits, or arpeggios.
     drumMaster: 2.0,
+
+    // Pre-game countdown beeps before the intro phrase.
+    // This is separate from the "tap / the / words..." intro tones.
     countdownBeep: 0.085,
 
-    // Intro words use the same musical level family as round transitions.
-    introWords: 1.0,
+    // Intro phrase tones:
+    // "tap / the / words / match / my / beat"
+    // Keep this close to transition if you want the intro phrase and
+    // between-round phrases to feel like the same musical family.
+    introWords: 1.5,
+
+    // Between-round transition phrase tones:
+    // "time / to / jam!"
+    // "speed / it / up"
+    // "feel / that / groove"
     transition: 1.0,
 
-    buttonPopIn: 0.135,
+    // Little note/chime when a new verse word button pops onto the screen.
+    // This can get annoying if too loud because it happens often.
+    buttonPopIn: 0.2,
+
+    // Word tap tones in the first/warmup round.
+    // This is louder than later word taps so the first round feels clear.
     warmupWord: 0.495,
+
+    // Word tap tones after the warmup round.
+    // This is lower so it does not fight the drums, pads, and voice bits.
     defaultWord: 0.065,
+
+    // Recorded green filler voice buttons:
+    // Boom!, Hey!, Woo!, Yeah!, Yo!
     voice: 0.31,
+
+    // Sustained chord pad behind playable phrases in Jam/later rounds.
+    // Tiny values matter here because the chord sustains and stacks with the groove.
     pad: 0.016,
+
+    // Sparkle sound when the Groovy Score screen appears.
     scoreSparkle: 1.35,
+
+    // Final arpeggio after tapping through the score screen,
+    // or after the zero-score ending path.
     finalArpeggio: 1.34,
+
+    // Wrong-tap sound multiplier.
+    // This is here for tuning, but only affects wrong-tap sounds where MIX.wrongTap is wired in.
     wrongTap: 1.0,
+
+    // Generated clap filler button sound.
+    // This does not affect recorded voice fillers.
     clap: 1.0
   };
 
