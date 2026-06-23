@@ -2509,6 +2509,13 @@
     });
   }
 
+  function roundTransitionWords() {
+    if (state.roundIndex === 1) return ["time", "to", "jam!"];
+    if (state.roundIndex === 2) return ["speed", "it", "up"];
+
+    return ["feel", "that", "groove"];
+  }
+
 
   function playRoundTransitionSting(startAt = audioCtx?.currentTime || 0) {
     if (!audioCtx || muted) return;
@@ -2524,6 +2531,26 @@
         { midi: 76, beat: 1, duration: 0.16, volume: 0.040, type: "square" },
         { midi: 79, beat: 2, duration: 0.18, volume: 0.038, type: "square" },
         { midi: 84, beat: 3, duration: 0.16, volume: 0.030, type: "triangle" }
+      ].forEach(note => {
+        playTone({
+          midi: note.midi,
+          when: startAt + beat * note.beat,
+          duration: note.duration,
+          volume: note.volume,
+          type: note.type
+        });
+      });
+
+      return;
+    }
+
+    if (state.roundIndex >= 3) {
+      // Beat-based "feel / that / groove" lift: smoother and groovier than "speed it up."
+      [
+        { midi: 67, beat: 0, duration: 0.16, volume: 0.038, type: "triangle" },
+        { midi: 72, beat: 1, duration: 0.16, volume: 0.040, type: "square" },
+        { midi: 79, beat: 2, duration: 0.22, volume: 0.038, type: "square" },
+        { midi: 84, beat: 3, duration: 0.16, volume: 0.026, type: "triangle" }
       ].forEach(note => {
         playTone({
           midi: note.midi,
@@ -2713,7 +2740,7 @@
     const area = document.getElementById("versejamMainArea");
     if (!area) return audioCtx?.currentTime || 0;
 
-    const message = state.roundIndex === 1 ? ["time", "to", "jam!"] : ["speed", "it", "up"];
+    const message = roundTransitionWords();
 
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
 
@@ -2734,7 +2761,9 @@
 
     const transitionNotes = state.roundIndex === 1
       ? [76, 79, 84]
-      : [72, 76, 79];
+      : state.roundIndex >= 3
+        ? [67, 72, 79]
+        : [72, 76, 79];
 
     for (let index = 0; index < message.length; index += 1) {
       if (state.screen !== "game" || state.paused) return newGrooveStart;
@@ -2848,7 +2877,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.10",
+      debugBadge: "VJ 2.11",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
