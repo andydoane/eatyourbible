@@ -201,7 +201,7 @@
     // Whole-game volume before the compressor.
     // Raise this if the entire game feels too quiet.
     // Lower this first if the whole game distorts or feels harsh.
-    gameMaster: 1.4,
+    gameMaster: 1.0,
 
     // Final whole-game boost after the compressor.
     // This is the "make everything louder" control.
