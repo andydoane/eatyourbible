@@ -206,7 +206,7 @@
     // Final whole-game boost after the compressor.
     // This is the "make everything louder" control.
     // Be careful: high values can make the game feel compressed or crunchy.
-    outputBoost: 2.45,
+    outputBoost: 2.00,
 
     // All drum sounds: kick, snare, hats, extra percussion.
     // This does not affect word tones, pads, voice bits, or arpeggios.
