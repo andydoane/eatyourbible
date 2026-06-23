@@ -290,7 +290,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 1.2",
+      debugBadge: "SS 1.3",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -359,6 +359,10 @@
           <div class="scrub-hud" aria-live="polite">
             <span id="scrubHudLabel">0%</span>
             <span class="scrub-progress-track" aria-hidden="true"><span class="scrub-progress-fill" id="scrubProgressFill"></span></span>
+          </div>
+
+          <div class="scrub-instruction-chip" id="scrubInstructionChip" aria-live="polite">
+            ${escapeHtml(round.instruction || round.intro || round.title)}
           </div>
 
           <div class="scrub-scripture-card" id="scrubScriptureCard">

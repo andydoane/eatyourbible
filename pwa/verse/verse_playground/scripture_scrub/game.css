@@ -375,22 +375,79 @@ body{
 }
 
 .scrub-instruction-chip{
-  display: none;
   position: absolute;
   z-index: 44;
   left: 50%;
   bottom: calc(14px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  max-width: min(88vw, 560px);
-  padding: 9px 16px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.94);
-  color: var(--scrub-text);
-  box-shadow: 0 5px 0 rgba(0,0,0,.12);
-  font-weight: 900;
-  font-size: clamp(15px, 3.8vw, 20px);
+  max-width: min(88vw, 600px);
+  padding: clamp(9px, 1.7vh, 13px) clamp(16px, 4vw, 24px);
+  border-radius: 22px;
+  background: var(--scrub-chip-bg, #ffc751);
+  color: var(--scrub-chip-fg, #333333);
+  border: 4px solid var(--scrub-chip-border, rgba(255,255,255,.78));
+  box-shadow:
+    0 6px 0 var(--scrub-chip-shadow, rgba(0,0,0,.18)),
+    0 10px 18px rgba(0,0,0,.14);
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(16px, 4.1vw, 24px);
+  line-height: .98;
+  letter-spacing: .01em;
   text-align: center;
+  text-wrap: balance;
   pointer-events: none;
+  opacity: 1;
+  transition:
+    opacity .2s ease,
+    transform .2s ease;
+}
+
+.scrub-round-complete .scrub-instruction-chip{
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px) scale(.96);
+}
+
+.scrub-round-mud .scrub-instruction-chip {
+  --scrub-chip-bg: #ffc751;
+  --scrub-chip-fg: #4a2b19;
+  --scrub-chip-border: #fff1bd;
+  --scrub-chip-shadow: rgba(74, 43, 25, .38);
+}
+
+.scrub-round-paint .scrub-instruction-chip {
+  --scrub-chip-bg: #7f66c6;
+  --scrub-chip-fg: #ffffff;
+  --scrub-chip-border: #e7e0ff;
+  --scrub-chip-shadow: rgba(59, 43, 116, .42);
+}
+
+.scrub-round-fog .scrub-instruction-chip {
+  --scrub-chip-bg: #40b9c5;
+  --scrub-chip-fg: #ffffff;
+  --scrub-chip-border: #d8f3f6;
+  --scrub-chip-shadow: rgba(20, 103, 116, .38);
+}
+
+.scrub-round-leaves .scrub-instruction-chip {
+  --scrub-chip-bg: #ffa351;
+  --scrub-chip-fg: #333333;
+  --scrub-chip-border: #ffe6c9;
+  --scrub-chip-shadow: rgba(128, 72, 18, .34);
+}
+
+.scrub-round-stickers .scrub-instruction-chip {
+  --scrub-chip-bg: #ffc751;
+  --scrub-chip-fg: #333333;
+  --scrub-chip-border: #ffffff;
+  --scrub-chip-shadow: rgba(0, 0, 0, .28);
+}
+
+.scrub-round-archaeology .scrub-instruction-chip {
+  --scrub-chip-bg: #7f66c6;
+  --scrub-chip-fg: #ffffff;
+  --scrub-chip-border: #ffc751;
+  --scrub-chip-shadow: rgba(51, 37, 96, .44);
 }
 
 
@@ -1128,5 +1185,7 @@ body{
   .scrub-instruction-chip{
     bottom: calc(8px + env(safe-area-inset-bottom));
     padding-block: 7px;
+    border-width: 3px;
+    font-size: clamp(14px, 3.7vw, 18px);
   }
 }
