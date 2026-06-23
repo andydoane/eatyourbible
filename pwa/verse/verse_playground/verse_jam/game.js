@@ -1612,12 +1612,14 @@
     }
   }
 
-  function startBeatLoop({ cleanRestart = true } = {}) {
+  function startBeatLoop({ cleanRestart = true, startAt = null } = {}) {
     stopMusic({ stopAudio: cleanRestart });
     const generation = musicGeneration;
 
     state.beatCount = 0;
-    state.musicStartTime = audioCtx.currentTime + 0.08;
+    state.musicStartTime = Number.isFinite(startAt)
+      ? Math.max(startAt, audioCtx.currentTime + 0.02)
+      : audioCtx.currentTime + 0.08;
     state.nextScheduledBeatTime = state.musicStartTime;
 
     const tick = () => {
@@ -2425,13 +2427,15 @@
         updateRoundPill();
         updateBuildText();
 
-        // Transition phrase happens in a break, not over the new tempo.
-        await showRoundTransition({ alreadyAligned: true });
+        // Transition phrase happens in a one-measure break, still on beat.
+        const newGrooveStart = await showRoundTransition({ alreadyAligned: true });
 
         if (!isGameplayFlowActive(flowId)) return;
 
-        // Now start the new groove after the transition phrase has landed.
-        startBeatLoop();
+        // Start the new groove exactly on the downbeat after the break.
+        startBeatLoop({ cleanRestart: false, startAt: newGrooveStart });
+
+        await waitUntilAudioTime(newGrooveStart);
 
         if (!isGameplayFlowActive(flowId)) return;
 
@@ -2506,24 +2510,24 @@
   }
 
 
-  function playRoundTransitionSting() {
+  function playRoundTransitionSting(startAt = audioCtx?.currentTime || 0) {
     if (!audioCtx || muted) return;
 
-    const now = audioCtx.currentTime;
+    const beat = secondsPerBeat();
 
     if (state.roundIndex === 1) {
-      // Bright "time to jam!" lift: C power/pop chord with a little sparkle.
+      // Beat-based "time / to / jam!" lift.
       [
-        { midi: 60, delay: 0.000, duration: 0.42, volume: 0.055, type: "triangle" },
-        { midi: 67, delay: 0.015, duration: 0.42, volume: 0.052, type: "triangle" },
-        { midi: 72, delay: 0.030, duration: 0.46, volume: 0.050, type: "triangle" },
-        { midi: 76, delay: 0.045, duration: 0.38, volume: 0.040, type: "square" },
-        { midi: 79, delay: 0.060, duration: 0.34, volume: 0.034, type: "square" },
-        { midi: 84, delay: 0.130, duration: 0.18, volume: 0.030, type: "square" }
+        { midi: 60, beat: 0, duration: 0.42, volume: 0.052, type: "triangle" },
+        { midi: 67, beat: 0, duration: 0.42, volume: 0.048, type: "triangle" },
+        { midi: 72, beat: 0, duration: 0.46, volume: 0.046, type: "triangle" },
+        { midi: 76, beat: 1, duration: 0.16, volume: 0.040, type: "square" },
+        { midi: 79, beat: 2, duration: 0.18, volume: 0.038, type: "square" },
+        { midi: 84, beat: 3, duration: 0.16, volume: 0.030, type: "triangle" }
       ].forEach(note => {
         playTone({
           midi: note.midi,
-          when: now + note.delay,
+          when: startAt + beat * note.beat,
           duration: note.duration,
           volume: note.volume,
           type: note.type
@@ -2533,15 +2537,16 @@
       return;
     }
 
-    // Later round changes stay punchy but smaller than the first jam lift.
+    // Beat-based "speed / it / up" lift.
     [
-      { midi: 72, delay: 0.000, duration: 0.18, volume: 0.040, type: "square" },
-      { midi: 76, delay: 0.055, duration: 0.18, volume: 0.036, type: "square" },
-      { midi: 79, delay: 0.110, duration: 0.22, volume: 0.034, type: "square" }
+      { midi: 72, beat: 0, duration: 0.14, volume: 0.040, type: "square" },
+      { midi: 76, beat: 1, duration: 0.14, volume: 0.038, type: "square" },
+      { midi: 79, beat: 2, duration: 0.20, volume: 0.036, type: "square" },
+      { midi: 84, beat: 3, duration: 0.14, volume: 0.026, type: "triangle" }
     ].forEach(note => {
       playTone({
         midi: note.midi,
-        when: now + note.delay,
+        when: startAt + beat * note.beat,
         duration: note.duration,
         volume: note.volume,
         type: note.type
@@ -2703,49 +2708,62 @@
 
 
   async function showRoundTransition({ alreadyAligned = false } = {}) {
-    if (state.paused) return;
+    if (state.paused) return audioCtx?.currentTime || 0;
 
     const area = document.getElementById("versejamMainArea");
-    if (!area) return;
+    if (!area) return audioCtx?.currentTime || 0;
 
     const message = state.roundIndex === 1 ? ["time", "to", "jam!"] : ["speed", "it", "up"];
 
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
 
     const stack = document.getElementById("versejamIntroStack");
-    if (!stack) return;
+    if (!stack) return audioCtx?.currentTime || 0;
 
     if (!alreadyAligned) {
       await sleep(nextMeasureDelayMs());
     }
 
-    playRoundTransitionSting();
+    const beat = secondsPerBeat();
+    const transitionStart = audioCtx
+      ? audioCtx.currentTime + 0.08
+      : performance.now() / 1000;
+    const newGrooveStart = transitionStart + beat * 4;
 
-    for (const word of message) {
-      if (state.screen !== "game" || state.paused) return;
+    playRoundTransitionSting(transitionStart);
+
+    const transitionNotes = state.roundIndex === 1
+      ? [76, 79, 84]
+      : [72, 76, 79];
+
+    for (let index = 0; index < message.length; index += 1) {
+      if (state.screen !== "game" || state.paused) return newGrooveStart;
+
+      const wordTime = transitionStart + beat * index;
+
+      await waitUntilAudioTime(wordTime);
+
+      if (state.screen !== "game" || state.paused) return newGrooveStart;
 
       const el = document.createElement("div");
       el.className = "versejam-intro-word is-in";
-      el.textContent = word;
+      el.textContent = message[index];
       stack.appendChild(el);
 
-      // Keep the word pops light now that the transition has a fuller sting.
-      const transitionNotes = state.roundIndex === 1
-        ? [76, 79, 84]
-        : [72, 76, 79];
-
       playTone({
-        midi: transitionNotes[(stack.children.length - 1) % transitionNotes.length],
-        when: audioCtx?.currentTime || 0,
+        midi: transitionNotes[index % transitionNotes.length],
+        when: wordTime,
         duration: 0.11,
         volume: 0.045,
         type: "square"
       });
-
-      await sleep(secondsPerBeat() * 1000);
     }
 
-    await sleep(secondsPerBeat() * 2 * 1000);
+    // Return just before the new downbeat so the drum loop can be scheduled
+    // exactly on the beat instead of starting after the animation finishes.
+    await waitUntilAudioTime(newGrooveStart - 0.12);
+
+    return newGrooveStart;
   }
 
   function explodeButton(btnEl) {
@@ -2830,7 +2848,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.9",
+      debugBadge: "VJ 2.10",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
