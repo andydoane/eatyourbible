@@ -824,12 +824,12 @@ body{
   background:
     linear-gradient(90deg,
       rgba(255, 255, 255, .98) 0%,
-      rgba(255, 255, 255, .98) 72%,
-      rgba(255, 255, 255, .88) 84%,
-      rgba(255, 255, 255, .38) 94%,
+      rgba(255, 255, 255, .98) 84%,
+      rgba(255, 255, 255, .76) 91%,
+      rgba(255, 255, 255, .28) 97%,
       rgba(255, 255, 255, 0) 100%);
-  border-radius: 0 999px 999px 0;
-  filter: drop-shadow(0 0 18px rgba(255, 255, 255, .58));
+  border-radius: 0;
+  filter: none;
   opacity: 0;
   animation:
     scrubCleanSweepMove 1250ms linear both,
@@ -845,23 +845,24 @@ body{
 
 .scrub-clean-sweep::after {
   top: -4%;
-  right: -42px;
-  width: 92px;
+  right: -28px;
+  width: 64px;
   height: 108%;
   background:
     linear-gradient(90deg,
-      rgba(255, 255, 255, .78) 0%,
-      rgba(255, 255, 255, .48) 34%,
-      rgba(255, 255, 255, .18) 68%,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, .34) 24%,
+      rgba(255, 255, 255, .86) 50%,
+      rgba(255, 255, 255, .34) 76%,
       rgba(255, 255, 255, 0) 100%);
-  filter: blur(14px);
-  opacity: .92;
+  filter: blur(12px);
+  opacity: .95;
 }
 
 .scrub-clean-sweep::before {
   top: 3%;
-  right: -34px;
-  width: 88px;
+  right: -38px;
+  width: 76px;
   height: 94%;
   background:
     radial-gradient(circle at 48% 5%, rgba(151, 226, 240, .58) 0 5px, rgba(151, 226, 240, .18) 6px, transparent 8px),
