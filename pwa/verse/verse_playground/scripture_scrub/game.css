@@ -378,34 +378,37 @@ body{
   position: absolute;
   z-index: 44;
   left: 50%;
-  bottom: calc(14px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
-  max-width: min(88vw, 600px);
-  padding: clamp(9px, 1.7vh, 13px) clamp(16px, 4vw, 24px);
-  border-radius: 22px;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: fit-content;
+  max-width: min(90vw, 720px);
+  padding: clamp(18px, 3.4vh, 30px) clamp(22px, 5.8vw, 42px);
+  border-radius: clamp(24px, 6vw, 42px);
   background: var(--scrub-chip-bg, #ffc751);
   color: var(--scrub-chip-fg, #333333);
-  border: 4px solid var(--scrub-chip-border, rgba(255,255,255,.78));
+  border: clamp(4px, 1.1vw, 7px) solid var(--scrub-chip-border, rgba(255,255,255,.78));
   box-shadow:
-    0 6px 0 var(--scrub-chip-shadow, rgba(0,0,0,.18)),
-    0 10px 18px rgba(0,0,0,.14);
+    0 clamp(7px, 1.4vh, 12px) 0 var(--scrub-chip-shadow, rgba(0,0,0,.18)),
+    0 18px 34px rgba(0,0,0,.20);
   font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
   font-weight: 400;
-  font-size: clamp(16px, 4.1vw, 24px);
-  line-height: .98;
+  font-size: clamp(34px, 9.5vw, 72px);
+  line-height: .92;
   letter-spacing: .01em;
   text-align: center;
   text-wrap: balance;
   pointer-events: none;
   opacity: 1;
+  animation: scrubInstructionPop .26s cubic-bezier(.2,1.25,.28,1) both;
   transition:
-    opacity .2s ease,
-    transform .2s ease;
+    opacity .18s ease,
+    transform .18s ease;
 }
 
+.scrub-instruction-dismissed .scrub-instruction-chip,
 .scrub-round-complete .scrub-instruction-chip{
   opacity: 0;
-  transform: translateX(-50%) translateY(10px) scale(.96);
+  transform: translate(-50%, -50%) translateY(16px) scale(.88);
 }
 
 .scrub-round-mud .scrub-instruction-chip {
@@ -448,6 +451,23 @@ body{
   --scrub-chip-fg: #ffffff;
   --scrub-chip-border: #ffc751;
   --scrub-chip-shadow: rgba(51, 37, 96, .44);
+}
+
+@keyframes scrubInstructionPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.78) rotate(-1.5deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04) rotate(.7deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
 }
 
 
@@ -1183,9 +1203,9 @@ body{
   }
 
   .scrub-instruction-chip{
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    padding-block: 7px;
-    border-width: 3px;
-    font-size: clamp(14px, 3.7vw, 18px);
+    padding: 16px 18px;
+    border-width: 4px;
+    font-size: clamp(28px, 8.6vw, 42px);
+    max-width: 88vw;
   }
 }

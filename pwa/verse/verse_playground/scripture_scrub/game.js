@@ -248,6 +248,11 @@
     return Number.isFinite(round?.brushRadius) ? round.brushRadius : DEFAULT_BRUSH_RADIUS;
   }
 
+  function dismissInstructionChip() {
+    const root = document.getElementById("scrubGame");
+    if (root) root.classList.add("scrub-instruction-dismissed");
+  }
+
   async function loadVerseJson() {
     const verseId = String(ctx.verseId || launchParams.verseId || "").trim();
     if (!verseId) return null;
@@ -290,7 +295,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 1.3",
+      debugBadge: "SS 1.4",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -882,6 +887,7 @@
     coverCanvas.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
       event.preventDefault();
+      dismissInstructionChip();
       pointerDown = true;
       lastPoint = getCanvasPoint(event);
       coverCanvas.setPointerCapture?.(event.pointerId);
@@ -1138,12 +1144,16 @@
 
     stageEl.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
+      dismissInstructionChip();
       rakeLeavesAt(event.clientX, event.clientY);
     };
 
     stageEl.onpointermove = (event) => {
       if (menuOpen || completionLocked) return;
-      if (event.buttons || event.pointerType === "touch") rakeLeavesAt(event.clientX, event.clientY);
+      if (event.buttons || event.pointerType === "touch") {
+        dismissInstructionChip();
+        rakeLeavesAt(event.clientX, event.clientY);
+      }
     };
   }
 
@@ -1371,7 +1381,10 @@
       btn.style.setProperty("--sticker-emoji-size", `${emojiSize}px`);
       btn.style.setProperty("--sticker-word-size", `${wordSize}px`);
 
-      btn.onclick = () => peelSticker(btn);
+      btn.onclick = () => {
+        dismissInstructionChip();
+        peelSticker(btn);
+      };
       btn.onpointerdown = (event) => {
         event.stopPropagation();
       };
