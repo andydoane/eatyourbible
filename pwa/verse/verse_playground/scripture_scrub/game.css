@@ -407,8 +407,10 @@ body{
 
 .scrub-instruction-dismissed .scrub-instruction-chip,
 .scrub-round-complete .scrub-instruction-chip{
+  animation: none;
   opacity: 0;
   transform: translate(-50%, -50%) translateY(16px) scale(.88);
+  visibility: hidden;
 }
 
 .scrub-round-mud .scrub-instruction-chip {
