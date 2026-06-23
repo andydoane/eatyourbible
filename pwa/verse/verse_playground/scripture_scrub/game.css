@@ -827,55 +827,15 @@ body{
   width: 0;
   height: 120%;
   pointer-events: none;
-  overflow: visible;
-  background:
-    linear-gradient(90deg,
-      rgba(255, 255, 255, .98) 0%,
-      rgba(255, 255, 255, .98) 84%,
-      rgba(255, 255, 255, .76) 91%,
-      rgba(255, 255, 255, .28) 97%,
-      rgba(255, 255, 255, 0) 100%);
+  overflow: hidden;
+  background: #ffffff;
   border-radius: 0;
   filter: none;
-  opacity: 0;
-  animation:
-    scrubCleanSweepMove 1250ms linear both,
-    scrubCleanSweepFade 1250ms linear both;
-}
-
-.scrub-clean-sweep::before,
-.scrub-clean-sweep::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-}
-
-.scrub-clean-sweep::after {
-  top: -4%;
-  right: -28px;
-  width: 64px;
-  height: 108%;
-  background:
-    linear-gradient(90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, .34) 24%,
-      rgba(255, 255, 255, .86) 50%,
-      rgba(255, 255, 255, .34) 76%,
-      rgba(255, 255, 255, 0) 100%);
-  filter: blur(12px);
-  opacity: .95;
+  opacity: 1;
+  animation: scrubCleanSweepMove 1250ms linear both;
 }
 
 
-.scrub-clean-sweep-mud {
-  background:
-    linear-gradient(90deg,
-      rgba(255, 255, 255, .98) 0%,
-      rgba(255, 255, 255, .98) 68%,
-      rgba(255, 254, 248, .92) 82%,
-      rgba(255, 241, 189, .30) 93%,
-      rgba(255, 255, 255, 0) 100%);
-}
 
 @keyframes scrubCleanSweepMove {
   0% {
@@ -887,23 +847,7 @@ body{
   }
 }
 
-@keyframes scrubCleanSweepFade {
-  0% {
-    opacity: 0;
-  }
 
-  6% {
-    opacity: 1;
-  }
-
-  90% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
 
 
 
