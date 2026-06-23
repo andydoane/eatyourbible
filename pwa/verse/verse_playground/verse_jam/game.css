@@ -768,6 +768,120 @@ body {
   -webkit-user-select: none;
 }
 
+.versejam-score-screen {
+  width: min(430px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  animation: vj-score-screen-in 320ms cubic-bezier(.2, 1.35, .35, 1) both;
+}
+
+.versejam-score-title {
+  border-radius: 999px;
+  padding: 12px 20px 14px;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(1.55rem, 8vw, 3.05rem);
+  line-height: .95;
+  font-weight: 400;
+  letter-spacing: .035em;
+  color: #fff7e8;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, .22);
+  background: linear-gradient(90deg,
+      rgba(255, 122, 217, .95),
+      rgba(255, 226, 122, .95),
+      rgba(141, 247, 255, .95),
+      rgba(157, 255, 141, .95),
+      rgba(255, 122, 217, .95));
+  background-size: 260% 100%;
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, .24),
+    inset 0 -6px 0 rgba(0, 0, 0, .14),
+    0 0 30px rgba(255, 122, 217, .20);
+  animation: vj-rainbow-bg 1.35s linear infinite, vj-score-title-pulse 760ms ease-in-out infinite alternate;
+}
+
+.versejam-score-number {
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(3.8rem, 22vw, 8.4rem);
+  line-height: .9;
+  font-weight: 400;
+  color: #fff7e8;
+  letter-spacing: .025em;
+  text-shadow:
+    0 6px 0 rgba(0, 0, 0, .30),
+    0 0 26px rgba(255, 255, 255, .22);
+  animation: vj-score-number-pop 440ms cubic-bezier(.2, 1.45, .35, 1) both;
+}
+
+.versejam-score-continue {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 26px 16px;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(1.15rem, 6vw, 1.85rem);
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: .035em;
+  color: #fff7e8;
+  background: linear-gradient(180deg, #9dff8d, #28b85f);
+  box-shadow:
+    0 14px 26px rgba(0, 0, 0, .26),
+    inset 0 -6px 0 rgba(0, 0, 0, .16);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.versejam-score-continue:active {
+  transform: translateY(2px) scale(.98);
+  box-shadow:
+    0 9px 18px rgba(0, 0, 0, .24),
+    inset 0 -4px 0 rgba(0, 0, 0, .16);
+}
+
+.versejam-score-continue:disabled {
+  opacity: .82;
+  cursor: default;
+}
+
+@keyframes vj-score-screen-in {
+  from {
+    opacity: 0;
+    transform: scale(.84) translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes vj-score-title-pulse {
+  from {
+    transform: scale(.985);
+    filter: brightness(1);
+  }
+
+  to {
+    transform: scale(1.035);
+    filter: brightness(1.14);
+  }
+}
+
+@keyframes vj-score-number-pop {
+  from {
+    opacity: 0;
+    transform: scale(.28) rotate(-4deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
 .versejam-score-splash {
   position: absolute;
   left: 50%;

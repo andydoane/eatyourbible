@@ -2423,9 +2423,8 @@
 
       if (!isGameplayFlowActive(flowId)) return;
 
-      state.completed = true;
-      stopRun();
-      setScreen("end");
+      await showGroovyScoreScreen(flowId);
+      return;
     }
   }
 
@@ -2520,6 +2519,90 @@
       });
     });
   }
+
+  function playCompletionArpeggio() {
+    if (!audioCtx || muted) return;
+
+    const now = audioCtx.currentTime + 0.03;
+
+    // Celebratory C-major arpeggio after the drum beat stops.
+    [
+      { midi: 60, delay: 0.00, duration: 0.16, volume: 0.075, type: "square" },
+      { midi: 64, delay: 0.08, duration: 0.16, volume: 0.070, type: "square" },
+      { midi: 67, delay: 0.16, duration: 0.18, volume: 0.068, type: "square" },
+      { midi: 72, delay: 0.25, duration: 0.22, volume: 0.066, type: "square" },
+      { midi: 76, delay: 0.36, duration: 0.24, volume: 0.056, type: "triangle" },
+      { midi: 79, delay: 0.48, duration: 0.28, volume: 0.050, type: "triangle" },
+      { midi: 84, delay: 0.62, duration: 0.42, volume: 0.045, type: "triangle" }
+    ].forEach(note => {
+      playTone({
+        midi: note.midi,
+        when: now + note.delay,
+        duration: note.duration,
+        volume: note.volume,
+        type: note.type
+      });
+    });
+
+    // Tiny final sparkle.
+    playTone({
+      midi: 91,
+      when: now + 0.80,
+      duration: 0.18,
+      volume: 0.030,
+      type: "triangle"
+    });
+  }
+
+  async function showGroovyScoreScreen(flowId = gameplayGeneration) {
+    if (!isGameplayFlowActive(flowId)) return;
+
+    const area = document.getElementById("versejamMainArea");
+    if (!area) return;
+
+    // Keep the drum beat running while this screen is visible.
+    // The watchdog treats busy as an intentional waiting state.
+    state.busy = true;
+    state.acceptingInput = false;
+    noteGameplayActivity();
+
+    area.innerHTML = `
+      <section class="versejam-score-screen" aria-label="Groovy score">
+        <div class="versejam-score-title">GROOVY SCORE</div>
+        <div class="versejam-score-number">${Math.max(0, state.groovyScore)}</div>
+        <button class="versejam-score-continue" type="button" id="verseJamScoreContinue">
+          Tap to Continue
+        </button>
+      </section>
+    `;
+
+    const button = document.getElementById("verseJamScoreContinue");
+    if (!button) return;
+
+    return new Promise(resolve => {
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.textContent = "Great!";
+
+        // Stop the drum/pad first, then play the musical send-off.
+        state.busy = false;
+        state.completed = true;
+        stopRun();
+
+        playCompletionArpeggio();
+
+        await sleep(900);
+
+        // Do not call setScreen("end") here; setScreen would call stopRun()
+        // again and can cut off the arpeggio. Render the end screen directly.
+        state.screen = "end";
+        render();
+
+        resolve();
+      }, { once: true });
+    });
+  }
+
 
   async function showEndingSequence(flowId = gameplayGeneration) {
     if (!isGameplayFlowActive(flowId)) return;
@@ -2689,7 +2772,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VJ 2.6",
+      debugBadge: "VJ 2.7",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
