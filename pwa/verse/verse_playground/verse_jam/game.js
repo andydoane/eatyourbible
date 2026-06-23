@@ -3180,10 +3180,9 @@
 
   function helpHtml() {
     return `
-      Tap the next verse word to play its note.<br><br>
-      Beginner: normal starting speed.<br>
-      Advanced: faster starting speed and faster tempo climb.<br><br>
-      The beat keeps going while each chunk appears. First, listen as the words pop in. Then watch the cue button count down: 3, 2, 1, GO! When it says TAP!, echo the rhythm by tapping the next verse word. Correct taps pop into chunky pixels and build the verse above. Wrong taps play a gentle “no” note.
+      Listen to the rhythm patter, then tap the verse words to match the beat.<br><br>
+      The better you match the rhythm, the more Groovy points you earn.<br><br>
+      Each time through the verse gets faster.
     `;
   }
 
