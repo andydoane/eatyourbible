@@ -895,22 +895,27 @@ body{
   }
 
   8% {
-    width: 6%;
+    width: 8%;
     opacity: 1;
   }
 
   42% {
-    width: 48%;
+    width: 52%;
     opacity: 1;
   }
 
-  84% {
-    width: calc(100% + 120px);
+  78% {
+    width: calc(100% + 190px);
+    opacity: 1;
+  }
+
+  88% {
+    width: calc(100% + 210px);
     opacity: 1;
   }
 
   100% {
-    width: calc(100% + 170px);
+    width: calc(100% + 230px);
     opacity: 0;
   }
 }

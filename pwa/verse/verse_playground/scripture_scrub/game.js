@@ -307,7 +307,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 1.8",
+      debugBadge: "SS 1.9",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1553,55 +1553,31 @@
     sweep.className = `scrub-clean-sweep scrub-clean-sweep-${sweepRoundId}`;
     stageEl.appendChild(sweep);
 
-    const start = performance.now();
-    const duration = 1250;
-    let previousWipeX = 0;
+    const totalDuration = 1250;
+    const hiddenClearMoment = 980;
 
-    function frame(now) {
-      const rawProgress = clamp((now - start) / duration, 0, 1);
-      const easedProgress = rawProgress < 0.5
-        ? 4 * rawProgress * rawProgress * rawProgress
-        : 1 - Math.pow(-2 * rawProgress + 2, 3) / 2;
+    updateProgress(currentThreshold());
 
-      const wipeX = rect.width * easedProgress;
-      const bandPadding = 34 * Math.min(1, rawProgress / 0.28);
-      const clearLeft = Math.max(0, previousWipeX - bandPadding);
-      const clearRight = Math.min(rect.width, wipeX + bandPadding);
-      const clearWidth = Math.max(0, clearRight - clearLeft);
-
-      if (clearWidth > 0.5) {
-        coverCtx.save();
-        coverCtx.globalCompositeOperation = "destination-out";
-        coverCtx.clearRect(
-          clearLeft,
-          0,
-          clearWidth,
-          rect.height
-        );
-        coverCtx.restore();
-      }
-
-      previousWipeX = Math.max(previousWipeX, wipeX);
-
-      updateProgress(Math.max(currentThreshold(), easedProgress));
-
-      if (rawProgress < 1) {
-        requestAnimationFrame(frame);
-        return;
-      }
+    const clearWhileHidden = () => {
+      clearMaskFully();
 
       coverCtx.save();
       coverCtx.globalCompositeOperation = "destination-out";
       coverCtx.clearRect(0, 0, rect.width, rect.height);
       coverCtx.restore();
 
-      setTimeout(() => {
-        sweep.remove();
-        onDone();
-      }, 120);
-    }
+      updateProgress(1);
+    };
 
-    requestAnimationFrame(frame);
+    const clearTimer = setTimeout(clearWhileHidden, hiddenClearMoment);
+
+    setTimeout(() => {
+      clearTimeout(clearTimer);
+      clearWhileHidden();
+
+      sweep.remove();
+      onDone();
+    }, totalDuration + 80);
   }
 
 
