@@ -218,7 +218,7 @@
 
     // GO! tone after the 3, 2, 1 countdown.
     // Keep this much lower than introWords if GO feels too loud.
-    goTone: 0.35,
+    goTone: 0.15,
 
     // Intro phrase tones:
     // "tap / the / words / match / my / beat"
