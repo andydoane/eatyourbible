@@ -223,7 +223,7 @@
     // Intro phrase tones:
     // "tap / the / words / match / my / beat"
     // This can stay louder without making GO! blast.
-    introWords: 2.0,
+    introWords: 2.5,
 
     // Between-round transition phrase tones:
     // "time / to / jam!"
@@ -233,7 +233,7 @@
 
     // Little note/chime when a new verse word button pops onto the screen.
     // This can get annoying if too loud because it happens often.
-    buttonPopIn: 1.0,
+    buttonPopIn: 0.7,
 
     // Word tap tones in the first/warmup round.
     // This is louder than later word taps so the first round feels clear.
