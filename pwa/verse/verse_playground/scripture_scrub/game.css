@@ -144,6 +144,8 @@ body{
   align-items: center;
   justify-content: center;
   max-width: min(92%, 760px);
+  min-height: clamp(54px, 8.2vh, 78px);
+  box-sizing: border-box;
   padding: clamp(7px, 1.4vh, 11px) clamp(18px, 4vw, 28px);
   border-radius: 999px;
   background: #ffffff;
@@ -160,6 +162,7 @@ body{
 .scrub-ref-pill.is-next-round{
   position: relative;
   z-index: 60;
+  min-height: clamp(54px, 8.2vh, 78px);
   padding: 0;
   border-color: rgba(255,199,81,.78);
   box-shadow:
@@ -171,6 +174,8 @@ body{
 
 .scrub-next-round-btn{
   width: 100%;
+  min-height: clamp(54px, 8.2vh, 78px);
+  box-sizing: border-box;
   border: 0;
   border-radius: 999px;
   padding: clamp(12px, 2vh, 17px) clamp(24px, 5vw, 38px);
