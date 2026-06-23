@@ -72,6 +72,13 @@
   const SOUND_BIT_BASE_URL = "./verse_jam_sounds/";
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
 
+  // Shared UI tap sounds used by the other games.
+  // These are only for menus/navigation, not gameplay word buttons.
+  const UI_TAP_SOUNDS = [
+    "../../ui_audio/ui_sound_pop_1.mp3",
+    "../../ui_audio/ui_sound_pop_2.mp3"
+  ];
+
   const SOUND_BITS = [
     { id: "boom", label: "Boom!", filename: "verse_jam_voice_boom.mp3" },
     { id: "hey", label: "Hey!", filename: "verse_jam_voice_hey.mp3" },
@@ -264,7 +271,13 @@
 
     // Generated clap filler button sound.
     // This does not affect recorded voice fillers.
-    clap: 1.0
+    clap: 1.0,
+
+    // Shared UI tap sound volume.
+    // Used for title buttons, mode buttons, game menu buttons,
+    // headphones screen button, and completion screen buttons.
+    // Does not affect verse word buttons or musical gameplay sounds.
+    uiTap: 0.12
   };
 
   // Volume balance
@@ -314,6 +327,11 @@
   let htmlAudioPrimePromise = null;
   let soundBitLoadPromise = null;
   const soundBitBuffers = {};
+
+  let uiTapLoadPromise = null;
+  const uiTapBuffers = [];
+  let uiTapIndex = 0;
+
   const activeAudioSources = new Set();
   let soundBitBag = [];
 
@@ -476,8 +494,9 @@
 
     audioUnlocked = true;
 
-    // Load the short shout samples, but do not block the tap gesture.
+    // Load short samples, but do not block the tap gesture.
     loadSoundBitBuffers();
+    loadUiTapBuffers();
   }
 
   function installAudioUnlockHandlers() {
@@ -1558,6 +1577,97 @@
     return soundBitLoadPromise;
   }
 
+  async function loadUiTapBuffers() {
+    if (!audioCtx) return;
+    if (uiTapLoadPromise) return uiTapLoadPromise;
+
+    uiTapLoadPromise = Promise.all(UI_TAP_SOUNDS.map(async (url, index) => {
+      if (uiTapBuffers[index]) return;
+
+      try {
+        const res = await fetch(url, { cache: "force-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const arrayBuffer = await res.arrayBuffer();
+        uiTapBuffers[index] = await audioCtx.decodeAudioData(arrayBuffer);
+      } catch (err) {
+        console.warn(`Verse Jam could not load UI tap sound: ${url}`, err);
+        uiTapBuffers[index] = null;
+      }
+    }));
+
+    return uiTapLoadPromise;
+  }
+
+  function playUiTapFallback() {
+    if (!audioCtx || !masterGain || muted) return;
+
+    const now = audioCtx.currentTime;
+
+    // Tiny generated fallback for the very first tap before MP3s finish loading.
+    playTone({
+      midi: 84,
+      when: now,
+      duration: 0.045,
+      volume: 0.035 * MIX.uiTap,
+      type: "square"
+    });
+  }
+
+  function playUiTapSound() {
+    if (!audioCtx || !masterGain || muted) return false;
+
+    const availableBuffers = uiTapBuffers.filter(Boolean);
+
+    if (!availableBuffers.length) {
+      loadUiTapBuffers();
+      playUiTapFallback();
+      return false;
+    }
+
+    const buffer = availableBuffers[uiTapIndex % availableBuffers.length];
+    uiTapIndex += 1;
+
+    const now = audioCtx.currentTime;
+    const source = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+
+    source.buffer = buffer;
+    gain.gain.setValueAtTime(Math.max(0, MIX.uiTap), now);
+
+    source.connect(gain);
+    gain.connect(masterGain);
+
+    trackAudioSource(source);
+    source.start(now);
+
+    return true;
+  }
+
+  function wireUiTapButtons(root = app) {
+    if (!root) return;
+
+    root.querySelectorAll("button").forEach(button => {
+      if (button.dataset.vjUiTapWired === "true") return;
+
+      // Do not add shared UI tap sounds to gameplay buttons.
+      // Verse word buttons already have musical gameplay sounds.
+      if (
+        button.classList.contains("versejam-word-btn") ||
+        button.id === "versejamCueButton"
+      ) {
+        return;
+      }
+
+      button.dataset.vjUiTapWired = "true";
+
+      button.addEventListener("pointerdown", () => {
+        playUiTapSound();
+      }, { passive: true });
+    });
+  }
+
+
   function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = VOICE_SOUND_BIT_VOLUME) {
     if (!audioCtx || !masterGain || muted || !sound?.filename) return false;
 
@@ -1900,6 +2010,7 @@
     `;
 
     wireGameScreen();
+    wireUiTapButtons(app);
     updateBuildText();
   }
 
@@ -2970,6 +3081,8 @@
         setScreen("mode");
       }
     });
+
+    wireUiTapButtons(app);
   }
 
   function renderMode() {
@@ -2990,6 +3103,8 @@
         setScreen("headphones");
       }
     });
+
+    wireUiTapButtons(app);
   }
 
   function renderHeadphonesWarning() {
@@ -3024,6 +3139,8 @@
 
     const button = document.getElementById("verseJamHeadphonesGotIt");
 
+    wireUiTapButtons(app);
+
     if (button) {
       button.addEventListener("click", () => {
         primeHtmlAudio();
@@ -3049,6 +3166,8 @@
       onMoreGames: () => window.VerseGameBridge.exitGame(),
       onChangeVerse: () => window.VerseGameBridge.returnToTitle()
     });
+
+    wireUiTapButtons(app);
 
     const center = document.querySelector(".vm-game-center");
     if (center) {
