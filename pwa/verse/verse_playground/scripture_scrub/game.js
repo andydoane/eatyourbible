@@ -48,6 +48,8 @@
     archaeology: 0.95
   };
 
+  const BIBLE_REVEAL_COMPLETION_THRESHOLD = 0.96;
+
   const ROUNDS = [
     {
       id: "mud",
@@ -113,7 +115,7 @@
       introTitle: "Find the Bible",
       icon: "🏺",
       intro: "Dig carefully. Find the hidden Bible!",
-      instruction: "Dig carefully — clear less dirt for a better score.",
+      instruction: "Dig carefully — uncover the Bible!",
       kind: "archaeology",
       texture: "dirt",
       rewardIcon: "📖",
@@ -375,7 +377,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.3",
+      debugBadge: "SS 3.4",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1105,12 +1107,13 @@
     coverageCheckTimer = setTimeout(() => {
       coverageCheckTimer = null;
       const cleared = measureClearedRatio();
-      updateProgress(cleared);
 
       if (round.kind === "archaeology") {
         checkBibleFound(cleared);
         return;
       }
+
+      updateProgress(cleared);
 
       if (cleared >= currentThreshold()) completeRound();
     }, delay);
@@ -1734,13 +1737,16 @@
   function checkBibleFound(clearedRatio) {
     if (!bibleRect || !coverCanvas || !coverCtx || completionLocked) return;
 
-    const revealRatio = measureBibleRevealRatio();
-    if (revealRatio < .42) return;
+    const bibleRevealRatio = measureBibleRevealRatio();
+    updateProgress(bibleRevealRatio);
+
+    if (bibleRevealRatio < BIBLE_REVEAL_COMPLETION_THRESHOLD) return;
 
     archaeologyScore = calculateArchaeologyScore(clearedRatio);
+
     const bible = document.getElementById("scrubBibleTarget");
     if (bible) bible.classList.add("is-found");
-    updateProgress(clearedRatio);
+
     completeRound();
   }
 
