@@ -285,6 +285,8 @@
   let bibleRect = null;
   let chalkboardTargetRects = [];
   let glowTargetRects = [];
+  let glowMaskCanvas = null;
+  let glowMaskCtx = null;
   let mowerActive = false;
   let mowerFromTop = true;
   let mowerAnimationFrame = null;
@@ -449,7 +451,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.5",
+      debugBadge: "SS 4.6",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -563,6 +565,7 @@
             <div class="scrub-ref-pill" id="scrubRefPill">${escapeHtml(getReferenceDisplay())}</div>
             <div class="scrub-verse-fit-box" id="scrubVerseFitBox">
               <div class="scrub-verse-text" id="scrubVerseText">${renderVerseHtml()}</div>
+              <div class="scrub-verse-text scrub-glow-verse-text" id="scrubGlowVerseText" aria-hidden="true">${renderVerseHtml()}</div>
             </div>
           </div>
 
@@ -1188,23 +1191,52 @@
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.clearRect(0, 0, width, height);
 
+    setupGlowMask(width, height);
+    syncGlowVerseLayer();
     refreshGlowTargetRects();
-    drawGlowWordCovers(width, height);
+    applyGlowMask();
 
     requestAnimationFrame(() => {
+      syncGlowVerseLayer();
       refreshGlowTargetRects();
-      coverCtx.clearRect(0, 0, width, height);
-      drawGlowWordCovers(width, height);
+      setupGlowMask(width, height);
+      applyGlowMask();
       updateProgress(0);
     });
 
     setTimeout(() => {
+      syncGlowVerseLayer();
       refreshGlowTargetRects();
-      coverCtx.clearRect(0, 0, width, height);
-      drawGlowWordCovers(width, height);
+      setupGlowMask(width, height);
+      applyGlowMask();
     }, 180);
 
     wireGlowReveal(round);
+  }
+
+  function setupGlowMask(width, height) {
+    glowMaskCanvas = document.createElement("canvas");
+    glowMaskCanvas.width = coverCanvas.width;
+    glowMaskCanvas.height = coverCanvas.height;
+
+    glowMaskCtx = glowMaskCanvas.getContext("2d", { willReadFrequently: true });
+    if (!glowMaskCtx) return;
+
+    glowMaskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    glowMaskCtx.clearRect(0, 0, width, height);
+  }
+
+  function syncGlowVerseLayer() {
+    const base = document.getElementById("scrubVerseText");
+    const glow = document.getElementById("scrubGlowVerseText");
+    if (!base || !glow) return;
+
+    glow.style.fontSize = base.style.fontSize;
+    glow.style.lineHeight = base.style.lineHeight;
+    glow.style.maxWidth = base.style.maxWidth;
+    glow.style.width = base.style.width;
+    glow.style.marginLeft = base.style.marginLeft;
+    glow.style.marginRight = base.style.marginRight;
   }
 
   function refreshGlowTargetRects() {
@@ -1246,27 +1278,13 @@
     glowTargetRects = targets;
   }
 
-  function drawGlowWordCovers(width, height) {
-    if (!coverCtx || !glowTargetRects.length) return;
-
-    coverCtx.save();
-    coverCtx.globalCompositeOperation = "source-over";
-    coverCtx.filter = "none";
-    coverCtx.fillStyle = "#050817";
-
-    glowTargetRects.forEach((target) => {
-      coverCtx.fillRect(target.left, target.top, target.width, target.height);
-    });
-
-    coverCtx.restore();
-  }
-
   function wireGlowReveal(round) {
     coverCanvas.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
 
       event.preventDefault();
       dismissInstructionChip();
+      syncGlowVerseLayer();
       refreshGlowTargetRects();
 
       pointerDown = true;
@@ -1321,33 +1339,42 @@
   }
 
   function revealGlowAt(x, y, radius, round) {
-    if (!coverCtx) return;
+    if (!glowMaskCtx) return;
 
-    const glowRadius = radius * 1.45;
-    const clearRadius = radius * 1.02;
+    const revealRadius = radius * 1.08;
 
-    coverCtx.save();
-    coverCtx.globalCompositeOperation = "lighter";
+    glowMaskCtx.save();
+    glowMaskCtx.globalCompositeOperation = "source-over";
 
-    const glow = coverCtx.createRadialGradient(x, y, 0, x, y, glowRadius);
-    glow.addColorStop(0, "rgba(178, 255, 239, .42)");
-    glow.addColorStop(.42, "rgba(64, 185, 197, .18)");
-    glow.addColorStop(1, "rgba(127, 102, 198, 0)");
+    const reveal = glowMaskCtx.createRadialGradient(x, y, 0, x, y, revealRadius);
+    reveal.addColorStop(0, "rgba(255, 255, 255, 1)");
+    reveal.addColorStop(.68, "rgba(255, 255, 255, .96)");
+    reveal.addColorStop(1, "rgba(255, 255, 255, 0)");
 
-    coverCtx.fillStyle = glow;
-    coverCtx.beginPath();
-    coverCtx.arc(x, y, glowRadius, 0, Math.PI * 2);
-    coverCtx.fill();
-    coverCtx.restore();
+    glowMaskCtx.fillStyle = reveal;
+    glowMaskCtx.beginPath();
+    glowMaskCtx.arc(x, y, revealRadius, 0, Math.PI * 2);
+    glowMaskCtx.fill();
+    glowMaskCtx.restore();
 
-    coverCtx.save();
-    coverCtx.globalCompositeOperation = "destination-out";
-    coverCtx.beginPath();
-    coverCtx.arc(x, y, clearRadius, 0, Math.PI * 2);
-    coverCtx.fill();
-    coverCtx.restore();
+    applyGlowMask();
+    eraseClearMask(x, y, revealRadius);
+  }
 
-    eraseClearMask(x, y, clearRadius);
+  function applyGlowMask() {
+    const glow = document.getElementById("scrubGlowVerseText");
+    if (!glow || !glowMaskCanvas) return;
+
+    const url = `url("${glowMaskCanvas.toDataURL("image/png")}")`;
+
+    glow.style.webkitMaskImage = url;
+    glow.style.maskImage = url;
+    glow.style.webkitMaskRepeat = "no-repeat";
+    glow.style.maskRepeat = "no-repeat";
+    glow.style.webkitMaskSize = "100% 100%";
+    glow.style.maskSize = "100% 100%";
+    glow.style.webkitMaskPosition = "0 0";
+    glow.style.maskPosition = "0 0";
   }
 
   function measureGlowClearedRatio() {
@@ -1389,11 +1416,24 @@
   }
 
   function clearGlowCover() {
-    if (!coverCtx || !stageEl) return;
+    if (!glowMaskCtx || !glowMaskCanvas || !stageEl) return;
 
     const rect = stageEl.getBoundingClientRect();
-    coverCtx.clearRect(0, 0, rect.width, rect.height);
+
+    glowMaskCtx.save();
+    glowMaskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    glowMaskCtx.clearRect(0, 0, rect.width, rect.height);
+    glowMaskCtx.fillStyle = "#ffffff";
+    glowMaskCtx.fillRect(0, 0, rect.width, rect.height);
+    glowMaskCtx.restore();
+
+    applyGlowMask();
+
+    if (coverCtx) {
+      coverCtx.clearRect(0, 0, rect.width, rect.height);
+    }
   }
+
 
 
   function setupMowerRound(round, width, height) {
@@ -2760,6 +2800,8 @@
     clearMaskCtx = null;
     chalkboardTargetRects = [];
     glowTargetRects = [];
+    glowMaskCanvas = null;
+    glowMaskCtx = null;
     pointerDown = false;
     lastPoint = null;
     menuOpen = false;
