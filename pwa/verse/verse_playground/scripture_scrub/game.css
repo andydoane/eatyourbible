@@ -251,6 +251,45 @@ body{
     #333333;
 }
 
+.scrub-round-mower .scrub-scripture-card {
+  background:
+    linear-gradient(rgba(18, 82, 28, .18), rgba(18, 82, 28, .18)),
+    url("./scripture_scrub_images/scripture_scrub_grass_bg_2.jpg") center center / cover no-repeat;
+}
+
+.scrub-round-mower .scrub-verse-text,
+.scrub-round-mower .scrub-token-word,
+.scrub-round-mower .scrub-token-word.is-special {
+  color: #ffffff;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, .24),
+    0 0 14px rgba(0, 0, 0, .32);
+}
+
+.scrub-round-mower .scrub-ref-pill {
+  background: rgba(255, 255, 255, .95);
+  color: #2f7a2f;
+  border-color: rgba(255, 255, 255, .65);
+}
+
+.scrub-round-mower .scrub-object-layer {
+  pointer-events: none;
+}
+
+.scrub-mower-sprite {
+  position: absolute;
+  z-index: 80;
+  top: 0;
+  left: 0;
+  height: auto;
+  object-fit: contain;
+  transform: translate(-50%, -50%) rotate(var(--scrub-mower-rot, 0deg));
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, .24));
+  will-change: top, transform;
+}
+
 .scrub-round-stickers .scrub-ref-pill {
   background: #ffffff;
   color: var(--scrub-purple);
@@ -472,6 +511,13 @@ body{
   --scrub-chip-fg: #333333;
   --scrub-chip-border: #ffe6c9;
   --scrub-chip-shadow: rgba(128, 72, 18, .34);
+}
+
+.scrub-round-mower .scrub-instruction-chip {
+  --scrub-chip-bg: #a7cb6f;
+  --scrub-chip-fg: #244f20;
+  --scrub-chip-border: #e5f2cf;
+  --scrub-chip-shadow: rgba(36, 79, 32, .34);
 }
 
 .scrub-round-stickers .scrub-instruction-chip {

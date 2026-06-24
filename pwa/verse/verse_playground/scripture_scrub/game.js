@@ -16,9 +16,9 @@
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
-  // Set to one of: "mud", "paint", "fog", "leaves", "stickers", "archaeology"
+  // Set to one of: "mud", "paint", "fog", "leaves", "stickers", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "archaeology";
+  const DEBUG_SKIP_ROUND_ID = "mower";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
@@ -51,6 +51,7 @@
     mud: 0.95,
     paint: 0.95,
     fog: 0.92,
+    mower: 0.90,
     archaeology: 0.95
   };
 
@@ -115,6 +116,18 @@
       rewardIcon: "⭐",
       rewardTitle: "Stickers peeled!"
     },
+
+    {
+      id: "mower",
+      title: "Mowing Grass",
+      introTitle: "Mow the Grass",
+      icon: "🌱",
+      intro: "Mow the grass.",
+      instruction: "Tap a spot to send the mower.",
+      kind: "mower",
+      rewardIcon: "🌿",
+      rewardTitle: "Grass mowed!"
+    },
     {
       id: "archaeology",
       title: "Archaeology",
@@ -131,6 +144,8 @@
 
   const IMAGE_BASE = "./scripture_scrub_images/";
   const GRASS_BG_IMAGE = "scripture_scrub_grass_bg_1.jpg";
+  const MOWED_GRASS_BG_IMAGE = "scripture_scrub_grass_bg_2.jpg";
+  const MOWER_IMAGE = "scripture_scrub_mower.png";
   const LEAF_IMAGES = [
     "scripture_scrub_leaf_orange_1.png",
     "scripture_scrub_leaf_orange_2.png",
@@ -219,6 +234,9 @@
   };
 
   let verseJson = null;
+  let grassCoverImage = null;
+  let mowedGrassImage = null;
+  let mowerImage = null;
   let leafImages = [];
   let paintBlobImages = [];
 
@@ -239,6 +257,9 @@
   let objectCleared = 0;
   let archaeologyScore = null;
   let bibleRect = null;
+  let mowerActive = false;
+  let mowerFromTop = true;
+  let mowerAnimationFrame = null;
   let resizeHandler = null;
 
   const parsedRef = window.VerseGameShell.parseReferenceParts(
@@ -327,17 +348,29 @@
     }
   }
 
-  async function loadGrassBackgroundImage() {
+  async function loadImageAsset(fileName, label) {
     return new Promise((resolve) => {
       const img = new Image();
       img.decoding = "async";
       img.onload = () => resolve(img);
       img.onerror = () => {
-        console.warn("Scripture Scrub: could not load grass background image", GRASS_BG_IMAGE);
+        console.warn(`Scripture Scrub: could not load ${label}`, fileName);
         resolve(null);
       };
-      img.src = `${IMAGE_BASE}${GRASS_BG_IMAGE}`;
+      img.src = `${IMAGE_BASE}${fileName}`;
     });
+  }
+
+  async function loadGrassBackgroundImage() {
+    return loadImageAsset(GRASS_BG_IMAGE, "grass background image");
+  }
+
+  async function loadMowedGrassBackgroundImage() {
+    return loadImageAsset(MOWED_GRASS_BG_IMAGE, "mowed grass background image");
+  }
+
+  async function loadMowerImage() {
+    return loadImageAsset(MOWER_IMAGE, "mower image");
   }
 
   async function loadLeafImages() {
@@ -383,7 +416,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.4",
+      debugBadge: "SS 3.5",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -874,6 +907,12 @@
       return;
     }
 
+    if (round.kind === "mower") {
+      setupMowerRound(round, rect.width, rect.height);
+      updateProgress(0);
+      return;
+    }
+
     coverCanvas.style.display = "none";
     coverCanvas.onpointerdown = null;
     coverCanvas.onpointermove = null;
@@ -918,6 +957,173 @@
     clearMaskCtx.setTransform(1, 0, 0, 1, 0, 0);
     clearMaskCtx.clearRect(0, 0, clearMaskCanvas.width, clearMaskCanvas.height);
     clearMaskCtx.restore();
+  }
+
+  function drawImageCover(ctxToUse, img, width, height) {
+    if (!ctxToUse || !img?.naturalWidth || !img?.naturalHeight) return false;
+
+    const scale = Math.max(width / img.naturalWidth, height / img.naturalHeight);
+    const drawWidth = img.naturalWidth * scale;
+    const drawHeight = img.naturalHeight * scale;
+    const x = (width - drawWidth) / 2;
+    const y = (height - drawHeight) / 2;
+
+    ctxToUse.drawImage(img, x, y, drawWidth, drawHeight);
+    return true;
+  }
+
+  function setupMowerRound(round, width, height) {
+    const objectLayer = document.getElementById("scrubObjectLayer");
+    if (objectLayer) objectLayer.innerHTML = "";
+
+    mowerActive = false;
+    mowerFromTop = true;
+
+    if (mowerAnimationFrame) {
+      cancelAnimationFrame(mowerAnimationFrame);
+      mowerAnimationFrame = null;
+    }
+
+    coverCanvas.style.display = "block";
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.clearRect(0, 0, width, height);
+
+    const drewGrass = drawImageCover(coverCtx, grassCoverImage, width, height);
+    if (!drewGrass) {
+      coverCtx.fillStyle = "#4f9b3f";
+      coverCtx.fillRect(0, 0, width, height);
+    }
+
+    coverCanvas.onpointerdown = (event) => {
+      if (menuOpen || completionLocked || mowerActive) return;
+
+      event.preventDefault();
+      dismissInstructionChip();
+
+      const point = getCanvasPoint(event);
+      startMowerPass(point.x, round);
+    };
+
+    coverCanvas.onpointermove = null;
+    coverCanvas.onpointerup = null;
+    coverCanvas.onpointercancel = null;
+    coverCanvas.onpointerleave = null;
+  }
+
+  function getMowerWidth() {
+    return Math.round(currentBrushRadius() * 2);
+  }
+
+  function getMowerHeight(mowerWidth) {
+    if (mowerImage?.naturalWidth && mowerImage?.naturalHeight) {
+      return Math.round(mowerWidth * (mowerImage.naturalHeight / mowerImage.naturalWidth));
+    }
+
+    return Math.round(mowerWidth * 1.35);
+  }
+
+  function startMowerPass(tapX, round) {
+    if (!stageEl || !coverCanvas || !coverCtx || mowerActive) return;
+
+    const rect = stageEl.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mowerWidth = getMowerWidth();
+    const mowerHeight = getMowerHeight(mowerWidth);
+    const x = clamp(tapX, mowerWidth / 2, width - mowerWidth / 2);
+
+    const objectLayer = document.getElementById("scrubObjectLayer");
+    if (!objectLayer) return;
+
+    mowerActive = true;
+
+    const mower = document.createElement("img");
+    mower.className = "scrub-mower-sprite";
+    mower.alt = "";
+    mower.setAttribute("aria-hidden", "true");
+    mower.src = mowerImage?.src || `${IMAGE_BASE}${MOWER_IMAGE}`;
+    mower.style.width = `${mowerWidth}px`;
+    mower.style.height = `${mowerHeight}px`;
+    mower.style.left = `${x}px`;
+
+    const fromTop = mowerFromTop;
+    const startY = fromTop ? -mowerHeight : height + mowerHeight;
+    const endY = fromTop ? height + mowerHeight : -mowerHeight;
+    const rotation = fromTop ? 180 : 0;
+    const duration = 1250;
+
+    mower.style.top = `${startY}px`;
+    mower.style.setProperty("--scrub-mower-rot", `${rotation}deg`);
+
+    objectLayer.appendChild(mower);
+
+    const startTime = performance.now();
+    let lastY = startY;
+
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = easeMowerPass(progress);
+      const y = startY + ((endY - startY) * eased);
+
+      mower.style.top = `${y}px`;
+      eraseMowerStripSegment(x, lastY, y, mowerWidth, mowerHeight);
+      lastY = y;
+
+      if (progress < 1) {
+        mowerAnimationFrame = requestAnimationFrame(animate);
+        return;
+      }
+
+      finishMowerPass({
+        mower,
+        x,
+        width: mowerWidth,
+        stageHeight: height,
+        round
+      });
+    };
+
+    mowerAnimationFrame = requestAnimationFrame(animate);
+  }
+
+  function easeMowerPass(t) {
+    return t < 0.5
+      ? 2 * t * t
+      : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function eraseMowerStripSegment(x, previousY, currentY, mowerWidth, mowerHeight) {
+    if (!coverCtx) return;
+
+    const top = Math.min(previousY, currentY) - mowerHeight * 0.58;
+    const bottom = Math.max(previousY, currentY) + mowerHeight * 0.58;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "destination-out";
+    coverCtx.fillRect(
+      x - mowerWidth / 2,
+      top,
+      mowerWidth,
+      bottom - top
+    );
+    coverCtx.restore();
+  }
+
+  function finishMowerPass({ mower, x, width, stageHeight, round }) {
+    mowerAnimationFrame = null;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "destination-out";
+    coverCtx.fillRect(x - width / 2, 0, width, stageHeight);
+    coverCtx.restore();
+
+    mower.remove();
+
+    mowerActive = false;
+    mowerFromTop = !mowerFromTop;
+
+    scheduleCoverageCheck(round, true);
   }
 
   function drawCoverTexture(texture, width, height) {
@@ -2032,6 +2238,13 @@
       coverageCheckTimer = null;
     }
 
+    if (mowerAnimationFrame) {
+      cancelAnimationFrame(mowerAnimationFrame);
+      mowerAnimationFrame = null;
+    }
+
+    mowerActive = false;
+
     if (resizeHandler) {
       window.removeEventListener("resize", resizeHandler);
       resizeHandler = null;
@@ -2061,7 +2274,9 @@
   }
 
   verseJson = await loadVerseJson();
-  await loadGrassBackgroundImage();
+  grassCoverImage = await loadGrassBackgroundImage();
+  mowedGrassImage = await loadMowedGrassBackgroundImage();
+  mowerImage = await loadMowerImage();
   leafImages = await loadLeafImages();
   paintBlobImages = await loadPaintBlobImages();
   await waitForLocalFonts();
