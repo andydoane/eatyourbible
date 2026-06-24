@@ -366,10 +366,11 @@ body{
 }
 
 .scrub-round-glow .scrub-glow-verse-text {
+  --scrub-glow-pad: clamp(38px, 8vw, 82px);
   position: absolute;
   z-index: 3;
-  box-sizing: border-box;
-  padding: 0;
+  box-sizing: content-box;
+  padding: var(--scrub-glow-pad);
   margin: 0;
   pointer-events: none;
   color: #eafffb;
@@ -463,10 +464,11 @@ body{
 }
 
 .scrub-round-rainbow .scrub-glow-verse-text {
+  --scrub-rainbow-pad: clamp(38px, 8vw, 82px);
   position: absolute;
   z-index: 3;
-  box-sizing: border-box;
-  padding: 0;
+  box-sizing: content-box;
+  padding: var(--scrub-rainbow-pad);
   margin: 0;
   pointer-events: none;
   color: transparent;

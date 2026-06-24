@@ -299,6 +299,7 @@
   let glowTargetRects = [];
   let glowMaskCanvas = null;
   let glowMaskCtx = null;
+  let glowMaskApplyAnimationFrame = null;
   let glowTrailSpots = [];
   let glowTrailAnimationFrame = null;
   let rainbowTrailParticles = [];
@@ -469,7 +470,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.6",
+      debugBadge: "SS 5.7",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1299,13 +1300,16 @@
 
     const boxRect = box.getBoundingClientRect();
     const baseRect = base.getBoundingClientRect();
+    const glowStyle = window.getComputedStyle(glow);
+    const padLeft = parseFloat(glowStyle.paddingLeft) || 0;
+    const padTop = parseFloat(glowStyle.paddingTop) || 0;
 
     glow.style.fontSize = base.style.fontSize;
     glow.style.lineHeight = base.style.lineHeight;
     glow.style.maxWidth = `${baseRect.width}px`;
     glow.style.width = `${baseRect.width}px`;
-    glow.style.left = `${baseRect.left - boxRect.left}px`;
-    glow.style.top = `${baseRect.top - boxRect.top}px`;
+    glow.style.left = `${baseRect.left - boxRect.left - padLeft}px`;
+    glow.style.top = `${baseRect.top - boxRect.top - padTop}px`;
     glow.style.marginLeft = "0";
     glow.style.marginRight = "0";
     glow.style.transform = "none";
@@ -1380,6 +1384,8 @@
     };
 
     const stop = (event) => {
+      flushGlowMaskApply();
+
       pointerDown = false;
       lastPoint = null;
       rainbowLastBurstAt = 0;
@@ -1441,7 +1447,7 @@
     glowMaskCtx.fill();
     glowMaskCtx.restore();
 
-    applyGlowMask();
+    scheduleGlowMaskApply();
 
     if (round?.kind === "rainbow") {
       addRainbowTrailBurst(x, y, radius);
@@ -1468,6 +1474,25 @@
     glow.style.webkitMaskPosition = "0 0";
     glow.style.maskPosition = "0 0";
   }
+
+  function scheduleGlowMaskApply() {
+    if (glowMaskApplyAnimationFrame) return;
+
+    glowMaskApplyAnimationFrame = requestAnimationFrame(() => {
+      glowMaskApplyAnimationFrame = null;
+      applyGlowMask();
+    });
+  }
+
+  function flushGlowMaskApply() {
+    if (glowMaskApplyAnimationFrame) {
+      cancelAnimationFrame(glowMaskApplyAnimationFrame);
+      glowMaskApplyAnimationFrame = null;
+    }
+
+    applyGlowMask();
+  }
+
 
   function addGlowTrailSpot(x, y, radius) {
     if (!coverCtx || !stageEl) return;
@@ -3084,6 +3109,11 @@
     if (glowTrailAnimationFrame) {
       cancelAnimationFrame(glowTrailAnimationFrame);
       glowTrailAnimationFrame = null;
+    }
+
+    if (glowMaskApplyAnimationFrame) {
+      cancelAnimationFrame(glowMaskApplyAnimationFrame);
+      glowMaskApplyAnimationFrame = null;
     }
 
     if (rainbowTrailAnimationFrame) {
