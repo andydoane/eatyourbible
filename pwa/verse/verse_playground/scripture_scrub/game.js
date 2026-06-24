@@ -472,7 +472,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.11",
+      debugBadge: "SS 5.12",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1584,13 +1584,27 @@
       const value = piece.textContent || "";
       if (!value.trim()) return;
 
-      const style = window.getComputedStyle(piece);
-      const fontSize = parseFloat(style.fontSize) || 36;
-      const fontWeight = style.fontWeight || "400";
-      const fontFamily = style.fontFamily || '"Titan One", sans-serif';
-      const fontStyle = style.fontStyle || "normal";
-      const fontVariant = style.fontVariant || "normal";
       const rects = Array.from(piece.getClientRects ? piece.getClientRects() : []);
+      if (!rects.length) return;
+
+      const marker = document.createElement("span");
+      marker.setAttribute("aria-hidden", "true");
+      marker.style.display = "inline-block";
+      marker.style.width = "0";
+      marker.style.height = "0";
+      marker.style.padding = "0";
+      marker.style.margin = "0";
+      marker.style.border = "0";
+      marker.style.overflow = "hidden";
+      marker.style.verticalAlign = "baseline";
+
+      piece.appendChild(marker);
+      const markerRect = marker.getBoundingClientRect();
+      marker.remove();
+
+      const domBaseline = Number.isFinite(markerRect.top)
+        ? markerRect.top - glowRect.top
+        : null;
 
       rects.forEach((rect) => {
         if (rect.width <= .5 || rect.height <= .5) return;
@@ -1601,44 +1615,21 @@
           line = {
             top: rect.top,
             bottom: rect.bottom,
-            fontSize,
-            font: `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize}px ${fontFamily}`
+            baseline: domBaseline ?? (rect.top - glowRect.top + rect.height * .8)
           };
           lines.push(line);
         } else {
           line.top = Math.min(line.top, rect.top);
           line.bottom = Math.max(line.bottom, rect.bottom);
 
-          if (fontSize > line.fontSize) {
-            line.fontSize = fontSize;
-            line.font = `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize}px ${fontFamily}`;
+          if (domBaseline !== null) {
+            line.baseline = domBaseline;
           }
         }
       });
     });
 
     lines.sort((a, b) => a.top - b.top);
-
-    lines.forEach((line) => {
-      glowTextCtx.font = line.font;
-
-      // Use one representative string for the whole line, so descenders do not move
-      // individual letters up or down.
-      const metrics = glowTextCtx.measureText("Hgpqy");
-      const ascent = Number.isFinite(metrics.actualBoundingBoxAscent)
-        ? metrics.actualBoundingBoxAscent
-        : Number.isFinite(metrics.fontBoundingBoxAscent)
-          ? metrics.fontBoundingBoxAscent
-          : line.fontSize * .78;
-      const descent = Number.isFinite(metrics.actualBoundingBoxDescent)
-        ? metrics.actualBoundingBoxDescent
-        : Number.isFinite(metrics.fontBoundingBoxDescent)
-          ? metrics.fontBoundingBoxDescent
-          : line.fontSize * .22;
-
-      const lineCenter = ((line.top + line.bottom) / 2) - glowRect.top;
-      line.baseline = lineCenter + ((ascent - descent) / 2);
-    });
 
     return lines;
   }
