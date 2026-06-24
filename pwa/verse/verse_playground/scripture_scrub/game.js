@@ -16,9 +16,9 @@
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
-  // Set to one of: "mud", "paint", "fog", "leaves", "stickers", "mower", "archaeology"
+  // Set to one of: "mud", "paint", "fog", "chalkboard", "glow", "leaves", "stickers", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "chalkboard";
+  const DEBUG_SKIP_ROUND_ID = "glow";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
@@ -51,7 +51,8 @@
     mud: 0.95,
     paint: 0.95,
     fog: 0.92,
-    chalkboard: 0.92,
+    chalkboard: 0.95,
+    glow: 0.9,
     mower: 0.95,
     archaeology: 0.95
   };
@@ -105,6 +106,17 @@
       kind: "chalkboard",
       rewardIcon: "🧽",
       rewardTitle: "Board erased!"
+    },
+    {
+      id: "glow",
+      title: "Glow in the Dark",
+      introTitle: "Reveal the Glow",
+      icon: "🌟",
+      intro: "Reveal the glowing verse.",
+      instruction: "Make it glow.",
+      kind: "glow",
+      rewardIcon: "✨",
+      rewardTitle: "Glowing bright!"
     },
     {
       id: "leaves",
@@ -272,6 +284,7 @@
   let archaeologyScore = null;
   let bibleRect = null;
   let chalkboardTargetRects = [];
+  let glowTargetRects = [];
   let mowerActive = false;
   let mowerFromTop = true;
   let mowerAnimationFrame = null;
@@ -436,7 +449,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.4",
+      debugBadge: "SS 4.5",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -908,6 +921,12 @@
       return;
     }
 
+    if (round.kind === "glow") {
+      setupGlowRound(round, rect.width, rect.height);
+      updateProgress(0);
+      return;
+    }
+
     if (round.kind === "mower") {
       setupMowerRound(round, rect.width, rect.height);
       updateProgress(0);
@@ -1160,6 +1179,222 @@
 
     return total ? cleared / total : 0;
   }
+
+  function setupGlowRound(round, width, height) {
+    glowTargetRects = [];
+
+    coverCanvas.style.display = "block";
+    coverCanvas.style.pointerEvents = "";
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.clearRect(0, 0, width, height);
+
+    refreshGlowTargetRects();
+    drawGlowWordCovers(width, height);
+
+    requestAnimationFrame(() => {
+      refreshGlowTargetRects();
+      coverCtx.clearRect(0, 0, width, height);
+      drawGlowWordCovers(width, height);
+      updateProgress(0);
+    });
+
+    setTimeout(() => {
+      refreshGlowTargetRects();
+      coverCtx.clearRect(0, 0, width, height);
+      drawGlowWordCovers(width, height);
+    }, 180);
+
+    wireGlowReveal(round);
+  }
+
+  function refreshGlowTargetRects() {
+    if (!stageEl) return;
+
+    const text = document.getElementById("scrubVerseText");
+    const stageRect = stageEl.getBoundingClientRect();
+
+    if (!text || !stageRect.width || !stageRect.height) {
+      glowTargetRects = [];
+      return;
+    }
+
+    const targets = [];
+    const padX = 7;
+    const padY = 6;
+    const pieces = text.querySelectorAll(".scrub-token-word, .scrub-token-punct");
+
+    pieces.forEach((piece) => {
+      const rects = Array.from(piece.getClientRects ? piece.getClientRects() : []);
+
+      rects.forEach((rect) => {
+        if (rect.width <= 1 || rect.height <= 1) return;
+
+        const left = clamp(rect.left - stageRect.left - padX, 0, stageRect.width);
+        const top = clamp(rect.top - stageRect.top - padY, 0, stageRect.height);
+        const right = clamp(rect.right - stageRect.left + padX, 0, stageRect.width);
+        const bottom = clamp(rect.bottom - stageRect.top + padY, 0, stageRect.height);
+
+        const width = Math.max(1, right - left);
+        const height = Math.max(1, bottom - top);
+
+        if (width > 1 && height > 1) {
+          targets.push({ left, top, width, height });
+        }
+      });
+    });
+
+    glowTargetRects = targets;
+  }
+
+  function drawGlowWordCovers(width, height) {
+    if (!coverCtx || !glowTargetRects.length) return;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.filter = "none";
+    coverCtx.fillStyle = "#050817";
+
+    glowTargetRects.forEach((target) => {
+      coverCtx.fillRect(target.left, target.top, target.width, target.height);
+    });
+
+    coverCtx.restore();
+  }
+
+  function wireGlowReveal(round) {
+    coverCanvas.onpointerdown = (event) => {
+      if (menuOpen || completionLocked) return;
+
+      event.preventDefault();
+      dismissInstructionChip();
+      refreshGlowTargetRects();
+
+      pointerDown = true;
+      lastPoint = getCanvasPoint(event);
+      coverCanvas.setPointerCapture?.(event.pointerId);
+
+      revealGlowAt(lastPoint.x, lastPoint.y, currentBrushRadius(round), round);
+      scheduleCoverageCheck(round);
+    };
+
+    coverCanvas.onpointermove = (event) => {
+      if (!pointerDown || menuOpen || completionLocked) return;
+
+      event.preventDefault();
+
+      const point = getCanvasPoint(event);
+      revealGlowLine(lastPoint || point, point, currentBrushRadius(round), round);
+      lastPoint = point;
+
+      scheduleCoverageCheck(round);
+    };
+
+    const stop = (event) => {
+      pointerDown = false;
+      lastPoint = null;
+
+      if (event?.pointerId !== undefined) {
+        coverCanvas.releasePointerCapture?.(event.pointerId);
+      }
+
+      scheduleCoverageCheck(round, true);
+    };
+
+    coverCanvas.onpointerup = stop;
+    coverCanvas.onpointercancel = stop;
+    coverCanvas.onpointerleave = stop;
+  }
+
+  function revealGlowLine(from, to, radius, round) {
+    const distance = Math.hypot(to.x - from.x, to.y - from.y);
+    const steps = Math.max(1, Math.ceil(distance / (radius * .34)));
+
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      revealGlowAt(
+        from.x + (to.x - from.x) * t,
+        from.y + (to.y - from.y) * t,
+        radius,
+        round
+      );
+    }
+  }
+
+  function revealGlowAt(x, y, radius, round) {
+    if (!coverCtx) return;
+
+    const glowRadius = radius * 1.45;
+    const clearRadius = radius * 1.02;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "lighter";
+
+    const glow = coverCtx.createRadialGradient(x, y, 0, x, y, glowRadius);
+    glow.addColorStop(0, "rgba(178, 255, 239, .42)");
+    glow.addColorStop(.42, "rgba(64, 185, 197, .18)");
+    glow.addColorStop(1, "rgba(127, 102, 198, 0)");
+
+    coverCtx.fillStyle = glow;
+    coverCtx.beginPath();
+    coverCtx.arc(x, y, glowRadius, 0, Math.PI * 2);
+    coverCtx.fill();
+    coverCtx.restore();
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "destination-out";
+    coverCtx.beginPath();
+    coverCtx.arc(x, y, clearRadius, 0, Math.PI * 2);
+    coverCtx.fill();
+    coverCtx.restore();
+
+    eraseClearMask(x, y, clearRadius);
+  }
+
+  function measureGlowClearedRatio() {
+    if (!clearMaskCanvas || !clearMaskCtx || !glowTargetRects.length) {
+      return measureClearedRatio();
+    }
+
+    const width = clearMaskCanvas.width;
+    const height = clearMaskCanvas.height;
+    if (!width || !height) return 0;
+
+    const step = Math.max(3, Math.round(5 * dpr));
+    let total = 0;
+    let cleared = 0;
+
+    try {
+      const data = clearMaskCtx.getImageData(0, 0, width, height).data;
+
+      glowTargetRects.forEach((target) => {
+        const left = Math.max(0, Math.round(target.left * dpr));
+        const top = Math.max(0, Math.round(target.top * dpr));
+        const right = Math.min(width, Math.round((target.left + target.width) * dpr));
+        const bottom = Math.min(height, Math.round((target.top + target.height) * dpr));
+
+        for (let y = top; y < bottom; y += step) {
+          for (let x = left; x < right; x += step) {
+            total += 1;
+            const alpha = data[((y * width + x) * 4) + 3];
+            if (alpha < 24) cleared += 1;
+          }
+        }
+      });
+    } catch (err) {
+      console.warn("Scripture Scrub: glow coverage check failed", err);
+      return 0;
+    }
+
+    return total ? cleared / total : 0;
+  }
+
+  function clearGlowCover() {
+    if (!coverCtx || !stageEl) return;
+
+    const rect = stageEl.getBoundingClientRect();
+    coverCtx.clearRect(0, 0, rect.width, rect.height);
+  }
+
 
   function setupMowerRound(round, width, height) {
     const objectLayer = document.getElementById("scrubObjectLayer");
@@ -1588,7 +1823,9 @@
       coverageCheckTimer = null;
       const cleared = round.kind === "chalkboard"
         ? measureChalkboardClearedRatio()
-        : measureClearedRatio();
+        : round.kind === "glow"
+          ? measureGlowClearedRatio()
+          : measureClearedRatio();
 
       if (round.kind === "archaeology") {
         checkBibleFound(cleared);
@@ -2297,6 +2534,12 @@
       return;
     }
 
+    if (round.kind === "glow") {
+      clearGlowCover();
+      finishRound();
+      return;
+    }
+
     if (round.kind === "mower") {
       animateMowerCoverFade(finishRound);
       return;
@@ -2516,6 +2759,7 @@
     clearMaskCanvas = null;
     clearMaskCtx = null;
     chalkboardTargetRects = [];
+    glowTargetRects = [];
     pointerDown = false;
     lastPoint = null;
     menuOpen = false;
