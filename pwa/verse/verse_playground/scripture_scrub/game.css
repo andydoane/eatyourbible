@@ -231,7 +231,8 @@ body{
   display: none;
 }
 
-.scrub-round-glow .scrub-glow-verse-text {
+.scrub-round-glow .scrub-glow-verse-text,
+.scrub-round-rainbow .scrub-glow-verse-text {
   display: block;
 }
 
@@ -439,6 +440,144 @@ body{
 
   100% {
     filter: brightness(1.12);
+  }
+}
+
+.scrub-round-rainbow .scrub-scripture-card {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 90, 81, .16), transparent 26%),
+    radial-gradient(circle at 82% 24%, rgba(255, 199, 81, .15), transparent 28%),
+    radial-gradient(circle at 48% 82%, rgba(64, 185, 197, .16), transparent 30%),
+    linear-gradient(145deg, #4b5dde 0%, #7f66c6 48%, #40b9c5 100%);
+}
+
+.scrub-round-rainbow .scrub-verse-fit-box {
+  position: relative;
+  overflow: visible;
+}
+
+.scrub-round-rainbow #scrubVerseText,
+.scrub-round-rainbow #scrubVerseText .scrub-token-word,
+.scrub-round-rainbow #scrubVerseText .scrub-token-word.is-special,
+.scrub-round-rainbow #scrubVerseText .scrub-token-punct {
+  color: #ffffff;
+  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #141414;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, .72),
+    0 0 10px rgba(0, 0, 0, .34);
+}
+
+.scrub-round-rainbow .scrub-glow-verse-text {
+  --scrub-rainbow-pad: clamp(46px, 9vw, 86px);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  box-sizing: content-box;
+  padding: var(--scrub-rainbow-pad);
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,
+      #ff5a51 0%,
+      #ffa351 14%,
+      #ffc751 28%,
+      #a7cb6f 42%,
+      #40b9c5 56%,
+      #7f66c6 70%,
+      #ff7bd5 84%,
+      #ff5a51 100%);
+  background-size: 300% 100%;
+  animation: scrubRainbowTextFlow 1.45s linear infinite;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #141414;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, .66),
+    0 0 12px rgba(255, 255, 255, .36),
+    0 0 24px rgba(255, 199, 81, .26),
+    0 0 38px rgba(64, 185, 197, .24);
+  filter: brightness(1.18) saturate(1.25);
+  -webkit-mask-image: linear-gradient(transparent, transparent);
+  mask-image: linear-gradient(transparent, transparent);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.scrub-round-rainbow #scrubGlowVerseText,
+.scrub-round-rainbow #scrubGlowVerseText .scrub-token-word,
+.scrub-round-rainbow #scrubGlowVerseText .scrub-token-word.is-special,
+.scrub-round-rainbow #scrubGlowVerseText .scrub-token-punct {
+  background:
+    linear-gradient(90deg,
+      #ff5a51 0%,
+      #ffa351 14%,
+      #ffc751 28%,
+      #a7cb6f 42%,
+      #40b9c5 56%,
+      #7f66c6 70%,
+      #ff7bd5 84%,
+      #ff5a51 100%);
+  background-size: 300% 100%;
+  animation: scrubRainbowTextFlow 1.45s linear infinite;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #141414;
+}
+
+.scrub-round-rainbow .scrub-ref-pill {
+  background: rgba(255, 255, 255, .96);
+  color: #4b2ca1;
+  border-color: rgba(255, 255, 255, .72);
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, .18),
+    0 0 18px rgba(255, 255, 255, .28);
+}
+
+.scrub-round-rainbow .scrub-cover-canvas {
+  z-index: 8;
+}
+
+.scrub-round-rainbow .scrub-stage.scrub-round-complete .scrub-verse-text,
+.scrub-round-rainbow .scrub-stage.scrub-round-complete .scrub-token-word,
+.scrub-round-rainbow .scrub-stage.scrub-round-complete .scrub-token-word.is-special {
+  animation: scrubRainbowCompletePulse 900ms ease-in-out both;
+}
+
+.scrub-round-rainbow .scrub-instruction-chip {
+  --scrub-chip-bg: #ffffff;
+  --scrub-chip-fg: #4b2ca1;
+  --scrub-chip-border: #ffc751;
+  --scrub-chip-shadow: rgba(51, 37, 96, .42);
+}
+
+@keyframes scrubRainbowTextFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 300% 50%;
+  }
+}
+
+@keyframes scrubRainbowCompletePulse {
+  0% {
+    filter: brightness(1);
+  }
+
+  55% {
+    filter: brightness(1.35) saturate(1.35);
+  }
+
+  100% {
+    filter: brightness(1.12) saturate(1.16);
   }
 }
 

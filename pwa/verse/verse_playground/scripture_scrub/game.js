@@ -16,9 +16,9 @@
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
-  // Set to one of: "mud", "paint", "fog", "chalkboard", "glow", "leaves", "stickers", "mower", "archaeology"
+  // Set to one of: "mud", "paint", "fog", "chalkboard", "glow", "rainbow", "leaves", "stickers", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "glow";
+  const DEBUG_SKIP_ROUND_ID = "rainbow";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
@@ -53,6 +53,7 @@
     fog: 0.92,
     chalkboard: 0.95,
     glow: 0.98,
+    rainbow: 0.98,
     mower: 0.95,
     archaeology: 0.95
   };
@@ -117,6 +118,17 @@
       kind: "glow",
       rewardIcon: "✨",
       rewardTitle: "Glowing bright!"
+    },
+    {
+      id: "rainbow",
+      title: "Rainbow Reveal",
+      introTitle: "Reveal the Rainbow",
+      icon: "🌈",
+      intro: "Reveal the rainbow.",
+      instruction: "Reveal the Rainbow.",
+      kind: "rainbow",
+      rewardIcon: "🌈",
+      rewardTitle: "Rainbow revealed!"
     },
     {
       id: "leaves",
@@ -289,6 +301,8 @@
   let glowMaskCtx = null;
   let glowTrailSpots = [];
   let glowTrailAnimationFrame = null;
+  let rainbowTrailParticles = [];
+  let rainbowTrailAnimationFrame = null;
   let mowerActive = false;
   let mowerFromTop = true;
   let mowerAnimationFrame = null;
@@ -453,7 +467,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.0",
+      debugBadge: "SS 5.1",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -926,7 +940,7 @@
       return;
     }
 
-    if (round.kind === "glow") {
+    if (round.kind === "glow" || round.kind === "rainbow") {
       setupGlowRound(round, rect.width, rect.height);
       updateProgress(0);
       return;
@@ -1322,6 +1336,8 @@
     const stop = (event) => {
       pointerDown = false;
       lastPoint = null;
+      clearGlowTrail();
+      clearRainbowTrail();
 
       if (event?.pointerId !== undefined) {
         coverCanvas.releasePointerCapture?.(event.pointerId);
@@ -1379,7 +1395,11 @@
 
     applyGlowMask();
 
-    addGlowTrailSpot(x, y, radius);
+    if (round?.kind === "rainbow") {
+      addRainbowTrailBurst(x, y, radius);
+    } else {
+      addGlowTrailSpot(x, y, radius);
+    }
 
     // Progress still uses stage coordinates.
     eraseClearMask(x, y, revealRadius);
@@ -1487,6 +1507,113 @@
     }
   }
 
+  function addRainbowTrailBurst(x, y, radius) {
+    if (!coverCtx || !stageEl || !pointerDown) return;
+
+    const colors = [
+      "#ff5a51",
+      "#ffa351",
+      "#ffc751",
+      "#a7cb6f",
+      "#40b9c5",
+      "#7f66c6",
+      "#ff7bd5"
+    ];
+
+    const now = performance.now();
+    const particleCount = 4;
+
+    for (let i = 0; i < particleCount; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = radius * (1.25 + Math.random() * 1.65);
+      const size = clamp(radius * (.11 + Math.random() * .08), 4, 10);
+
+      rainbowTrailParticles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: size,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        born: now,
+        life: 420 + Math.random() * 180
+      });
+    }
+
+    if (rainbowTrailParticles.length > 90) {
+      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 90);
+    }
+
+    if (!rainbowTrailAnimationFrame) {
+      rainbowTrailAnimationFrame = requestAnimationFrame(drawRainbowTrailFrame);
+    }
+  }
+
+  function drawRainbowTrailFrame(now) {
+    rainbowTrailAnimationFrame = null;
+
+    if (!coverCtx || !stageEl) {
+      rainbowTrailParticles = [];
+      return;
+    }
+
+    const rect = stageEl.getBoundingClientRect();
+
+    coverCtx.save();
+    coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    coverCtx.clearRect(0, 0, rect.width, rect.height);
+    coverCtx.globalCompositeOperation = "lighter";
+
+    rainbowTrailParticles = rainbowTrailParticles.filter((particle) => {
+      const age = now - particle.born;
+      const t = Math.min(1, age / particle.life);
+
+      if (t >= 1 || !pointerDown) return false;
+
+      const seconds = age / 1000;
+      const px = particle.x + particle.vx * seconds;
+      const py = particle.y + particle.vy * seconds;
+      const alpha = 1 - t;
+      const r = particle.radius * (1 + t * .45);
+
+      coverCtx.save();
+      coverCtx.shadowColor = particle.color;
+      coverCtx.shadowBlur = 14 * alpha;
+      coverCtx.fillStyle = particle.color;
+      coverCtx.globalAlpha = alpha;
+      coverCtx.beginPath();
+      coverCtx.arc(px, py, r, 0, Math.PI * 2);
+      coverCtx.fill();
+      coverCtx.restore();
+
+      return true;
+    });
+
+    coverCtx.restore();
+
+    if (rainbowTrailParticles.length && pointerDown) {
+      rainbowTrailAnimationFrame = requestAnimationFrame(drawRainbowTrailFrame);
+    }
+  }
+
+  function clearRainbowTrail() {
+    rainbowTrailParticles = [];
+
+    if (rainbowTrailAnimationFrame) {
+      cancelAnimationFrame(rainbowTrailAnimationFrame);
+      rainbowTrailAnimationFrame = null;
+    }
+
+    if (coverCtx && stageEl) {
+      const rect = stageEl.getBoundingClientRect();
+      coverCtx.save();
+      coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      coverCtx.clearRect(0, 0, rect.width, rect.height);
+      coverCtx.restore();
+    }
+  }
+
+
 
   function measureGlowClearedRatio() {
     if (!clearMaskCanvas || !clearMaskCtx || !glowTargetRects.length) {
@@ -1528,6 +1655,7 @@
 
   function clearGlowCover() {
     clearGlowTrail();
+    clearRainbowTrail();
 
     const glow = document.getElementById("scrubGlowVerseText");
     const glowRect = glow?.getBoundingClientRect?.();
@@ -1978,7 +2106,7 @@
       coverageCheckTimer = null;
       const cleared = round.kind === "chalkboard"
         ? measureChalkboardClearedRatio()
-        : round.kind === "glow"
+        : round.kind === "glow" || round.kind === "rainbow"
           ? measureGlowClearedRatio()
           : measureClearedRatio();
 
@@ -2689,7 +2817,7 @@
       return;
     }
 
-    if (round.kind === "glow") {
+    if (round.kind === "glow" || round.kind === "rainbow") {
       clearGlowCover();
       finishRound();
       return;
@@ -2893,7 +3021,13 @@
       glowTrailAnimationFrame = null;
     }
 
+    if (rainbowTrailAnimationFrame) {
+      cancelAnimationFrame(rainbowTrailAnimationFrame);
+      rainbowTrailAnimationFrame = null;
+    }
+
     glowTrailSpots = [];
+    rainbowTrailParticles = [];
     mowerActive = false;
 
     if (resizeHandler) {
