@@ -91,7 +91,7 @@
       introTitle: "Rake the Leaves",
       icon: "🍂",
       intro: "Rake the leaves.",
-      instruction: "Swipe through the leaves to rake them away.",
+      instruction: "Rake the leaves.",
       kind: "leaves",
       rewardIcon: "🍁",
       rewardTitle: "Leaves raked!"
@@ -102,7 +102,7 @@
       introTitle: "Peel the Stickers",
       icon: "😀",
       intro: "Peel off the stickers, one at a time.",
-      instruction: "Tap each sticker to peel it away.",
+      instruction: "Peel the stickers.",
       kind: "stickers",
       rewardIcon: "⭐",
       rewardTitle: "Stickers peeled!"
@@ -337,7 +337,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 2.9",
+      debugBadge: "SS 2.9b",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1593,7 +1593,7 @@
       coverCanvas.style.pointerEvents = "none";
     }
 
-    if (stageEl && (round.id === "mud" || round.id === "paint")) {
+    if (stageEl && (round.id === "mud" || round.id === "paint" || round.id === "fog")) {
       stageEl.classList.add("scrub-cleaning-up");
     }
 
