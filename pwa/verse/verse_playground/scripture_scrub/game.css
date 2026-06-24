@@ -223,6 +223,27 @@ body{
   filter: none;
 }
 
+.scrub-round-leaves .scrub-scripture-card {
+  background:
+    linear-gradient(rgba(20, 80, 28, .18), rgba(20, 80, 28, .18)),
+    url("./scripture_scrub_images/scripture_scrub_grass_bg_1.jpg") center center / cover no-repeat;
+}
+
+.scrub-round-leaves .scrub-verse-text,
+.scrub-round-leaves .scrub-token-word,
+.scrub-round-leaves .scrub-token-word.is-special {
+  color: #ffffff;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, .22),
+    0 0 14px rgba(0, 0, 0, .28);
+}
+
+.scrub-round-leaves .scrub-ref-pill {
+  background: rgba(255, 255, 255, .95);
+  color: #2f7a2f;
+  border-color: rgba(255, 255, 255, .65);
+}
+
 .scrub-round-stickers .scrub-scripture-card {
   background:
     radial-gradient(circle at 18% 16%, rgba(255, 255, 255, .06), transparent 20%),
