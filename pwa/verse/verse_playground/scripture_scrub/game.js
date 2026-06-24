@@ -467,7 +467,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.2",
+      debugBadge: "SS 5.3",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1208,28 +1208,63 @@
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.clearRect(0, 0, width, height);
 
-    setupGlowMask();
     syncGlowVerseLayer();
+    if (round.kind === "rainbow") colorizeRainbowRevealLayer();
+    setupGlowMask();
     refreshGlowTargetRects();
     applyGlowMask();
 
     requestAnimationFrame(() => {
       syncGlowVerseLayer();
-      refreshGlowTargetRects();
+      if (round.kind === "rainbow") colorizeRainbowRevealLayer();
       setupGlowMask();
+      refreshGlowTargetRects();
       applyGlowMask();
       updateProgress(0);
     });
 
     setTimeout(() => {
       syncGlowVerseLayer();
-      refreshGlowTargetRects();
+      if (round.kind === "rainbow") colorizeRainbowRevealLayer();
       setupGlowMask();
+      refreshGlowTargetRects();
       applyGlowMask();
     }, 180);
 
     wireGlowReveal(round);
   }
+
+  function colorizeRainbowRevealLayer() {
+    const glow = document.getElementById("scrubGlowVerseText");
+    if (!glow || glow.dataset.scrubRainbowLetters === "1") return;
+
+    const colors = [
+      "#ff5a51",
+      "#ffa351",
+      "#ffc751",
+      "#a7cb6f",
+      "#40b9c5",
+      "#7f66c6",
+      "#ff7bd5"
+    ];
+
+    const pieces = glow.querySelectorAll(".scrub-token-word, .scrub-token-punct");
+
+    pieces.forEach((piece) => {
+      const text = piece.textContent || "";
+
+      piece.innerHTML = Array.from(text).map((char) => {
+        if (!char.trim()) return escapeHtml(char);
+
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        return `<span class="scrub-rainbow-letter" style="--scrub-rainbow-letter-color:${color}">${escapeHtml(char)}</span>`;
+      }).join("");
+    });
+
+    glow.dataset.scrubRainbowLetters = "1";
+  }
+
 
   function setupGlowMask() {
     const glow = document.getElementById("scrubGlowVerseText");
@@ -1520,13 +1555,16 @@
       "#ff7bd5"
     ];
 
+    const text = document.getElementById("scrubVerseText");
+    const textSize = parseFloat(window.getComputedStyle(text || document.body).fontSize) || 36;
+
     const now = performance.now();
     const particleCount = 2;
 
     for (let i = 0; i < particleCount; i += 1) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = radius * (.55 + Math.random() * .7);
-      const size = clamp(radius * (.08 + Math.random() * .05), 3, 7);
+      const speed = textSize * (.42 + Math.random() * .52);
+      const size = clamp(textSize * (.20 + Math.random() * .12), 7, 20);
 
       rainbowTrailParticles.push({
         x,
@@ -1536,7 +1574,7 @@
         radius: size,
         color: colors[Math.floor(Math.random() * colors.length)],
         born: now,
-        life: 260 + Math.random() * 120
+        life: 300 + Math.random() * 130
       });
     }
 

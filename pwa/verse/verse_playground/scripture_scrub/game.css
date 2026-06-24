@@ -445,10 +445,9 @@ body{
 
 .scrub-round-rainbow .scrub-scripture-card {
   background:
-    radial-gradient(circle at 18% 18%, rgba(255, 90, 81, .16), transparent 26%),
-    radial-gradient(circle at 82% 24%, rgba(255, 199, 81, .15), transparent 28%),
-    radial-gradient(circle at 48% 82%, rgba(64, 185, 197, .16), transparent 30%),
-    linear-gradient(145deg, #4b5dde 0%, #7f66c6 48%, #40b9c5 100%);
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .06), transparent 28%),
+    radial-gradient(circle at 82% 30%, rgba(255, 255, 255, .045), transparent 30%),
+    linear-gradient(145deg, #24262b 0%, #30333a 54%, #1f2126 100%);
 }
 
 .scrub-round-rainbow .scrub-verse-fit-box {
@@ -461,7 +460,7 @@ body{
 .scrub-round-rainbow #scrubVerseText .scrub-token-word.is-special,
 .scrub-round-rainbow #scrubVerseText .scrub-token-punct {
   color: #ffffff;
-  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #141414;
+  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
   text-shadow:
     0 3px 0 rgba(0, 0, 0, .72),
     0 0 10px rgba(0, 0, 0, .34);
@@ -477,29 +476,12 @@ body{
   box-sizing: content-box;
   padding: var(--scrub-rainbow-pad);
   pointer-events: none;
-  background:
-    linear-gradient(90deg,
-      #ff5a51 0%,
-      #ffa351 14%,
-      #ffc751 28%,
-      #a7cb6f 42%,
-      #40b9c5 56%,
-      #7f66c6 70%,
-      #ff7bd5 84%,
-      #ff5a51 100%);
-  background-size: 300% 100%;
-  animation: scrubRainbowTextBreathe 6.5s ease-in-out infinite;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #141414;
+  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
   text-shadow:
     0 3px 0 rgba(0, 0, 0, .66),
-    0 0 12px rgba(255, 255, 255, .36),
-    0 0 24px rgba(255, 199, 81, .26),
-    0 0 38px rgba(64, 185, 197, .24);
-  filter: brightness(1.18) saturate(1.25);
+    0 0 10px rgba(255, 255, 255, .20);
   -webkit-mask-image: linear-gradient(transparent, transparent);
   mask-image: linear-gradient(transparent, transparent);
   -webkit-mask-repeat: no-repeat;
@@ -512,32 +494,27 @@ body{
 .scrub-round-rainbow #scrubGlowVerseText .scrub-token-word,
 .scrub-round-rainbow #scrubGlowVerseText .scrub-token-word.is-special,
 .scrub-round-rainbow #scrubGlowVerseText .scrub-token-punct {
-  background:
-    linear-gradient(90deg,
-      #ff5a51 0%,
-      #ffa351 14%,
-      #ffc751 28%,
-      #a7cb6f 42%,
-      #40b9c5 56%,
-      #7f66c6 70%,
-      #ff7bd5 84%,
-      #ff5a51 100%);
-  background-size: 300% 100%;
-  animation: scrubRainbowTextBreathe 6.5s ease-in-out infinite;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #141414;
+  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
+}
+
+.scrub-round-rainbow .scrub-rainbow-letter {
+  color: var(--scrub-rainbow-letter-color);
+  -webkit-text-fill-color: var(--scrub-rainbow-letter-color);
+  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, .66),
+    0 0 8px rgba(255, 255, 255, .18);
 }
 
 .scrub-round-rainbow .scrub-ref-pill {
   background: rgba(255, 255, 255, .96);
-  color: #4b2ca1;
+  color: #333333;
   border-color: rgba(255, 255, 255, .72);
   box-shadow:
     0 6px 0 rgba(0, 0, 0, .18),
-    0 0 18px rgba(255, 255, 255, .28);
+    0 0 18px rgba(255, 255, 255, .20);
 }
 
 .scrub-round-rainbow .scrub-cover-canvas {
@@ -552,23 +529,9 @@ body{
 
 .scrub-round-rainbow .scrub-instruction-chip {
   --scrub-chip-bg: #ffffff;
-  --scrub-chip-fg: #4b2ca1;
+  --scrub-chip-fg: #333333;
   --scrub-chip-border: #ffc751;
-  --scrub-chip-shadow: rgba(51, 37, 96, .42);
-}
-
-@keyframes scrubRainbowTextBreathe {
-  0% {
-    filter: brightness(1.08) saturate(1.12) hue-rotate(0deg);
-  }
-
-  50% {
-    filter: brightness(1.24) saturate(1.34) hue-rotate(38deg);
-  }
-
-  100% {
-    filter: brightness(1.08) saturate(1.12) hue-rotate(0deg);
-  }
+  --scrub-chip-shadow: rgba(0, 0, 0, .42);
 }
 
 @keyframes scrubRainbowCompletePulse {
@@ -577,11 +540,11 @@ body{
   }
 
   55% {
-    filter: brightness(1.35) saturate(1.35);
+    filter: brightness(1.25) saturate(1.2);
   }
 
   100% {
-    filter: brightness(1.12) saturate(1.16);
+    filter: brightness(1.08) saturate(1.08);
   }
 }
 
