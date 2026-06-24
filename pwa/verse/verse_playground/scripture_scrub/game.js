@@ -416,7 +416,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.8",
+      debugBadge: "SS 3.9",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1743,26 +1743,23 @@
   function generateStickerPositions(count, width, height, stickerSize) {
     const safeCount = Math.max(1, Number(count) || 1);
 
-    const marginX = Math.max(46, stickerSize * 0.62);
-    const top = Math.max(118, height * 0.15);
-    const bottom = Math.min(
-      height - Math.max(58, stickerSize * 0.62),
-      height * 0.90
-    );
+    const edgeInset = Math.max(18, stickerSize * 0.18);
+    const top = Math.max(92, height * 0.09);
+    const bottom = height - edgeInset;
 
-    const minDistance = stickerSize * (width >= 760 ? 0.78 : 0.72);
-    const relaxedDistance = stickerSize * 0.58;
-    const maxAttempts = safeCount * 95;
+    const minDistance = stickerSize * (width >= 760 ? 0.70 : 0.64);
+    const relaxedDistance = stickerSize * 0.46;
+    const maxAttempts = safeCount * 110;
     const positions = [];
 
     function randomCandidate() {
       const verticalBias = Math.random();
-      const yRatio = verticalBias < 0.64
-        ? 0.24 + Math.random() * 0.52
-        : 0.08 + Math.random() * 0.84;
+      const yRatio = verticalBias < 0.68
+        ? 0.16 + Math.random() * 0.68
+        : Math.random();
 
       return {
-        x: marginX + Math.random() * Math.max(1, width - marginX * 2),
+        x: edgeInset + Math.random() * Math.max(1, width - edgeInset * 2),
         y: top + yRatio * Math.max(1, bottom - top)
       };
     }
@@ -1793,7 +1790,7 @@
         width,
         height,
         stickerSize,
-        marginX,
+        marginX: edgeInset,
         top,
         bottom
       });
@@ -1802,7 +1799,7 @@
     }
 
     return shuffle(positions).slice(0, safeCount).map((pos) => ({
-      x: clamp(pos.x, marginX, width - marginX),
+      x: clamp(pos.x, edgeInset, width - edgeInset),
       y: clamp(pos.y, top, bottom)
     }));
   }
