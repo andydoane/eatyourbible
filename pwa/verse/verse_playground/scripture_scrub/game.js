@@ -467,7 +467,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.4",
+      debugBadge: "SS 5.5",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1559,15 +1559,15 @@
     const textSize = parseFloat(window.getComputedStyle(text || document.body).fontSize) || 36;
 
     const now = performance.now();
-    const particleCount = 7;
+    const particleCount = 8;
     const spin = Math.random() * Math.PI * 2;
 
     for (let i = 0; i < particleCount; i += 1) {
-      const angle = spin + (i / particleCount) * Math.PI * 2 + ((Math.random() - .5) * .22);
-      const speed = textSize * (.62 + Math.random() * .34);
+      const angle = spin + (i / particleCount) * Math.PI * 2 + ((Math.random() - .5) * .18);
+      const speed = textSize * (2.25 + Math.random() * 1.1);
 
-      // Radius is about 1/4 of a letter height, so diameter is about 1/2 letter height.
-      const size = clamp(textSize * (.20 + Math.random() * .10), 7, 22);
+      // Radius is about 1/16 of a letter height, so diameter is about 1/8 letter height.
+      const size = clamp(textSize * (.045 + Math.random() * .035), 2, 8);
 
       rainbowTrailParticles.push({
         x,
@@ -1577,12 +1577,12 @@
         radius: size,
         color: colors[Math.floor(Math.random() * colors.length)],
         born: now,
-        life: 260 + Math.random() * 100
+        life: 520 + Math.random() * 180
       });
     }
 
-    if (rainbowTrailParticles.length > 70) {
-      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 70);
+    if (rainbowTrailParticles.length > 96) {
+      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 96);
     }
 
     if (!rainbowTrailAnimationFrame) {
