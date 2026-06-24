@@ -261,13 +261,10 @@ body{
 
 .scrub-round-chalkboard .scrub-scripture-card {
   background:
-    radial-gradient(circle at 14% 18%, rgba(255, 255, 255, .055) 0 1px, transparent 2px),
-    radial-gradient(circle at 72% 28%, rgba(255, 255, 255, .045) 0 1px, transparent 2px),
-    radial-gradient(circle at 42% 78%, rgba(255, 255, 255, .04) 0 1px, transparent 2px),
-    linear-gradient(145deg, #34383b 0%, #272a2d 56%, #202326 100%);
+    linear-gradient(rgba(0, 0, 0, .06), rgba(0, 0, 0, .06)),
+    url("./scripture_scrub_images/scripture_scrub_chalkboard.jpg") center center / cover no-repeat,
+    #24272a;
   box-shadow:
-    inset 0 0 0 clamp(14px, 3.2vw, 28px) #8b5a2b,
-    inset 0 0 0 clamp(20px, 4.1vw, 38px) #5d351d,
     inset 0 0 36px rgba(0, 0, 0, .44);
   padding:
     calc(92px + env(safe-area-inset-top)) clamp(34px, 7vw, 72px) calc(38px + env(safe-area-inset-bottom));
@@ -300,6 +297,33 @@ body{
 
 .scrub-round-chalkboard .scrub-cover-canvas {
   z-index: 8;
+}
+
+.scrub-stage-chalkboard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 62;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: clamp(14px, 3.2vw, 28px) solid #8b5a2b;
+  box-shadow:
+    inset 0 0 0 clamp(6px, 1vw, 10px) #5d351d,
+    inset 0 0 22px rgba(0, 0, 0, .42),
+    0 0 0 1px rgba(255, 255, 255, .08);
+}
+
+.scrub-stage-chalkboard::after {
+  content: "";
+  position: absolute;
+  inset: clamp(14px, 3.2vw, 28px);
+  z-index: 63;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 2px solid rgba(255, 255, 255, .08);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, .18),
+    inset 0 0 18px rgba(0, 0, 0, .28);
 }
 
 .scrub-round-chalkboard .scrub-instruction-chip {

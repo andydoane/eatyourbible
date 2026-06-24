@@ -158,6 +158,7 @@
   const GRASS_BG_IMAGE = "scripture_scrub_grass_bg_1.jpg";
   const MOWED_GRASS_BG_IMAGE = "scripture_scrub_grass_bg_2.jpg";
   const MOWER_IMAGE = "scripture_scrub_mower.png";
+  const CHALKBOARD_BG_IMAGE = "scripture_scrub_chalkboard.jpg";
   const LEAF_IMAGES = [
     "scripture_scrub_leaf_orange_1.png",
     "scripture_scrub_leaf_orange_2.png",
@@ -249,6 +250,7 @@
   let grassCoverImage = null;
   let mowedGrassImage = null;
   let mowerImage = null;
+  let chalkboardImage = null;
   let leafImages = [];
   let paintBlobImages = [];
 
@@ -387,6 +389,11 @@
     return loadImageAsset(MOWER_IMAGE, "mower image");
   }
 
+
+  async function loadChalkboardImage() {
+    return loadImageAsset(CHALKBOARD_BG_IMAGE, "chalkboard background image");
+  }
+
   async function loadLeafImages() {
     const loaded = await Promise.all(LEAF_IMAGES.map((fileName) => new Promise((resolve) => {
       const img = new Image();
@@ -429,7 +436,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.2",
+      debugBadge: "SS 4.3",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1076,18 +1083,33 @@
 
     const eraserRadius = radius * 1.08;
 
-    coverCtx.save();
-    coverCtx.globalCompositeOperation = "source-over";
-    coverCtx.filter = "none";
-    coverCtx.fillStyle = "#2b2d30";
-    coverCtx.beginPath();
-    coverCtx.arc(x, y, eraserRadius, 0, Math.PI * 2);
-    coverCtx.fill();
-    coverCtx.restore();
-
+    drawChalkboardImagePatch(x, y, eraserRadius);
     eraseClearMask(x, y, eraserRadius);
   }
 
+  function drawChalkboardImagePatch(x, y, radius) {
+    if (!coverCtx || !stageEl) return;
+
+    const rect = stageEl.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.filter = "none";
+    coverCtx.beginPath();
+    coverCtx.arc(x, y, radius, 0, Math.PI * 2);
+    coverCtx.clip();
+
+    if (chalkboardImage?.naturalWidth && chalkboardImage?.naturalHeight) {
+      drawImageCover(coverCtx, chalkboardImage, width, height);
+    } else {
+      coverCtx.fillStyle = "#2b2d30";
+      coverCtx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    }
+
+    coverCtx.restore();
+  }
 
 
   function measureChalkboardClearedRatio() {
@@ -2490,6 +2512,7 @@
   grassCoverImage = await loadGrassBackgroundImage();
   mowedGrassImage = await loadMowedGrassBackgroundImage();
   mowerImage = await loadMowerImage();
+  chalkboardImage = await loadChalkboardImage();
   leafImages = await loadLeafImages();
   paintBlobImages = await loadPaintBlobImages();
   await waitForLocalFonts();
