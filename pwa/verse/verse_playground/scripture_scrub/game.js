@@ -15,6 +15,12 @@
   const HELP_OVERLAY_ID = "scriptureScrubHelpOverlay";
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
+  // Dev-only shortcut: long-press the sponge on the title screen to jump here.
+  // Set to one of: "mud", "paint", "fog", "leaves", "stickers", "archaeology"
+  // Set to null to disable.
+  const DEBUG_SKIP_ROUND_ID = "archaeology";
+  const DEBUG_SKIP_LONG_PRESS_MS = 900;
+
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
 
   const GAME_THEME = {
@@ -388,6 +394,68 @@
       onBack: () => window.VerseGameBridge.exitGame(),
       onStart: beginScrubRun
     });
+
+    wireTitleSpongeDebugSkip();
+  }
+
+  function wireTitleSpongeDebugSkip() {
+    if (!DEBUG_SKIP_ROUND_ID) return;
+
+    const icon = app?.querySelector?.(".vm-game-icon");
+    if (!icon) return;
+
+    icon.style.cursor = "pointer";
+    icon.style.touchAction = "manipulation";
+
+    let longPressTimer = null;
+    let longPressTriggered = false;
+
+    const clearLongPress = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    };
+
+    const startLongPress = (event) => {
+      longPressTriggered = false;
+      clearLongPress();
+
+      longPressTimer = setTimeout(() => {
+        longPressTriggered = true;
+        jumpToDebugRound();
+      }, DEBUG_SKIP_LONG_PRESS_MS);
+
+      event.preventDefault?.();
+    };
+
+    const cancelLongPress = () => {
+      clearLongPress();
+    };
+
+    icon.addEventListener("pointerdown", startLongPress);
+    icon.addEventListener("pointerup", cancelLongPress);
+    icon.addEventListener("pointercancel", cancelLongPress);
+    icon.addEventListener("pointerleave", cancelLongPress);
+
+    icon.addEventListener("click", (event) => {
+      if (!longPressTriggered) return;
+      event.preventDefault();
+      event.stopPropagation();
+    });
+  }
+
+  function jumpToDebugRound() {
+    const targetIndex = ROUNDS.findIndex((round) => round.id === DEBUG_SKIP_ROUND_ID);
+
+    if (targetIndex < 0) {
+      console.warn("Scripture Scrub: unknown DEBUG_SKIP_ROUND_ID", DEBUG_SKIP_ROUND_ID);
+      return;
+    }
+
+    currentRoundIndex = targetIndex;
+    archaeologyScore = null;
+    renderRoundIntro();
   }
 
   function beginScrubRun() {
