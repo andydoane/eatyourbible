@@ -202,6 +202,7 @@
   ];
 
   let verseJson = null;
+  let leafImages = [];
   let paintBlobImages = [];
 
   let currentRoundIndex = 0;
@@ -309,6 +310,21 @@
     }
   }
 
+  async function loadLeafImages() {
+    const loaded = await Promise.all(LEAF_IMAGES.map((fileName) => new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        console.warn("Scripture Scrub: could not load leaf image", fileName);
+        resolve(null);
+      };
+      img.src = `${IMAGE_BASE}${fileName}`;
+    })));
+
+    return loaded.filter(Boolean);
+  }
+
   async function loadPaintBlobImages() {
     const loaded = await Promise.all(PAINT_BLOB_IMAGES.map((fileName) => new Promise((resolve) => {
       const img = new Image();
@@ -337,7 +353,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 2.9b",
+      debugBadge: "SS 3.0",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1165,7 +1181,7 @@
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
-    const count = 40;
+    const count = 52;
     const size = getCoverObjectSize("leaf", width);
     const positions = generateCoverPositions({
       count,
@@ -1180,7 +1196,8 @@
     objectCleared = 0;
     updateProgress(0);
 
-    const imageBag = shuffle(LEAF_IMAGES.concat(LEAF_IMAGES, LEAF_IMAGES, LEAF_IMAGES, LEAF_IMAGES, LEAF_IMAGES));
+    const imagePool = leafImages.length ? LEAF_IMAGES : LEAF_IMAGES;
+    const imageBag = shuffle(imagePool.concat(imagePool, imagePool, imagePool, imagePool, imagePool, imagePool));
 
     for (let i = 0; i < count; i += 1) {
       const pos = positions[i] || {
@@ -1787,6 +1804,7 @@
   }
 
   verseJson = await loadVerseJson();
+  leafImages = await loadLeafImages();
   paintBlobImages = await loadPaintBlobImages();
   await waitForLocalFonts();
   renderTitleScreen();
