@@ -451,7 +451,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.7",
+      debugBadge: "SS 4.8",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1199,7 +1199,7 @@
     requestAnimationFrame(() => {
       syncGlowVerseLayer();
       refreshGlowTargetRects();
-      setupGlowMask(width, height);
+      setupGlowMask();
       applyGlowMask();
       updateProgress(0);
     });
@@ -1207,7 +1207,7 @@
     setTimeout(() => {
       syncGlowVerseLayer();
       refreshGlowTargetRects();
-      setupGlowMask(width, height);
+      setupGlowMask();
       applyGlowMask();
     }, 180);
 
