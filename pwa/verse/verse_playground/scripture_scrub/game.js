@@ -52,7 +52,7 @@
     paint: 0.95,
     fog: 0.92,
     chalkboard: 0.95,
-    glow: 0.9,
+    glow: 0.98,
     mower: 0.95,
     archaeology: 0.95
   };
@@ -451,7 +451,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.9",
+      debugBadge: "SS 4.9b",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
