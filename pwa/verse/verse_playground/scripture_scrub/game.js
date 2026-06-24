@@ -303,6 +303,8 @@
   let glowTrailAnimationFrame = null;
   let rainbowTrailParticles = [];
   let rainbowTrailAnimationFrame = null;
+  let rainbowLastBurstAt = 0;
+  let rainbowLastBurstPoint = null;
   let mowerActive = false;
   let mowerFromTop = true;
   let mowerAnimationFrame = null;
@@ -467,7 +469,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.5",
+      debugBadge: "SS 5.6",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1202,6 +1204,8 @@
 
   function setupGlowRound(round, width, height) {
     glowTargetRects = [];
+    rainbowLastBurstAt = 0;
+    rainbowLastBurstPoint = null;
 
     coverCanvas.style.display = "block";
     coverCanvas.style.pointerEvents = "";
@@ -1288,16 +1292,23 @@
   }
 
   function syncGlowVerseLayer() {
+    const box = document.getElementById("scrubVerseFitBox");
     const base = document.getElementById("scrubVerseText");
     const glow = document.getElementById("scrubGlowVerseText");
-    if (!base || !glow) return;
+    if (!box || !base || !glow) return;
+
+    const boxRect = box.getBoundingClientRect();
+    const baseRect = base.getBoundingClientRect();
 
     glow.style.fontSize = base.style.fontSize;
     glow.style.lineHeight = base.style.lineHeight;
-    glow.style.maxWidth = base.style.maxWidth;
-    glow.style.width = base.style.width;
-    glow.style.marginLeft = base.style.marginLeft;
-    glow.style.marginRight = base.style.marginRight;
+    glow.style.maxWidth = `${baseRect.width}px`;
+    glow.style.width = `${baseRect.width}px`;
+    glow.style.left = `${baseRect.left - boxRect.left}px`;
+    glow.style.top = `${baseRect.top - boxRect.top}px`;
+    glow.style.marginLeft = "0";
+    glow.style.marginRight = "0";
+    glow.style.transform = "none";
   }
 
   function refreshGlowTargetRects() {
@@ -1371,6 +1382,8 @@
     const stop = (event) => {
       pointerDown = false;
       lastPoint = null;
+      rainbowLastBurstAt = 0;
+      rainbowLastBurstPoint = null;
       clearGlowTrail();
       clearRainbowTrail();
 
@@ -1559,36 +1572,51 @@
     const textSize = parseFloat(window.getComputedStyle(text || document.body).fontSize) || 36;
 
     const now = performance.now();
-    const particleCount = 8;
+    const minBurstMs = 115;
+    const minBurstDistance = textSize * 1.15;
+
+    if (rainbowLastBurstPoint) {
+      const moved = Math.hypot(x - rainbowLastBurstPoint.x, y - rainbowLastBurstPoint.y);
+      const elapsed = now - rainbowLastBurstAt;
+
+      if (elapsed < minBurstMs && moved < minBurstDistance) return;
+    }
+
+    rainbowLastBurstAt = now;
+    rainbowLastBurstPoint = { x, y };
+
+    const particleCount = 9;
     const spin = Math.random() * Math.PI * 2;
 
     for (let i = 0; i < particleCount; i += 1) {
-      const angle = spin + (i / particleCount) * Math.PI * 2 + ((Math.random() - .5) * .18);
-      const speed = textSize * (2.25 + Math.random() * 1.1);
+      const angle = spin + (i / particleCount) * Math.PI * 2 + ((Math.random() - .5) * .16);
+      const startOffset = textSize * (.24 + Math.random() * .16);
+      const speed = textSize * (3.25 + Math.random() * 1.65);
 
-      // Radius is about 1/16 of a letter height, so diameter is about 1/8 letter height.
-      const size = clamp(textSize * (.045 + Math.random() * .035), 2, 8);
+      // Diameter is roughly 1/8 of a verse letter, with a little variation.
+      const size = clamp(textSize * (.032 + Math.random() * .026), 2, 7);
 
       rainbowTrailParticles.push({
-        x,
-        y,
+        x: x + Math.cos(angle) * startOffset,
+        y: y + Math.sin(angle) * startOffset,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         radius: size,
         color: colors[Math.floor(Math.random() * colors.length)],
         born: now,
-        life: 520 + Math.random() * 180
+        life: 620 + Math.random() * 180
       });
     }
 
-    if (rainbowTrailParticles.length > 96) {
-      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 96);
+    if (rainbowTrailParticles.length > 90) {
+      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 90);
     }
 
     if (!rainbowTrailAnimationFrame) {
       rainbowTrailAnimationFrame = requestAnimationFrame(drawRainbowTrailFrame);
     }
   }
+  
 
   function drawRainbowTrailFrame(now) {
     rainbowTrailAnimationFrame = null;
