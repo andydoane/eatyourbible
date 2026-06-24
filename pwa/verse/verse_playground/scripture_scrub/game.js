@@ -416,7 +416,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.9",
+      debugBadge: "SS 4.0",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -488,44 +488,17 @@
 
     currentRoundIndex = targetIndex;
     archaeologyScore = null;
-    renderRoundIntro();
+    renderRound();
   }
 
   function beginScrubRun() {
     currentRoundIndex = 0;
     archaeologyScore = null;
-    renderRoundIntro();
+    renderRound();
   }
 
   function renderRoundIntro() {
-    cleanupRound();
-    const round = roundConfig();
-    const roundNumber = currentRoundIndex + 1;
-
-    app.innerHTML = `
-      <div class="vm-game-screen scripture-scrub-root">
-        <button class="vm-game-back-pill no-zoom" id="scrubRoundBackBtn" type="button" aria-label="Back to intro">◀</button>
-        <div class="vm-game-stage scripture-scrub-round-title">
-          <div class="vm-game-center">
-            <div class="vm-game-icon" aria-hidden="true">${escapeHtml(round.icon)}</div>
-            <div class="vm-game-title">${escapeHtml(round.introTitle || round.title)}</div>
-            <div class="vm-game-actions">
-              <button class="vm-btn" id="scrubStartRoundBtn" type="button">Start Round</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const backBtn = document.getElementById("scrubRoundBackBtn");
-    const startBtn = document.getElementById("scrubStartRoundBtn");
-
-    if (backBtn) backBtn.onclick = currentRoundIndex === 0 ? renderTitleScreen : () => {
-      currentRoundIndex = Math.max(0, currentRoundIndex - 1);
-      renderRoundIntro();
-    };
-
-    if (startBtn) startBtn.onclick = renderRound;
+    renderRound();
   }
 
   function renderRound() {
@@ -2212,7 +2185,7 @@
       }
 
       currentRoundIndex += 1;
-      renderRoundIntro();
+      renderRound();
     };
   }
 
