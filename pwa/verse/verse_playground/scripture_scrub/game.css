@@ -460,10 +460,9 @@ body{
 .scrub-round-rainbow #scrubVerseText .scrub-token-word.is-special,
 .scrub-round-rainbow #scrubVerseText .scrub-token-punct {
   color: #ffffff;
-  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
   text-shadow:
-    0 3px 0 rgba(0, 0, 0, .72),
-    0 0 10px rgba(0, 0, 0, .34);
+    0 4px 0 rgba(0, 0, 0, .42),
+    0 0 12px rgba(0, 0, 0, .38);
 }
 
 .scrub-round-rainbow .scrub-glow-verse-text {
@@ -478,10 +477,9 @@ body{
   pointer-events: none;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
   text-shadow:
-    0 3px 0 rgba(0, 0, 0, .66),
-    0 0 10px rgba(255, 255, 255, .20);
+    0 4px 0 rgba(0, 0, 0, .32),
+    0 0 10px rgba(255, 255, 255, .18);
   -webkit-mask-image: linear-gradient(transparent, transparent);
   mask-image: linear-gradient(transparent, transparent);
   -webkit-mask-repeat: no-repeat;
@@ -496,15 +494,13 @@ body{
 .scrub-round-rainbow #scrubGlowVerseText .scrub-token-punct {
   color: transparent;
   -webkit-text-fill-color: transparent;
-  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
 }
 
 .scrub-round-rainbow .scrub-rainbow-letter {
   color: var(--scrub-rainbow-letter-color);
   -webkit-text-fill-color: var(--scrub-rainbow-letter-color);
-  -webkit-text-stroke: clamp(1px, .28vw, 2.5px) #111111;
   text-shadow:
-    0 3px 0 rgba(0, 0, 0, .66),
+    0 4px 0 rgba(0, 0, 0, .32),
     0 0 8px rgba(255, 255, 255, .18);
 }
 
