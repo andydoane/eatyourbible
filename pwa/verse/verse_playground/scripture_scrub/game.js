@@ -51,7 +51,7 @@
     mud: 0.95,
     paint: 0.95,
     fog: 0.92,
-    mower: 0.90,
+    mower: 0.95,
     archaeology: 0.95
   };
 
@@ -416,7 +416,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.6",
+      debugBadge: "SS 3.7",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -884,6 +884,8 @@
     coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.clearRect(0, 0, rect.width, rect.height);
+    coverCanvas.style.opacity = "1";
+    coverCanvas.style.transition = "";
 
     setupClearMask(rect.width, rect.height);
 
@@ -1100,23 +1102,6 @@
     clearMaskCtx.globalCompositeOperation = "destination-out";
     clearMaskCtx.fillRect(x, y, width, height);
     clearMaskCtx.restore();
-  }
-
-  function eraseMowerStripSegment(x, previousY, currentY, mowerWidth, mowerHeight) {
-    if (!coverCtx) return;
-
-    const top = Math.min(previousY, currentY) - mowerHeight * 0.58;
-    const bottom = Math.max(previousY, currentY) + mowerHeight * 0.58;
-
-    coverCtx.save();
-    coverCtx.globalCompositeOperation = "destination-out";
-    coverCtx.fillRect(
-      x - mowerWidth / 2,
-      top,
-      mowerWidth,
-      bottom - top
-    );
-    coverCtx.restore();
   }
 
   function eraseMowerStripSegment(x, previousY, currentY, mowerWidth, mowerHeight) {
@@ -2107,11 +2092,7 @@
       coverCanvas.style.pointerEvents = "none";
     }
 
-    if (stageEl && (round.id === "mud" || round.id === "paint" || round.id === "fog")) {
-      stageEl.classList.add("scrub-cleaning-up");
-    }
-
-    animateAutoCleanCover(() => {
+    const finishRound = () => {
       clearMaskFully();
       updateProgress(1);
       clearRemainingObjects();
@@ -2123,7 +2104,48 @@
 
       launchSparkles();
       showNextRoundPill();
+    };
+
+    if (round.kind === "mower") {
+      animateMowerCoverFade(finishRound);
+      return;
+    }
+
+    if (stageEl && (round.id === "mud" || round.id === "paint" || round.id === "fog")) {
+      stageEl.classList.add("scrub-cleaning-up");
+    }
+
+    animateAutoCleanCover(finishRound);
+  }
+
+  function animateMowerCoverFade(onDone = () => { }) {
+    if (!coverCanvas || !coverCtx || coverCanvas.style.display === "none") {
+      setTimeout(onDone, 360);
+      return;
+    }
+
+    clearMaskFully();
+    updateProgress(1);
+
+    coverCanvas.style.transition = "opacity 650ms ease";
+    coverCanvas.style.opacity = "1";
+
+    requestAnimationFrame(() => {
+      coverCanvas.style.opacity = "0";
     });
+
+    setTimeout(() => {
+      if (stageEl) {
+        const rect = stageEl.getBoundingClientRect();
+
+        coverCtx.save();
+        coverCtx.globalCompositeOperation = "destination-out";
+        coverCtx.clearRect(0, 0, rect.width, rect.height);
+        coverCtx.restore();
+      }
+
+      onDone();
+    }, 700);
   }
 
   function animateAutoCleanCover(onDone = () => { }) {
