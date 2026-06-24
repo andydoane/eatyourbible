@@ -356,10 +356,10 @@ body{
 .scrub-round-glow .scrub-verse-text,
 .scrub-round-glow .scrub-token-word,
 .scrub-round-glow .scrub-token-word.is-special {
-  color: rgba(117, 160, 188, .24);
+  color: rgba(117, 160, 188, .14);
   text-shadow:
-    0 0 5px rgba(64, 185, 197, .12),
-    0 0 16px rgba(127, 102, 198, .08);
+    0 0 5px rgba(64, 185, 197, .08),
+    0 0 16px rgba(127, 102, 198, .05);
 }
 
 .scrub-round-glow .scrub-glow-verse-text {
@@ -369,7 +369,7 @@ body{
   z-index: 3;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  color: rgba(209, 255, 247, .99);
+  color: #eafffb;
   text-shadow:
     0 0 4px rgba(209, 255, 247, .95),
     0 0 13px rgba(64, 185, 197, .86),

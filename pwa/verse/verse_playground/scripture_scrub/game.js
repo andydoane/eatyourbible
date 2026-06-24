@@ -451,7 +451,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.6",
+      debugBadge: "SS 4.7",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1191,7 +1191,7 @@
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.clearRect(0, 0, width, height);
 
-    setupGlowMask(width, height);
+    setupGlowMask();
     syncGlowVerseLayer();
     refreshGlowTargetRects();
     applyGlowMask();
@@ -1214,16 +1214,25 @@
     wireGlowReveal(round);
   }
 
-  function setupGlowMask(width, height) {
+  function setupGlowMask() {
+    const glow = document.getElementById("scrubGlowVerseText");
+    const rect = glow?.getBoundingClientRect?.();
+
+    if (!rect || !rect.width || !rect.height) {
+      glowMaskCanvas = null;
+      glowMaskCtx = null;
+      return;
+    }
+
     glowMaskCanvas = document.createElement("canvas");
-    glowMaskCanvas.width = coverCanvas.width;
-    glowMaskCanvas.height = coverCanvas.height;
+    glowMaskCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+    glowMaskCanvas.height = Math.max(1, Math.round(rect.height * dpr));
 
     glowMaskCtx = glowMaskCanvas.getContext("2d", { willReadFrequently: true });
     if (!glowMaskCtx) return;
 
     glowMaskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    glowMaskCtx.clearRect(0, 0, width, height);
+    glowMaskCtx.clearRect(0, 0, rect.width, rect.height);
   }
 
   function syncGlowVerseLayer() {
@@ -1339,25 +1348,35 @@
   }
 
   function revealGlowAt(x, y, radius, round) {
-    if (!glowMaskCtx) return;
+    const glow = document.getElementById("scrubGlowVerseText");
 
-    const revealRadius = radius * 1.08;
+    if (!glowMaskCtx || !glowMaskCanvas || !stageEl || !glow) return;
+
+    const stageRect = stageEl.getBoundingClientRect();
+    const glowRect = glow.getBoundingClientRect();
+
+    const localX = x - (glowRect.left - stageRect.left);
+    const localY = y - (glowRect.top - stageRect.top);
+
+    const revealRadius = radius * 1.18;
 
     glowMaskCtx.save();
     glowMaskCtx.globalCompositeOperation = "source-over";
 
-    const reveal = glowMaskCtx.createRadialGradient(x, y, 0, x, y, revealRadius);
+    const reveal = glowMaskCtx.createRadialGradient(localX, localY, 0, localX, localY, revealRadius);
     reveal.addColorStop(0, "rgba(255, 255, 255, 1)");
-    reveal.addColorStop(.68, "rgba(255, 255, 255, .96)");
+    reveal.addColorStop(.72, "rgba(255, 255, 255, 1)");
     reveal.addColorStop(1, "rgba(255, 255, 255, 0)");
 
     glowMaskCtx.fillStyle = reveal;
     glowMaskCtx.beginPath();
-    glowMaskCtx.arc(x, y, revealRadius, 0, Math.PI * 2);
+    glowMaskCtx.arc(localX, localY, revealRadius, 0, Math.PI * 2);
     glowMaskCtx.fill();
     glowMaskCtx.restore();
 
     applyGlowMask();
+
+    // Progress still uses stage coordinates.
     eraseClearMask(x, y, revealRadius);
   }
 
@@ -1416,21 +1435,23 @@
   }
 
   function clearGlowCover() {
-    if (!glowMaskCtx || !glowMaskCanvas || !stageEl) return;
+    const glow = document.getElementById("scrubGlowVerseText");
+    const glowRect = glow?.getBoundingClientRect?.();
 
-    const rect = stageEl.getBoundingClientRect();
+    if (!glowMaskCtx || !glowMaskCanvas || !stageEl || !glowRect) return;
 
     glowMaskCtx.save();
     glowMaskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    glowMaskCtx.clearRect(0, 0, rect.width, rect.height);
+    glowMaskCtx.clearRect(0, 0, glowRect.width, glowRect.height);
     glowMaskCtx.fillStyle = "#ffffff";
-    glowMaskCtx.fillRect(0, 0, rect.width, rect.height);
+    glowMaskCtx.fillRect(0, 0, glowRect.width, glowRect.height);
     glowMaskCtx.restore();
 
     applyGlowMask();
 
     if (coverCtx) {
-      coverCtx.clearRect(0, 0, rect.width, rect.height);
+      const stageRect = stageEl.getBoundingClientRect();
+      coverCtx.clearRect(0, 0, stageRect.width, stageRect.height);
     }
   }
 
