@@ -369,6 +369,7 @@ body{
   --scrub-glow-pad: clamp(38px, 8vw, 82px);
   position: absolute;
   z-index: 3;
+  opacity: 0;
   box-sizing: content-box;
   padding: var(--scrub-glow-pad);
   margin: 0;
@@ -467,6 +468,7 @@ body{
   --scrub-rainbow-pad: clamp(38px, 8vw, 82px);
   position: absolute;
   z-index: 3;
+  opacity: 0;
   box-sizing: content-box;
   padding: var(--scrub-rainbow-pad);
   margin: 0;

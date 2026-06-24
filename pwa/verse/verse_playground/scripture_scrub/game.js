@@ -299,6 +299,8 @@
   let glowTargetRects = [];
   let glowMaskCanvas = null;
   let glowMaskCtx = null;
+  let glowTextCanvas = null;
+  let glowTextCtx = null;
   let glowMaskApplyAnimationFrame = null;
   let glowTrailSpots = [];
   let glowTrailAnimationFrame = null;
@@ -470,7 +472,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.7",
+      debugBadge: "SS 5.8",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1216,6 +1218,7 @@
     syncGlowVerseLayer();
     if (round.kind === "rainbow") colorizeRainbowRevealLayer();
     setupGlowMask();
+    renderGlowTextCanvas(round);
     refreshGlowTargetRects();
     applyGlowMask();
 
@@ -1223,6 +1226,7 @@
       syncGlowVerseLayer();
       if (round.kind === "rainbow") colorizeRainbowRevealLayer();
       setupGlowMask();
+      renderGlowTextCanvas(round);
       refreshGlowTargetRects();
       applyGlowMask();
       updateProgress(0);
@@ -1232,6 +1236,7 @@
       syncGlowVerseLayer();
       if (round.kind === "rainbow") colorizeRainbowRevealLayer();
       setupGlowMask();
+      renderGlowTextCanvas(round);
       refreshGlowTargetRects();
       applyGlowMask();
     }, 180);
@@ -1460,27 +1465,15 @@
   }
 
   function applyGlowMask() {
-    const glow = document.getElementById("scrubGlowVerseText");
-    if (!glow || !glowMaskCanvas) return;
-
-    const url = `url("${glowMaskCanvas.toDataURL("image/png")}")`;
-
-    glow.style.webkitMaskImage = url;
-    glow.style.maskImage = url;
-    glow.style.webkitMaskRepeat = "no-repeat";
-    glow.style.maskRepeat = "no-repeat";
-    glow.style.webkitMaskSize = "100% 100%";
-    glow.style.maskSize = "100% 100%";
-    glow.style.webkitMaskPosition = "0 0";
-    glow.style.maskPosition = "0 0";
+    renderGlowCanvasFrame(performance.now());
   }
 
   function scheduleGlowMaskApply() {
     if (glowMaskApplyAnimationFrame) return;
 
-    glowMaskApplyAnimationFrame = requestAnimationFrame(() => {
+    glowMaskApplyAnimationFrame = requestAnimationFrame((now) => {
       glowMaskApplyAnimationFrame = null;
-      applyGlowMask();
+      renderGlowCanvasFrame(now);
     });
   }
 
@@ -1490,7 +1483,180 @@
       glowMaskApplyAnimationFrame = null;
     }
 
-    applyGlowMask();
+    renderGlowCanvasFrame(performance.now());
+  }
+
+  function renderGlowTextCanvas(round = roundConfig()) {
+    const glow = document.getElementById("scrubGlowVerseText");
+    const glowRect = glow?.getBoundingClientRect?.();
+
+    if (!glow || !glowMaskCanvas || !glowRect?.width || !glowRect?.height) {
+      glowTextCanvas = null;
+      glowTextCtx = null;
+      return;
+    }
+
+    glowTextCanvas = document.createElement("canvas");
+    glowTextCanvas.width = glowMaskCanvas.width;
+    glowTextCanvas.height = glowMaskCanvas.height;
+
+    glowTextCtx = glowTextCanvas.getContext("2d");
+    if (!glowTextCtx) return;
+
+    glowTextCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    glowTextCtx.clearRect(0, 0, glowRect.width, glowRect.height);
+    glowTextCtx.textAlign = "left";
+    glowTextCtx.textBaseline = "alphabetic";
+
+    const isRainbow = round?.kind === "rainbow";
+    const selector = isRainbow
+      ? ".scrub-rainbow-letter, .scrub-token-punct"
+      : ".scrub-token-word, .scrub-token-punct";
+
+    const pieces = Array.from(glow.querySelectorAll(selector));
+
+    pieces.forEach((piece) => {
+      const value = piece.textContent || "";
+      if (!value.trim()) return;
+
+      const style = window.getComputedStyle(piece);
+      const fontSize = parseFloat(style.fontSize) || 36;
+      const fontWeight = style.fontWeight || "400";
+      const fontFamily = style.fontFamily || '"Titan One", sans-serif';
+      const fontStyle = style.fontStyle || "normal";
+      const fontVariant = style.fontVariant || "normal";
+
+      glowTextCtx.font = `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize}px ${fontFamily}`;
+
+      if (isRainbow) {
+        const fill = style.webkitTextFillColor && style.webkitTextFillColor !== "rgba(0, 0, 0, 0)"
+          ? style.webkitTextFillColor
+          : style.color;
+
+        glowTextCtx.fillStyle = fill || "#ffc751";
+        glowTextCtx.shadowColor = "rgba(0, 0, 0, .32)";
+        glowTextCtx.shadowBlur = 0;
+        glowTextCtx.shadowOffsetX = 0;
+        glowTextCtx.shadowOffsetY = Math.max(2, fontSize * .08);
+      } else {
+        glowTextCtx.fillStyle = "#eafffb";
+        glowTextCtx.shadowColor = "rgba(64, 185, 197, .92)";
+        glowTextCtx.shadowBlur = Math.max(16, fontSize * .55);
+        glowTextCtx.shadowOffsetX = 0;
+        glowTextCtx.shadowOffsetY = 0;
+      }
+
+      const rects = Array.from(piece.getClientRects ? piece.getClientRects() : []);
+
+      rects.forEach((rect) => {
+        if (rect.width <= .5 || rect.height <= .5) return;
+
+        const x = rect.left - glowRect.left;
+        const y = rect.top - glowRect.top + fontSize * .84;
+
+        glowTextCtx.fillText(value, x, y);
+
+        if (!isRainbow) {
+          glowTextCtx.shadowColor = "rgba(127, 102, 198, .56)";
+          glowTextCtx.shadowBlur = Math.max(28, fontSize * .9);
+          glowTextCtx.fillText(value, x, y);
+
+          glowTextCtx.shadowColor = "rgba(234, 255, 251, .9)";
+          glowTextCtx.shadowBlur = Math.max(4, fontSize * .12);
+          glowTextCtx.fillText(value, x, y);
+        }
+      });
+
+      glowTextCtx.shadowBlur = 0;
+      glowTextCtx.shadowOffsetX = 0;
+      glowTextCtx.shadowOffsetY = 0;
+    });
+  }
+
+  function renderGlowCanvasFrame(now = performance.now()) {
+    if (!coverCtx || !stageEl) return;
+
+    const stageRect = stageEl.getBoundingClientRect();
+
+    coverCtx.save();
+    coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    coverCtx.clearRect(0, 0, stageRect.width, stageRect.height);
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.globalAlpha = 1;
+
+    const glow = document.getElementById("scrubGlowVerseText");
+    const glowRect = glow?.getBoundingClientRect?.();
+
+    if (glowTextCanvas && glowMaskCanvas && glowRect?.width && glowRect?.height) {
+      const x = glowRect.left - stageRect.left;
+      const y = glowRect.top - stageRect.top;
+
+      coverCtx.drawImage(glowTextCanvas, x, y, glowRect.width, glowRect.height);
+
+      coverCtx.globalCompositeOperation = "destination-in";
+      coverCtx.drawImage(glowMaskCanvas, x, y, glowRect.width, glowRect.height);
+
+      coverCtx.globalCompositeOperation = "source-over";
+    }
+
+    drawGlowTrailParticlesOnCanvas(now);
+    drawRainbowParticlesOnCanvas(now);
+
+    coverCtx.globalAlpha = 1;
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.restore();
+  }
+
+  function drawGlowTrailParticlesOnCanvas(now) {
+    if (!coverCtx || !stageEl) return;
+
+    glowTrailSpots = glowTrailSpots.filter((spot) => {
+      const age = now - spot.born;
+      const t = Math.min(1, age / spot.life);
+
+      if (t >= 1 || !pointerDown) return false;
+
+      const alpha = 1 - t;
+      const radius = spot.radius * (1 + t * .22);
+      const glow = coverCtx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, radius);
+
+      glow.addColorStop(0, `rgba(234, 255, 251, ${0.34 * alpha})`);
+      glow.addColorStop(.32, `rgba(64, 185, 197, ${0.20 * alpha})`);
+      glow.addColorStop(.68, `rgba(127, 102, 198, ${0.11 * alpha})`);
+      glow.addColorStop(1, "rgba(127, 102, 198, 0)");
+
+      coverCtx.fillStyle = glow;
+      coverCtx.beginPath();
+      coverCtx.arc(spot.x, spot.y, radius, 0, Math.PI * 2);
+      coverCtx.fill();
+
+      return true;
+    });
+  }
+
+  function drawRainbowParticlesOnCanvas(now) {
+    if (!coverCtx || !stageEl) return;
+
+    rainbowTrailParticles = rainbowTrailParticles.filter((particle) => {
+      const age = now - particle.born;
+      const t = Math.min(1, age / particle.life);
+
+      if (t >= 1 || !pointerDown) return false;
+
+      const seconds = age / 1000;
+      const px = particle.x + particle.vx * seconds;
+      const py = particle.y + particle.vy * seconds;
+      const alpha = 1 - t;
+
+      coverCtx.globalAlpha = alpha;
+      coverCtx.fillStyle = particle.color;
+      coverCtx.beginPath();
+      coverCtx.arc(px, py, particle.radius, 0, Math.PI * 2);
+      coverCtx.fill();
+      coverCtx.globalAlpha = 1;
+
+      return true;
+    });
   }
 
 
@@ -1519,44 +1685,7 @@
   function drawGlowTrailFrame(now) {
     glowTrailAnimationFrame = null;
 
-    if (!coverCtx || !stageEl) {
-      glowTrailSpots = [];
-      return;
-    }
-
-    const rect = stageEl.getBoundingClientRect();
-
-    coverCtx.save();
-    coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    coverCtx.clearRect(0, 0, rect.width, rect.height);
-    coverCtx.globalCompositeOperation = "lighter";
-
-    glowTrailSpots = glowTrailSpots.filter((spot) => {
-      const age = now - spot.born;
-      const t = Math.min(1, age / spot.life);
-
-      if (t >= 1) return false;
-
-      const alpha = pointerDown ? (1 - t) : 0;
-      if (alpha <= 0) return false;
-
-      const radius = spot.radius * (1 + t * .22);
-      const glow = coverCtx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, radius);
-
-      glow.addColorStop(0, `rgba(234, 255, 251, ${0.34 * alpha})`);
-      glow.addColorStop(.32, `rgba(64, 185, 197, ${0.20 * alpha})`);
-      glow.addColorStop(.68, `rgba(127, 102, 198, ${0.11 * alpha})`);
-      glow.addColorStop(1, "rgba(127, 102, 198, 0)");
-
-      coverCtx.fillStyle = glow;
-      coverCtx.beginPath();
-      coverCtx.arc(spot.x, spot.y, radius, 0, Math.PI * 2);
-      coverCtx.fill();
-
-      return true;
-    });
-
-    coverCtx.restore();
+    renderGlowCanvasFrame(now);
 
     if (glowTrailSpots.length && pointerDown) {
       glowTrailAnimationFrame = requestAnimationFrame(drawGlowTrailFrame);
@@ -1571,13 +1700,7 @@
       glowTrailAnimationFrame = null;
     }
 
-    if (coverCtx && stageEl) {
-      const rect = stageEl.getBoundingClientRect();
-      coverCtx.save();
-      coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      coverCtx.clearRect(0, 0, rect.width, rect.height);
-      coverCtx.restore();
-    }
+    scheduleGlowMaskApply();
   }
 
   function addRainbowTrailBurst(x, y, radius) {
@@ -1642,44 +1765,10 @@
     }
   }
   
-
   function drawRainbowTrailFrame(now) {
     rainbowTrailAnimationFrame = null;
 
-    if (!coverCtx || !stageEl) {
-      rainbowTrailParticles = [];
-      return;
-    }
-
-    const rect = stageEl.getBoundingClientRect();
-
-    coverCtx.save();
-    coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    coverCtx.clearRect(0, 0, rect.width, rect.height);
-    coverCtx.globalCompositeOperation = "source-over";
-
-    rainbowTrailParticles = rainbowTrailParticles.filter((particle) => {
-      const age = now - particle.born;
-      const t = Math.min(1, age / particle.life);
-
-      if (t >= 1 || !pointerDown) return false;
-
-      const seconds = age / 1000;
-      const px = particle.x + particle.vx * seconds;
-      const py = particle.y + particle.vy * seconds;
-      const alpha = 1 - t;
-
-      coverCtx.globalAlpha = alpha;
-      coverCtx.fillStyle = particle.color;
-      coverCtx.beginPath();
-      coverCtx.arc(px, py, particle.radius, 0, Math.PI * 2);
-      coverCtx.fill();
-
-      return true;
-    });
-
-    coverCtx.globalAlpha = 1;
-    coverCtx.restore();
+    renderGlowCanvasFrame(now);
 
     if (rainbowTrailParticles.length && pointerDown) {
       rainbowTrailAnimationFrame = requestAnimationFrame(drawRainbowTrailFrame);
@@ -1694,13 +1783,7 @@
       rainbowTrailAnimationFrame = null;
     }
 
-    if (coverCtx && stageEl) {
-      const rect = stageEl.getBoundingClientRect();
-      coverCtx.save();
-      coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      coverCtx.clearRect(0, 0, rect.width, rect.height);
-      coverCtx.restore();
-    }
+    scheduleGlowMaskApply();
   }
 
 
@@ -1759,12 +1842,7 @@
     glowMaskCtx.fillRect(0, 0, glowRect.width, glowRect.height);
     glowMaskCtx.restore();
 
-    applyGlowMask();
-
-    if (coverCtx) {
-      const stageRect = stageEl.getBoundingClientRect();
-      coverCtx.clearRect(0, 0, stageRect.width, stageRect.height);
-    }
+    renderGlowCanvasFrame(performance.now());
   }
 
 
@@ -3123,6 +3201,8 @@
 
     glowTrailSpots = [];
     rainbowTrailParticles = [];
+    glowTextCanvas = null;
+    glowTextCtx = null;
     mowerActive = false;
 
     if (resizeHandler) {
