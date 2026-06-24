@@ -18,7 +18,7 @@
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
   // Set to one of: "mud", "paint", "fog", "leaves", "stickers", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "stickers";
+  const DEBUG_SKIP_ROUND_ID = "chalkboard";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
@@ -51,6 +51,7 @@
     mud: 0.95,
     paint: 0.95,
     fog: 0.92,
+    chalkboard: 0.86,
     mower: 0.95,
     archaeology: 0.95
   };
@@ -93,6 +94,17 @@
       texture: "fog",
       rewardIcon: "☀️",
       rewardTitle: "Now you can see it!"
+    },
+    {
+      id: "chalkboard",
+      title: "Chalkboard Erase",
+      introTitle: "Erase the Chalkboard",
+      icon: "✏️",
+      intro: "Erase the chalkboard.",
+      instruction: "Erase the chalk.",
+      kind: "chalkboard",
+      rewardIcon: "🧽",
+      rewardTitle: "Board erased!"
     },
     {
       id: "leaves",
@@ -257,6 +269,7 @@
   let objectCleared = 0;
   let archaeologyScore = null;
   let bibleRect = null;
+  let chalkboardTargetRect = null;
   let mowerActive = false;
   let mowerFromTop = true;
   let mowerAnimationFrame = null;
@@ -339,7 +352,8 @@
     try {
       await Promise.all([
         document.fonts.load('1em "Baloo 2"'),
-        document.fonts.load('1em "Titan One"')
+        document.fonts.load('1em "Titan One"'),
+        document.fonts.load('1em "Chalkboard"')
       ]);
 
       await document.fonts.ready;
@@ -406,9 +420,8 @@
   function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
-      <p>Scrub, wipe, rake, peel, and dig through six playful rounds.</p>
+      <p>Scrub, wipe, rake, peel, mow, and dig!.</p>
       <p>The verse is hiding behind each cover. Clear enough of the screen to move on.</p>
-      <p>In the final archaeology round, dig carefully to find the hidden Bible. The less dirt you clear, the better your score.</p>
     `;
   }
 
@@ -416,7 +429,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.0",
+      debugBadge: "SS 4.1",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -882,6 +895,12 @@
       return;
     }
 
+    if (round.kind === "chalkboard") {
+      setupChalkboardRound(round, rect.width, rect.height);
+      updateProgress(0);
+      return;
+    }
+
     if (round.kind === "mower") {
       setupMowerRound(round, rect.width, rect.height);
       updateProgress(0);
@@ -945,6 +964,194 @@
 
     ctxToUse.drawImage(img, x, y, drawWidth, drawHeight);
     return true;
+  }
+
+  function setupChalkboardRound(round, width, height) {
+    chalkboardTargetRect = null;
+
+    coverCanvas.style.display = "block";
+    coverCanvas.style.pointerEvents = "";
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.clearRect(0, 0, width, height);
+
+    refreshChalkboardTargetRect();
+    requestAnimationFrame(() => {
+      refreshChalkboardTargetRect();
+      updateProgress(0);
+    });
+    setTimeout(refreshChalkboardTargetRect, 180);
+
+    wireChalkboardErase(round);
+  }
+
+  function refreshChalkboardTargetRect() {
+    if (!stageEl) return;
+
+    const text = document.getElementById("scrubVerseText");
+    const stageRect = stageEl.getBoundingClientRect();
+    const textRect = text?.getBoundingClientRect?.();
+
+    if (!textRect || !stageRect.width || !stageRect.height) {
+      chalkboardTargetRect = null;
+      return;
+    }
+
+    const padX = Math.max(28, stageRect.width * 0.045);
+    const padY = Math.max(28, stageRect.height * 0.045);
+
+    const left = clamp(textRect.left - stageRect.left - padX, 0, stageRect.width);
+    const top = clamp(textRect.top - stageRect.top - padY, 0, stageRect.height);
+    const right = clamp(textRect.right - stageRect.left + padX, 0, stageRect.width);
+    const bottom = clamp(textRect.bottom - stageRect.top + padY, 0, stageRect.height);
+
+    chalkboardTargetRect = {
+      left,
+      top,
+      width: Math.max(1, right - left),
+      height: Math.max(1, bottom - top)
+    };
+  }
+
+  function wireChalkboardErase(round) {
+    coverCanvas.onpointerdown = (event) => {
+      if (menuOpen || completionLocked) return;
+
+      event.preventDefault();
+      dismissInstructionChip();
+      refreshChalkboardTargetRect();
+
+      pointerDown = true;
+      lastPoint = getCanvasPoint(event);
+      coverCanvas.setPointerCapture?.(event.pointerId);
+
+      eraseChalkboardAt(lastPoint.x, lastPoint.y, currentBrushRadius(round), round);
+      scheduleCoverageCheck(round);
+    };
+
+    coverCanvas.onpointermove = (event) => {
+      if (!pointerDown || menuOpen || completionLocked) return;
+
+      event.preventDefault();
+
+      const point = getCanvasPoint(event);
+      eraseChalkboardLine(lastPoint || point, point, currentBrushRadius(round), round);
+      lastPoint = point;
+
+      scheduleCoverageCheck(round);
+    };
+
+    const stop = (event) => {
+      pointerDown = false;
+      lastPoint = null;
+
+      if (event?.pointerId !== undefined) {
+        coverCanvas.releasePointerCapture?.(event.pointerId);
+      }
+
+      scheduleCoverageCheck(round, true);
+    };
+
+    coverCanvas.onpointerup = stop;
+    coverCanvas.onpointercancel = stop;
+    coverCanvas.onpointerleave = stop;
+  }
+
+  function eraseChalkboardLine(from, to, radius, round) {
+    const distance = Math.hypot(to.x - from.x, to.y - from.y);
+    const steps = Math.max(1, Math.ceil(distance / (radius * .38)));
+
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      eraseChalkboardAt(
+        from.x + (to.x - from.x) * t,
+        from.y + (to.y - from.y) * t,
+        radius,
+        round
+      );
+    }
+  }
+
+  function eraseChalkboardAt(x, y, radius, round) {
+    if (!coverCtx) return;
+
+    const smearRadius = radius * 1.16;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "source-over";
+    coverCtx.filter = "blur(6px)";
+    coverCtx.fillStyle = "rgba(43, 45, 48, .92)";
+    coverCtx.beginPath();
+    coverCtx.arc(x, y, smearRadius, 0, Math.PI * 2);
+    coverCtx.fill();
+    coverCtx.restore();
+
+    drawChalkDustSmear(x, y, radius);
+    eraseClearMask(x, y, radius * 1.05);
+  }
+
+  function drawChalkDustSmear(x, y, radius) {
+    if (!coverCtx) return;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "source-over";
+
+    for (let i = 0; i < 7; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * radius * 0.95;
+      const px = x + Math.cos(angle) * distance;
+      const py = y + Math.sin(angle) * distance;
+      const w = radius * (0.32 + Math.random() * 0.55);
+      const h = radius * (0.08 + Math.random() * 0.18);
+
+      coverCtx.save();
+      coverCtx.translate(px, py);
+      coverCtx.rotate(Math.random() * Math.PI);
+      coverCtx.globalAlpha = 0.08 + Math.random() * 0.08;
+      coverCtx.filter = "blur(5px)";
+      coverCtx.fillStyle = "#ffffff";
+      coverCtx.beginPath();
+      coverCtx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
+      coverCtx.fill();
+      coverCtx.restore();
+    }
+
+    coverCtx.restore();
+  }
+
+  function measureChalkboardClearedRatio() {
+    if (!clearMaskCanvas || !clearMaskCtx || !chalkboardTargetRect) {
+      return measureClearedRatio();
+    }
+
+    const width = clearMaskCanvas.width;
+    const height = clearMaskCanvas.height;
+    if (!width || !height) return 0;
+
+    const left = Math.max(0, Math.round(chalkboardTargetRect.left * dpr));
+    const top = Math.max(0, Math.round(chalkboardTargetRect.top * dpr));
+    const right = Math.min(width, Math.round((chalkboardTargetRect.left + chalkboardTargetRect.width) * dpr));
+    const bottom = Math.min(height, Math.round((chalkboardTargetRect.top + chalkboardTargetRect.height) * dpr));
+    const step = Math.max(4, Math.round(7 * dpr));
+
+    let total = 0;
+    let cleared = 0;
+
+    try {
+      const data = clearMaskCtx.getImageData(0, 0, width, height).data;
+
+      for (let y = top; y < bottom; y += step) {
+        for (let x = left; x < right; x += step) {
+          total += 1;
+          const alpha = data[((y * width + x) * 4) + 3];
+          if (alpha < 24) cleared += 1;
+        }
+      }
+    } catch (err) {
+      console.warn("Scripture Scrub: chalkboard coverage check failed", err);
+      return 0;
+    }
+
+    return total ? cleared / total : 0;
   }
 
   function setupMowerRound(round, width, height) {
@@ -1372,7 +1579,9 @@
     const delay = immediate ? 0 : 90;
     coverageCheckTimer = setTimeout(() => {
       coverageCheckTimer = null;
-      const cleared = measureClearedRatio();
+      const cleared = round.kind === "chalkboard"
+        ? measureChalkboardClearedRatio()
+        : measureClearedRatio();
 
       if (round.kind === "archaeology") {
         checkBibleFound(cleared);
@@ -2076,6 +2285,11 @@
       showNextRoundPill();
     };
 
+    if (round.kind === "chalkboard") {
+      finishRound();
+      return;
+    }
+
     if (round.kind === "mower") {
       animateMowerCoverFade(finishRound);
       return;
@@ -2294,6 +2508,7 @@
     coverCtx = null;
     clearMaskCanvas = null;
     clearMaskCtx = null;
+    chalkboardTargetRect = null;
     pointerDown = false;
     lastPoint = null;
     menuOpen = false;
