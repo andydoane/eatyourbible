@@ -287,6 +287,8 @@
   let glowTargetRects = [];
   let glowMaskCanvas = null;
   let glowMaskCtx = null;
+  let glowTrailSpots = [];
+  let glowTrailAnimationFrame = null;
   let mowerActive = false;
   let mowerFromTop = true;
   let mowerAnimationFrame = null;
@@ -451,7 +453,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.9b",
+      debugBadge: "SS 5.0",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1083,6 +1085,7 @@
     const stop = (event) => {
       pointerDown = false;
       lastPoint = null;
+      clearGlowTrail();
 
       if (event?.pointerId !== undefined) {
         coverCanvas.releasePointerCapture?.(event.pointerId);
@@ -1376,6 +1379,8 @@
 
     applyGlowMask();
 
+    addGlowTrailSpot(x, y, radius);
+
     // Progress still uses stage coordinates.
     eraseClearMask(x, y, revealRadius);
   }
@@ -1395,6 +1400,93 @@
     glow.style.webkitMaskPosition = "0 0";
     glow.style.maskPosition = "0 0";
   }
+
+  function addGlowTrailSpot(x, y, radius) {
+    if (!coverCtx || !stageEl) return;
+
+    const now = performance.now();
+
+    glowTrailSpots.push({
+      x,
+      y,
+      radius: radius * 1.85,
+      born: now,
+      life: 320
+    });
+
+    if (glowTrailSpots.length > 18) {
+      glowTrailSpots.splice(0, glowTrailSpots.length - 18);
+    }
+
+    if (!glowTrailAnimationFrame) {
+      glowTrailAnimationFrame = requestAnimationFrame(drawGlowTrailFrame);
+    }
+  }
+
+  function drawGlowTrailFrame(now) {
+    glowTrailAnimationFrame = null;
+
+    if (!coverCtx || !stageEl) {
+      glowTrailSpots = [];
+      return;
+    }
+
+    const rect = stageEl.getBoundingClientRect();
+
+    coverCtx.save();
+    coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    coverCtx.clearRect(0, 0, rect.width, rect.height);
+    coverCtx.globalCompositeOperation = "lighter";
+
+    glowTrailSpots = glowTrailSpots.filter((spot) => {
+      const age = now - spot.born;
+      const t = Math.min(1, age / spot.life);
+
+      if (t >= 1) return false;
+
+      const alpha = pointerDown ? (1 - t) : 0;
+      if (alpha <= 0) return false;
+
+      const radius = spot.radius * (1 + t * .22);
+      const glow = coverCtx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, radius);
+
+      glow.addColorStop(0, `rgba(234, 255, 251, ${0.34 * alpha})`);
+      glow.addColorStop(.32, `rgba(64, 185, 197, ${0.20 * alpha})`);
+      glow.addColorStop(.68, `rgba(127, 102, 198, ${0.11 * alpha})`);
+      glow.addColorStop(1, "rgba(127, 102, 198, 0)");
+
+      coverCtx.fillStyle = glow;
+      coverCtx.beginPath();
+      coverCtx.arc(spot.x, spot.y, radius, 0, Math.PI * 2);
+      coverCtx.fill();
+
+      return true;
+    });
+
+    coverCtx.restore();
+
+    if (glowTrailSpots.length && pointerDown) {
+      glowTrailAnimationFrame = requestAnimationFrame(drawGlowTrailFrame);
+    }
+  }
+
+  function clearGlowTrail() {
+    glowTrailSpots = [];
+
+    if (glowTrailAnimationFrame) {
+      cancelAnimationFrame(glowTrailAnimationFrame);
+      glowTrailAnimationFrame = null;
+    }
+
+    if (coverCtx && stageEl) {
+      const rect = stageEl.getBoundingClientRect();
+      coverCtx.save();
+      coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      coverCtx.clearRect(0, 0, rect.width, rect.height);
+      coverCtx.restore();
+    }
+  }
+
 
   function measureGlowClearedRatio() {
     if (!clearMaskCanvas || !clearMaskCtx || !glowTargetRects.length) {
@@ -1435,6 +1527,8 @@
   }
 
   function clearGlowCover() {
+    clearGlowTrail();
+
     const glow = document.getElementById("scrubGlowVerseText");
     const glowRect = glow?.getBoundingClientRect?.();
 
@@ -2794,6 +2888,12 @@
       mowerAnimationFrame = null;
     }
 
+    if (glowTrailAnimationFrame) {
+      cancelAnimationFrame(glowTrailAnimationFrame);
+      glowTrailAnimationFrame = null;
+    }
+
+    glowTrailSpots = [];
     mowerActive = false;
 
     if (resizeHandler) {
