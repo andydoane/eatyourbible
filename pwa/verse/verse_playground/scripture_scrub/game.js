@@ -51,7 +51,7 @@
     mud: 0.95,
     paint: 0.95,
     fog: 0.92,
-    chalkboard: 0.86,
+    chalkboard: 0.92,
     mower: 0.95,
     archaeology: 0.95
   };
@@ -271,7 +271,7 @@
   let objectCleared = 0;
   let archaeologyScore = null;
   let bibleRect = null;
-  let chalkboardTargetRect = null;
+  let chalkboardTargetRects = [];
   let mowerActive = false;
   let mowerFromTop = true;
   let mowerAnimationFrame = null;
@@ -436,7 +436,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.3",
+      debugBadge: "SS 4.4",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -974,7 +974,7 @@
   }
 
   function setupChalkboardRound(round, width, height) {
-    chalkboardTargetRect = null;
+    chalkboardTargetRects = [];
 
     coverCanvas.style.display = "block";
     coverCanvas.style.pointerEvents = "";
@@ -996,27 +996,38 @@
 
     const text = document.getElementById("scrubVerseText");
     const stageRect = stageEl.getBoundingClientRect();
-    const textRect = text?.getBoundingClientRect?.();
 
-    if (!textRect || !stageRect.width || !stageRect.height) {
-      chalkboardTargetRect = null;
+    if (!text || !stageRect.width || !stageRect.height) {
+      chalkboardTargetRects = [];
       return;
     }
 
-    const padX = 10;
-    const padY = 10;
+    const targets = [];
+    const padX = 3;
+    const padY = 4;
+    const pieces = text.querySelectorAll(".scrub-token-word, .scrub-token-punct");
 
-    const left = clamp(textRect.left - stageRect.left - padX, 0, stageRect.width);
-    const top = clamp(textRect.top - stageRect.top - padY, 0, stageRect.height);
-    const right = clamp(textRect.right - stageRect.left + padX, 0, stageRect.width);
-    const bottom = clamp(textRect.bottom - stageRect.top + padY, 0, stageRect.height);
+    pieces.forEach((piece) => {
+      const rects = Array.from(piece.getClientRects ? piece.getClientRects() : []);
 
-    chalkboardTargetRect = {
-      left,
-      top,
-      width: Math.max(1, right - left),
-      height: Math.max(1, bottom - top)
-    };
+      rects.forEach((rect) => {
+        if (rect.width <= 1 || rect.height <= 1) return;
+
+        const left = clamp(rect.left - stageRect.left - padX, 0, stageRect.width);
+        const top = clamp(rect.top - stageRect.top - padY, 0, stageRect.height);
+        const right = clamp(rect.right - stageRect.left + padX, 0, stageRect.width);
+        const bottom = clamp(rect.bottom - stageRect.top + padY, 0, stageRect.height);
+
+        const width = Math.max(1, right - left);
+        const height = Math.max(1, bottom - top);
+
+        if (width > 1 && height > 1) {
+          targets.push({ left, top, width, height });
+        }
+      });
+    });
+
+    chalkboardTargetRects = targets;
   }
 
   function wireChalkboardErase(round) {
@@ -1113,7 +1124,7 @@
 
 
   function measureChalkboardClearedRatio() {
-    if (!clearMaskCanvas || !clearMaskCtx || !chalkboardTargetRect) {
+    if (!clearMaskCanvas || !clearMaskCtx || !chalkboardTargetRects.length) {
       return measureClearedRatio();
     }
 
@@ -1121,25 +1132,27 @@
     const height = clearMaskCanvas.height;
     if (!width || !height) return 0;
 
-    const left = Math.max(0, Math.round(chalkboardTargetRect.left * dpr));
-    const top = Math.max(0, Math.round(chalkboardTargetRect.top * dpr));
-    const right = Math.min(width, Math.round((chalkboardTargetRect.left + chalkboardTargetRect.width) * dpr));
-    const bottom = Math.min(height, Math.round((chalkboardTargetRect.top + chalkboardTargetRect.height) * dpr));
-    const step = Math.max(4, Math.round(7 * dpr));
-
+    const step = Math.max(3, Math.round(5 * dpr));
     let total = 0;
     let cleared = 0;
 
     try {
       const data = clearMaskCtx.getImageData(0, 0, width, height).data;
 
-      for (let y = top; y < bottom; y += step) {
-        for (let x = left; x < right; x += step) {
-          total += 1;
-          const alpha = data[((y * width + x) * 4) + 3];
-          if (alpha < 24) cleared += 1;
+      chalkboardTargetRects.forEach((target) => {
+        const left = Math.max(0, Math.round(target.left * dpr));
+        const top = Math.max(0, Math.round(target.top * dpr));
+        const right = Math.min(width, Math.round((target.left + target.width) * dpr));
+        const bottom = Math.min(height, Math.round((target.top + target.height) * dpr));
+
+        for (let y = top; y < bottom; y += step) {
+          for (let x = left; x < right; x += step) {
+            total += 1;
+            const alpha = data[((y * width + x) * 4) + 3];
+            if (alpha < 24) cleared += 1;
+          }
         }
-      }
+      });
     } catch (err) {
       console.warn("Scripture Scrub: chalkboard coverage check failed", err);
       return 0;
@@ -2502,7 +2515,7 @@
     coverCtx = null;
     clearMaskCanvas = null;
     clearMaskCtx = null;
-    chalkboardTargetRect = null;
+    chalkboardTargetRects = [];
     pointerDown = false;
     lastPoint = null;
     menuOpen = false;
