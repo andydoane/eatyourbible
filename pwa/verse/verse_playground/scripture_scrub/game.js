@@ -472,7 +472,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.10",
+      debugBadge: "SS 5.11",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1514,6 +1514,7 @@
       : ".scrub-token-word, .scrub-token-punct";
 
     const pieces = Array.from(glow.querySelectorAll(selector));
+    const lineBaselines = buildGlowCanvasLineBaselines(pieces, glowRect);
 
     pieces.forEach((piece) => {
       const value = piece.textContent || "";
@@ -1552,20 +1553,8 @@
         if (rect.width <= .5 || rect.height <= .5) return;
 
         const x = rect.left - glowRect.left;
-        const metrics = glowTextCtx.measureText(value);
-        const ascent = Number.isFinite(metrics.actualBoundingBoxAscent)
-          ? metrics.actualBoundingBoxAscent
-          : Number.isFinite(metrics.fontBoundingBoxAscent)
-            ? metrics.fontBoundingBoxAscent
-            : rect.height * .78;
-        const descent = Number.isFinite(metrics.actualBoundingBoxDescent)
-          ? metrics.actualBoundingBoxDescent
-          : Number.isFinite(metrics.fontBoundingBoxDescent)
-            ? metrics.fontBoundingBoxDescent
-            : rect.height * .22;
-
-        // Align the canvas glyph's visual center to the DOM rect's visual center.
-        const y = rect.top - glowRect.top + (rect.height / 2) + ((ascent - descent) / 2);
+        const line = lineBaselines.find((item) => Math.abs(item.top - rect.top) <= 3);
+        const y = line ? line.baseline : rect.top - glowRect.top + fontSize * .84;
 
         glowTextCtx.fillText(value, x, y);
 
@@ -1585,6 +1574,75 @@
       glowTextCtx.shadowOffsetY = 0;
     });
   }
+
+  function buildGlowCanvasLineBaselines(pieces, glowRect) {
+    if (!glowTextCtx || !glowRect) return [];
+
+    const lines = [];
+
+    pieces.forEach((piece) => {
+      const value = piece.textContent || "";
+      if (!value.trim()) return;
+
+      const style = window.getComputedStyle(piece);
+      const fontSize = parseFloat(style.fontSize) || 36;
+      const fontWeight = style.fontWeight || "400";
+      const fontFamily = style.fontFamily || '"Titan One", sans-serif';
+      const fontStyle = style.fontStyle || "normal";
+      const fontVariant = style.fontVariant || "normal";
+      const rects = Array.from(piece.getClientRects ? piece.getClientRects() : []);
+
+      rects.forEach((rect) => {
+        if (rect.width <= .5 || rect.height <= .5) return;
+
+        let line = lines.find((item) => Math.abs(item.top - rect.top) <= 3);
+
+        if (!line) {
+          line = {
+            top: rect.top,
+            bottom: rect.bottom,
+            fontSize,
+            font: `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize}px ${fontFamily}`
+          };
+          lines.push(line);
+        } else {
+          line.top = Math.min(line.top, rect.top);
+          line.bottom = Math.max(line.bottom, rect.bottom);
+
+          if (fontSize > line.fontSize) {
+            line.fontSize = fontSize;
+            line.font = `${fontStyle} ${fontVariant} ${fontWeight} ${fontSize}px ${fontFamily}`;
+          }
+        }
+      });
+    });
+
+    lines.sort((a, b) => a.top - b.top);
+
+    lines.forEach((line) => {
+      glowTextCtx.font = line.font;
+
+      // Use one representative string for the whole line, so descenders do not move
+      // individual letters up or down.
+      const metrics = glowTextCtx.measureText("Hgpqy");
+      const ascent = Number.isFinite(metrics.actualBoundingBoxAscent)
+        ? metrics.actualBoundingBoxAscent
+        : Number.isFinite(metrics.fontBoundingBoxAscent)
+          ? metrics.fontBoundingBoxAscent
+          : line.fontSize * .78;
+      const descent = Number.isFinite(metrics.actualBoundingBoxDescent)
+        ? metrics.actualBoundingBoxDescent
+        : Number.isFinite(metrics.fontBoundingBoxDescent)
+          ? metrics.fontBoundingBoxDescent
+          : line.fontSize * .22;
+
+      const lineCenter = ((line.top + line.bottom) / 2) - glowRect.top;
+      line.baseline = lineCenter + ((ascent - descent) / 2);
+    });
+
+    return lines;
+  }
+
 
   function renderGlowCanvasFrame(now = performance.now()) {
     if (!coverCtx || !stageEl) return;
