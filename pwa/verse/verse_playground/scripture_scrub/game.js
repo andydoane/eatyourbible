@@ -18,7 +18,7 @@
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
   // Set to one of: "mud", "paint", "fog", "leaves", "stickers", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "mower";
+  const DEBUG_SKIP_ROUND_ID = "stickers";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
@@ -416,7 +416,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.7",
+      debugBadge: "SS 3.8",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
