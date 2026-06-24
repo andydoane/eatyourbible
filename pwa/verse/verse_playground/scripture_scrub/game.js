@@ -163,6 +163,7 @@
     "COOL",
     "SHINE",
     "GREAT",
+    "NEAT",
     "SUPER"
   ];
 
@@ -201,6 +202,13 @@
     "scrub-sticker-peel-slide-down",
     "scrub-sticker-peel-wobble"
   ];
+
+  const STICKER_RECENT_LIMIT = 18;
+  const stickerRecentHistory = {
+    words: [],
+    emojis: [],
+    colors: []
+  };
 
   let verseJson = null;
   let leafImages = [];
@@ -367,7 +375,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.2",
+      debugBadge: "SS 3.3",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1286,10 +1294,131 @@
     if (ratio >= roundCompletionThreshold()) completeRound();
   }
 
-  function pickStickerDesign(index) {
-    const style = STICKER_STYLES[index % STICKER_STYLES.length];
-    const shape = STICKER_SHAPES[Math.floor(Math.random() * STICKER_SHAPES.length)];
-    const border = STICKER_BORDERS[Math.floor(Math.random() * STICKER_BORDERS.length)];
+  function makeStickerDeck(items, copies = 1) {
+    const deck = [];
+
+    for (let i = 0; i < copies; i += 1) {
+      deck.push(...items);
+    }
+
+    return shuffle(deck);
+  }
+
+  function refillStickerDeck(deck, items, copies = 1) {
+    if (deck.length) return deck;
+    deck.push(...makeStickerDeck(items, copies));
+    return deck;
+  }
+
+  function countStickerValue(map, value) {
+    return map.get(value) || 0;
+  }
+
+  function addStickerUsage(map, value) {
+    map.set(value, countStickerValue(map, value) + 1);
+  }
+
+  function rememberStickerValue(list, value) {
+    if (!value) return;
+    list.push(value);
+
+    while (list.length > STICKER_RECENT_LIMIT) {
+      list.shift();
+    }
+  }
+
+  function pickLeastUsedStickerValue(deck, source, usage, getKey = (value) => value, copies = 1) {
+    refillStickerDeck(deck, source, copies);
+
+    const candidateCount = Math.min(deck.length, Math.max(3, Math.ceil(source.length * 0.45)));
+    const candidates = deck.splice(0, candidateCount);
+
+    candidates.sort((a, b) => {
+      const aKey = getKey(a);
+      const bKey = getKey(b);
+      const usageDiff = countStickerValue(usage, aKey) - countStickerValue(usage, bKey);
+      if (usageDiff !== 0) return usageDiff;
+      return Math.random() - 0.5;
+    });
+
+    const chosen = candidates.shift();
+    deck.push(...shuffle(candidates));
+
+    return chosen;
+  }
+
+  function makeWordStickerSlots(count) {
+    const target = clamp(
+      Math.round(count * 0.30),
+      4,
+      Math.min(7, count)
+    );
+
+    const indexes = Array.from({ length: count }, (_, index) => index);
+    const preferred = shuffle(indexes.filter((index) => index > 0 && index < count - 1));
+    const slots = new Set(preferred.slice(0, target));
+
+    while (slots.size < target) {
+      slots.add(Math.floor(Math.random() * count));
+    }
+
+    return slots;
+  }
+
+  function pickStickerContent({ useWord, decks, usage }) {
+    if (useWord) {
+      const word = pickLeastUsedStickerValue(
+        decks.words,
+        STICKER_WORDS,
+        usage.words,
+        (value) => value,
+        1
+      );
+
+      addStickerUsage(usage.words, word);
+      return word;
+    }
+
+    const emoji = pickLeastUsedStickerValue(
+      decks.emojis,
+      STICKER_EMOJIS,
+      usage.emojis,
+      (value) => value,
+      1
+    );
+
+    addStickerUsage(usage.emojis, emoji);
+    return emoji;
+  }
+
+  function pickStickerDesign(decks, usage) {
+    const style = pickLeastUsedStickerValue(
+      decks.styles,
+      STICKER_STYLES,
+      usage.colors,
+      (value) => value.bg,
+      1
+    );
+
+    const shape = pickLeastUsedStickerValue(
+      decks.shapes,
+      STICKER_SHAPES,
+      usage.shapes,
+      (value) => value,
+      2
+    );
+
+    const border = pickLeastUsedStickerValue(
+      decks.borders,
+      STICKER_BORDERS,
+      usage.borders,
+      (value) => value,
+      2
+    );
+
+    addStickerUsage(usage.colors, style.bg);
+    addStickerUsage(usage.shapes, shape);
+    addStickerUsage(usage.borders, border);
 
     return {
       bg: style.bg,
@@ -1300,8 +1429,17 @@
     };
   }
 
-  function shouldUseWordSticker(index) {
-    return index % 4 === 0;
+  function pickStickerPeelStyle(decks, usage) {
+    const peelStyle = pickLeastUsedStickerValue(
+      decks.peelStyles,
+      STICKER_PEEL_STYLES,
+      usage.peelStyles,
+      (value) => value,
+      2
+    );
+
+    addStickerUsage(usage.peelStyles, peelStyle);
+    return peelStyle;
   }
 
 
@@ -1440,15 +1578,33 @@
     objectCleared = 0;
     updateProgress(0);
 
-    const emojis = shuffle(STICKER_EMOJIS.concat(STICKER_EMOJIS, STICKER_EMOJIS, STICKER_EMOJIS));
-    const words = shuffle(STICKER_WORDS.concat(STICKER_WORDS, STICKER_WORDS));
+    const wordSlots = makeWordStickerSlots(count);
+
+    const decks = {
+      words: makeStickerDeck(STICKER_WORDS),
+      emojis: makeStickerDeck(STICKER_EMOJIS),
+      styles: makeStickerDeck(STICKER_STYLES),
+      shapes: makeStickerDeck(STICKER_SHAPES, 2),
+      borders: makeStickerDeck(STICKER_BORDERS, 2),
+      peelStyles: makeStickerDeck(STICKER_PEEL_STYLES, 2)
+    };
+
+    const usage = {
+      words: new Map(stickerRecentHistory.words.map((value) => [value, 1])),
+      emojis: new Map(stickerRecentHistory.emojis.map((value) => [value, 1])),
+      colors: new Map(stickerRecentHistory.colors.map((value) => [value, 1])),
+      shapes: new Map(),
+      borders: new Map(),
+      peelStyles: new Map()
+    };
 
     for (let i = 0; i < count; i += 1) {
       const pos = positions[i];
 
-      const useWord = shouldUseWordSticker(i);
-      const content = useWord ? words[i % words.length] : emojis[i % emojis.length];
-      const design = pickStickerDesign(i + Math.floor(Math.random() * STICKER_STYLES.length));
+      const useWord = wordSlots.has(i);
+      const content = pickStickerContent({ useWord, decks, usage });
+      const design = pickStickerDesign(decks, usage);
+      const peelStyle = pickStickerPeelStyle(decks, usage);
 
       const sizeVariation = useWord
         ? 0.92 + Math.random() * 0.16
@@ -1473,6 +1629,11 @@
         content,
         type: useWord ? "word" : "emoji"
       });
+
+      btn.dataset.peelStyle = peelStyle;
+      btn.dataset.stickerContent = content;
+      btn.dataset.stickerType = useWord ? "word" : "emoji";
+      btn.dataset.stickerColor = design.bg;
 
       btn.setAttribute("aria-label", useWord ? `Peel ${content} sticker` : `Peel ${content} sticker`);
       btn.style.width = `${stickerWidth}px`;
@@ -1510,9 +1671,17 @@
       btn.classList.remove(styleName);
     });
 
-    const peelStyle = STICKER_PEEL_STYLES[Math.floor(Math.random() * STICKER_PEEL_STYLES.length)];
+    const peelStyle = btn.dataset.peelStyle || STICKER_PEEL_STYLES[Math.floor(Math.random() * STICKER_PEEL_STYLES.length)];
     btn.classList.add(peelStyle);
     btn.classList.add("is-peeled");
+
+    if (btn.dataset.stickerType === "word") {
+      rememberStickerValue(stickerRecentHistory.words, btn.dataset.stickerContent);
+    } else {
+      rememberStickerValue(stickerRecentHistory.emojis, btn.dataset.stickerContent);
+    }
+
+    rememberStickerValue(stickerRecentHistory.colors, btn.dataset.stickerColor);
 
     objectCleared += 1;
     const ratio = objectTotal ? objectCleared / objectTotal : 0;
