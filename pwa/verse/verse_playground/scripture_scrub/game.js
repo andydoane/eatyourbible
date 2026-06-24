@@ -122,6 +122,7 @@
   ];
 
   const IMAGE_BASE = "./scripture_scrub_images/";
+  const GRASS_BG_IMAGE = "scripture_scrub_grass_bg_1.jpg";
   const LEAF_IMAGES = [
     "scripture_scrub_leaf_orange_1.png",
     "scripture_scrub_leaf_orange_2.png",
@@ -310,6 +311,19 @@
     }
   }
 
+  async function loadGrassBackgroundImage() {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        console.warn("Scripture Scrub: could not load grass background image", GRASS_BG_IMAGE);
+        resolve(null);
+      };
+      img.src = `${IMAGE_BASE}${GRASS_BG_IMAGE}`;
+    });
+  }
+
   async function loadLeafImages() {
     const loaded = await Promise.all(LEAF_IMAGES.map((fileName) => new Promise((resolve) => {
       const img = new Image();
@@ -353,7 +367,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.1",
+      debugBadge: "SS 3.2",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1804,6 +1818,7 @@
   }
 
   verseJson = await loadVerseJson();
+  await loadGrassBackgroundImage();
   leafImages = await loadLeafImages();
   paintBlobImages = await loadPaintBlobImages();
   await waitForLocalFonts();
