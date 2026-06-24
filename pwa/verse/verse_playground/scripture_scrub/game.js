@@ -416,7 +416,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 3.5",
+      debugBadge: "SS 3.6",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1093,6 +1093,15 @@
       : 1 - Math.pow(-2 * t + 2, 2) / 2;
   }
 
+  function eraseMowerClearMaskRect(x, y, width, height) {
+    if (!clearMaskCtx) return;
+
+    clearMaskCtx.save();
+    clearMaskCtx.globalCompositeOperation = "destination-out";
+    clearMaskCtx.fillRect(x, y, width, height);
+    clearMaskCtx.restore();
+  }
+
   function eraseMowerStripSegment(x, previousY, currentY, mowerWidth, mowerHeight) {
     if (!coverCtx) return;
 
@@ -1110,13 +1119,38 @@
     coverCtx.restore();
   }
 
-  function finishMowerPass({ mower, x, width, stageHeight, round }) {
-    mowerAnimationFrame = null;
+  function eraseMowerStripSegment(x, previousY, currentY, mowerWidth, mowerHeight) {
+    if (!coverCtx) return;
+
+    const top = Math.min(previousY, currentY) - mowerHeight * 0.58;
+    const bottom = Math.max(previousY, currentY) + mowerHeight * 0.58;
+    const rectX = x - mowerWidth / 2;
+    const rectY = top;
+    const rectW = mowerWidth;
+    const rectH = bottom - top;
 
     coverCtx.save();
     coverCtx.globalCompositeOperation = "destination-out";
-    coverCtx.fillRect(x - width / 2, 0, width, stageHeight);
+    coverCtx.fillRect(rectX, rectY, rectW, rectH);
     coverCtx.restore();
+
+    eraseMowerClearMaskRect(rectX, rectY, rectW, rectH);
+  }
+
+  function finishMowerPass({ mower, x, width, stageHeight, round }) {
+    mowerAnimationFrame = null;
+
+    const rectX = x - width / 2;
+    const rectY = 0;
+    const rectW = width;
+    const rectH = stageHeight;
+
+    coverCtx.save();
+    coverCtx.globalCompositeOperation = "destination-out";
+    coverCtx.fillRect(rectX, rectY, rectW, rectH);
+    coverCtx.restore();
+
+    eraseMowerClearMaskRect(rectX, rectY, rectW, rectH);
 
     mower.remove();
 
