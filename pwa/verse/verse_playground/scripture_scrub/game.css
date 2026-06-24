@@ -351,31 +351,35 @@ body{
 
 .scrub-round-glow .scrub-verse-fit-box {
   position: relative;
+  overflow: visible;
 }
 
 .scrub-round-glow #scrubVerseText,
 .scrub-round-glow #scrubVerseText .scrub-token-word,
 .scrub-round-glow #scrubVerseText .scrub-token-word.is-special,
 .scrub-round-glow #scrubVerseText .scrub-token-punct {
-  color: rgba(117, 160, 188, .14);
+  color: rgba(117, 160, 188, .055);
   text-shadow:
-    0 0 5px rgba(64, 185, 197, .08),
-    0 0 16px rgba(127, 102, 198, .05);
+    0 0 5px rgba(64, 185, 197, .035),
+    0 0 16px rgba(127, 102, 198, .025);
 }
 
 .scrub-round-glow .scrub-glow-verse-text {
+  --scrub-glow-pad: clamp(46px, 9vw, 86px);
   position: absolute;
   left: 50%;
   top: 50%;
   z-index: 3;
   transform: translate(-50%, -50%);
+  box-sizing: content-box;
+  padding: var(--scrub-glow-pad);
   pointer-events: none;
   color: #eafffb;
   text-shadow:
     0 0 5px rgba(234, 255, 251, 1),
     0 0 16px rgba(64, 185, 197, .95),
-    0 0 34px rgba(127, 102, 198, .72),
-    0 0 54px rgba(167, 203, 111, .32);
+    0 0 32px rgba(127, 102, 198, .68),
+    0 0 46px rgba(167, 203, 111, .26);
   filter: brightness(1.25) saturate(1.2);
   -webkit-mask-image: linear-gradient(transparent, transparent);
   mask-image: linear-gradient(transparent, transparent);
