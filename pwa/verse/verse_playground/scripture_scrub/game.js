@@ -429,7 +429,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 4.1",
+      debugBadge: "SS 4.2",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -996,8 +996,8 @@
       return;
     }
 
-    const padX = Math.max(28, stageRect.width * 0.045);
-    const padY = Math.max(28, stageRect.height * 0.045);
+    const padX = 10;
+    const padY = 10;
 
     const left = clamp(textRect.left - stageRect.left - padX, 0, stageRect.width);
     const top = clamp(textRect.top - stageRect.top - padY, 0, stageRect.height);
@@ -1074,49 +1074,21 @@
   function eraseChalkboardAt(x, y, radius, round) {
     if (!coverCtx) return;
 
-    const smearRadius = radius * 1.16;
+    const eraserRadius = radius * 1.08;
 
     coverCtx.save();
     coverCtx.globalCompositeOperation = "source-over";
-    coverCtx.filter = "blur(6px)";
-    coverCtx.fillStyle = "rgba(43, 45, 48, .92)";
+    coverCtx.filter = "none";
+    coverCtx.fillStyle = "#2b2d30";
     coverCtx.beginPath();
-    coverCtx.arc(x, y, smearRadius, 0, Math.PI * 2);
+    coverCtx.arc(x, y, eraserRadius, 0, Math.PI * 2);
     coverCtx.fill();
     coverCtx.restore();
 
-    drawChalkDustSmear(x, y, radius);
-    eraseClearMask(x, y, radius * 1.05);
+    eraseClearMask(x, y, eraserRadius);
   }
 
-  function drawChalkDustSmear(x, y, radius) {
-    if (!coverCtx) return;
 
-    coverCtx.save();
-    coverCtx.globalCompositeOperation = "source-over";
-
-    for (let i = 0; i < 7; i += 1) {
-      const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * radius * 0.95;
-      const px = x + Math.cos(angle) * distance;
-      const py = y + Math.sin(angle) * distance;
-      const w = radius * (0.32 + Math.random() * 0.55);
-      const h = radius * (0.08 + Math.random() * 0.18);
-
-      coverCtx.save();
-      coverCtx.translate(px, py);
-      coverCtx.rotate(Math.random() * Math.PI);
-      coverCtx.globalAlpha = 0.08 + Math.random() * 0.08;
-      coverCtx.filter = "blur(5px)";
-      coverCtx.fillStyle = "#ffffff";
-      coverCtx.beginPath();
-      coverCtx.ellipse(0, 0, w, h, 0, 0, Math.PI * 2);
-      coverCtx.fill();
-      coverCtx.restore();
-    }
-
-    coverCtx.restore();
-  }
 
   function measureChalkboardClearedRatio() {
     if (!clearMaskCanvas || !clearMaskCtx || !chalkboardTargetRect) {
