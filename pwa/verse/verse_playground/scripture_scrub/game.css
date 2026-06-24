@@ -488,7 +488,7 @@ body{
       #ff7bd5 84%,
       #ff5a51 100%);
   background-size: 300% 100%;
-  animation: scrubRainbowTextFlow 1.45s linear infinite;
+  animation: scrubRainbowTextBreathe 6.5s ease-in-out infinite;
   color: transparent;
   -webkit-text-fill-color: transparent;
   -webkit-background-clip: text;
@@ -523,7 +523,7 @@ body{
       #ff7bd5 84%,
       #ff5a51 100%);
   background-size: 300% 100%;
-  animation: scrubRainbowTextFlow 1.45s linear infinite;
+  animation: scrubRainbowTextBreathe 6.5s ease-in-out infinite;
   color: transparent;
   -webkit-text-fill-color: transparent;
   -webkit-background-clip: text;
@@ -557,13 +557,17 @@ body{
   --scrub-chip-shadow: rgba(51, 37, 96, .42);
 }
 
-@keyframes scrubRainbowTextFlow {
+@keyframes scrubRainbowTextBreathe {
   0% {
-    background-position: 0% 50%;
+    filter: brightness(1.08) saturate(1.12) hue-rotate(0deg);
+  }
+
+  50% {
+    filter: brightness(1.24) saturate(1.34) hue-rotate(38deg);
   }
 
   100% {
-    background-position: 300% 50%;
+    filter: brightness(1.08) saturate(1.12) hue-rotate(0deg);
   }
 }
 

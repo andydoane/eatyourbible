@@ -467,7 +467,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.1",
+      debugBadge: "SS 5.2",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1521,12 +1521,12 @@
     ];
 
     const now = performance.now();
-    const particleCount = 4;
+    const particleCount = 2;
 
     for (let i = 0; i < particleCount; i += 1) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = radius * (1.25 + Math.random() * 1.65);
-      const size = clamp(radius * (.11 + Math.random() * .08), 4, 10);
+      const speed = radius * (.55 + Math.random() * .7);
+      const size = clamp(radius * (.08 + Math.random() * .05), 3, 7);
 
       rainbowTrailParticles.push({
         x,
@@ -1536,12 +1536,12 @@
         radius: size,
         color: colors[Math.floor(Math.random() * colors.length)],
         born: now,
-        life: 420 + Math.random() * 180
+        life: 260 + Math.random() * 120
       });
     }
 
-    if (rainbowTrailParticles.length > 90) {
-      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 90);
+    if (rainbowTrailParticles.length > 42) {
+      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 42);
     }
 
     if (!rainbowTrailAnimationFrame) {
@@ -1562,7 +1562,7 @@
     coverCtx.save();
     coverCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     coverCtx.clearRect(0, 0, rect.width, rect.height);
-    coverCtx.globalCompositeOperation = "lighter";
+    coverCtx.globalCompositeOperation = "source-over";
 
     rainbowTrailParticles = rainbowTrailParticles.filter((particle) => {
       const age = now - particle.born;
@@ -1574,21 +1574,17 @@
       const px = particle.x + particle.vx * seconds;
       const py = particle.y + particle.vy * seconds;
       const alpha = 1 - t;
-      const r = particle.radius * (1 + t * .45);
 
-      coverCtx.save();
-      coverCtx.shadowColor = particle.color;
-      coverCtx.shadowBlur = 14 * alpha;
-      coverCtx.fillStyle = particle.color;
       coverCtx.globalAlpha = alpha;
+      coverCtx.fillStyle = particle.color;
       coverCtx.beginPath();
-      coverCtx.arc(px, py, r, 0, Math.PI * 2);
+      coverCtx.arc(px, py, particle.radius, 0, Math.PI * 2);
       coverCtx.fill();
-      coverCtx.restore();
 
       return true;
     });
 
+    coverCtx.globalAlpha = 1;
     coverCtx.restore();
 
     if (rainbowTrailParticles.length && pointerDown) {
