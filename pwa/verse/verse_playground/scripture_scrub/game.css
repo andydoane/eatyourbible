@@ -629,6 +629,12 @@ body{
   pointer-events: none;
 }
 
+.scrub-round-glow .scrub-stage.scrub-round-complete .scrub-cover-canvas,
+.scrub-round-rainbow .scrub-stage.scrub-round-complete .scrub-cover-canvas {
+  z-index: 56;
+  pointer-events: none;
+}
+
 .scrub-object-layer,
 .scrub-bible-layer,
 .scrub-reward-layer{

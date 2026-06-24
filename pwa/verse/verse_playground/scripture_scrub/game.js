@@ -472,7 +472,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.8",
+      debugBadge: "SS 5.10",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1552,7 +1552,20 @@
         if (rect.width <= .5 || rect.height <= .5) return;
 
         const x = rect.left - glowRect.left;
-        const y = rect.top - glowRect.top + fontSize * .84;
+        const metrics = glowTextCtx.measureText(value);
+        const ascent = Number.isFinite(metrics.actualBoundingBoxAscent)
+          ? metrics.actualBoundingBoxAscent
+          : Number.isFinite(metrics.fontBoundingBoxAscent)
+            ? metrics.fontBoundingBoxAscent
+            : rect.height * .78;
+        const descent = Number.isFinite(metrics.actualBoundingBoxDescent)
+          ? metrics.actualBoundingBoxDescent
+          : Number.isFinite(metrics.fontBoundingBoxDescent)
+            ? metrics.fontBoundingBoxDescent
+            : rect.height * .22;
+
+        // Align the canvas glyph's visual center to the DOM rect's visual center.
+        const y = rect.top - glowRect.top + (rect.height / 2) + ((ascent - descent) / 2);
 
         glowTextCtx.fillText(value, x, y);
 
