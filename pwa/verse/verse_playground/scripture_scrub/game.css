@@ -224,7 +224,8 @@ body{
 }
 
 .scrub-verse-line {
-  display: block;
+  display: table;
+  margin-inline: auto;
   white-space: nowrap;
 }
 

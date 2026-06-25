@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.29",
+      debugBadge: "SS 5.30",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -794,116 +794,117 @@
     return total;
   }
 
-  function getPlannedLineCandidates(units, boxRect, layoutAnalysis = {}) {
+  function getPlannedLineCandidates(units, boxRect) {
     if (!units.length || !boxRect?.width || !boxRect?.height) return [];
 
     const textLength = getVerseText().length;
     const areaAspect = boxRect.width / boxRect.height;
-    const maxLines = Math.min(units.length, textLength < 70 ? 7 : textLength < 115 ? 9 : 13);
+    const maxLines = Math.min(units.length, textLength < 70 ? 8 : textLength < 115 ? 10 : 14);
     const minLines = Math.min(maxLines, textLength < 70 ? 3 : textLength < 115 ? 4 : 5);
-    const candidates = [];
+    const allCandidates = [];
 
     for (let lineCount = minLines; lineCount <= maxLines; lineCount += 1) {
-      const candidate = buildBestLinePlanForCount(units, lineCount, areaAspect, layoutAnalysis);
-      if (candidate?.lines?.length) candidates.push(candidate);
+      const candidatesForCount = buildAspectLinePlansForCount(units, lineCount, areaAspect);
+      allCandidates.push(...candidatesForCount);
     }
 
-    candidates.sort((a, b) => b.score - a.score);
-    return candidates.slice(0, 8).map((candidate) => candidate.lines);
+    allCandidates.sort((a, b) => a.aspectDeviation - b.aspectDeviation);
+
+    return allCandidates.slice(0, 12).map((candidate) => candidate.lines);
   }
 
-  function buildBestLinePlanForCount(units, lineCount, areaAspect, layoutAnalysis = {}) {
+  function buildAspectLinePlansForCount(units, lineCount, areaAspect) {
     const n = units.length;
-    if (!n || lineCount < 1 || lineCount > n) return null;
+    if (!n || lineCount < 1 || lineCount > n) return [];
 
-    const totalWeight = getLineWeight(units, 0, n);
-    const targetLineWeight = totalWeight / lineCount;
-    const dp = Array.from({ length: lineCount + 1 }, () => Array(n + 1).fill(Infinity));
-    const prev = Array.from({ length: lineCount + 1 }, () => Array(n + 1).fill(-1));
+    const lineHeightUnit = 1.04;
+    const candidates = [];
+    const beamLimit = 140;
 
-    dp[0][0] = 0;
+    let states = [{
+      nextIndex: 0,
+      lines: [],
+      weights: []
+    }];
 
-    for (let line = 1; line <= lineCount; line += 1) {
-      for (let end = line; end <= n; end += 1) {
-        for (let start = line - 1; start < end; start += 1) {
-          if (!Number.isFinite(dp[line - 1][start])) continue;
+    for (let lineIndex = 0; lineIndex < lineCount; lineIndex += 1) {
+      const nextStates = [];
+      const linesLeftAfterThis = lineCount - lineIndex - 1;
 
-          const weight = getLineWeight(units, start, end);
-          const shortPenalty = getShortLinePenalty(weight, line, lineCount);
-          const raggedPenalty = Math.pow(weight - targetLineWeight, 2) * .16;
-          const longWordPenalty = getLongWordLinePenalty(units, start, end, layoutAnalysis);
-          const cost = dp[line - 1][start] + raggedPenalty + shortPenalty + longWordPenalty;
+      for (const state of states) {
+        const minEnd = state.nextIndex + 1;
+        const maxEnd = n - linesLeftAfterThis;
 
-          if (cost < dp[line][end]) {
-            dp[line][end] = cost;
-            prev[line][end] = start;
-          }
+        for (let end = minEnd; end <= maxEnd; end += 1) {
+          const lineUnits = units.slice(state.nextIndex, end);
+          const weight = getLineWeight(units, state.nextIndex, end);
+
+          nextStates.push({
+            nextIndex: end,
+            lines: [...state.lines, lineUnits],
+            weights: [...state.weights, weight]
+          });
         }
       }
+
+      nextStates.sort((a, b) => {
+        const aDeviation = getPartialAspectDeviation(a.weights, lineCount, lineHeightUnit, areaAspect);
+        const bDeviation = getPartialAspectDeviation(b.weights, lineCount, lineHeightUnit, areaAspect);
+        return aDeviation - bDeviation;
+      });
+
+      states = nextStates.slice(0, beamLimit);
     }
 
-    if (!Number.isFinite(dp[lineCount][n])) return null;
+    for (const state of states) {
+      if (state.nextIndex !== n) continue;
 
-    const lines = [];
-    let end = n;
+      const widest = Math.max(...state.weights);
+      const estimatedAspect = widest / Math.max(.1, lineCount * lineHeightUnit);
+      const aspectDeviation = Math.abs(Math.log(estimatedAspect / Math.max(.1, areaAspect)));
 
-    for (let line = lineCount; line >= 1; line -= 1) {
-      const start = prev[line][end];
-      if (start < 0) return null;
-      lines.unshift(units.slice(start, end));
-      end = start;
+      candidates.push({
+        lines: state.lines,
+        aspectDeviation,
+        estimatedAspect
+      });
     }
 
-    const weights = lines.map((lineUnits) => {
-      return lineUnits.reduce((total, unit, index) => {
-        return total + unit.width + (index > 0 ? estimateCharacterWidth(" ") : 0);
-      }, 0);
-    });
+    candidates.sort((a, b) => a.aspectDeviation - b.aspectDeviation);
+    return candidates.slice(0, 8);
+  }
+
+  function getPartialAspectDeviation(weights, finalLineCount, lineHeightUnit, areaAspect) {
+    if (!weights.length) return Infinity;
 
     const widest = Math.max(...weights);
-    const estimatedAspect = widest / Math.max(1, lineCount * 1.04);
-    const aspectScore = 46 * (1 - Math.min(1, Math.abs(Math.log(estimatedAspect / Math.max(.1, areaAspect))) / 1.1));
-    const balanceScore = 22 * (1 - Math.min(1, getLineBalanceSpread(weights) / Math.max(1, widest)));
-    const lineCountScore = 16 * (1 - Math.min(1, Math.abs(lineCount - getPreferredPlannedLineCount(units, areaAspect, layoutAnalysis)) / 5));
+    const estimatedAspect = widest / Math.max(.1, finalLineCount * lineHeightUnit);
+    return Math.abs(Math.log(estimatedAspect / Math.max(.1, areaAspect)));
+  }
+
+  function getLockedVerseMetrics(text) {
+    const lines = Array.from(text.querySelectorAll(".scrub-verse-line"));
+    const rects = lines
+      .map((line) => line.getBoundingClientRect())
+      .filter((rect) => rect.width > .5 && rect.height > .5);
+
+    if (!rects.length) {
+      const rect = text.getBoundingClientRect();
+      return {
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    const left = Math.min(...rects.map((rect) => rect.left));
+    const right = Math.max(...rects.map((rect) => rect.right));
+    const top = Math.min(...rects.map((rect) => rect.top));
+    const bottom = Math.max(...rects.map((rect) => rect.bottom));
 
     return {
-      lines,
-      score: aspectScore + balanceScore + lineCountScore - dp[lineCount][n] * .025
+      width: Math.max(0, right - left),
+      height: Math.max(0, bottom - top)
     };
-  }
-
-  function getShortLinePenalty(weight, lineIndex, lineCount) {
-    if (weight >= 4.7) return 0;
-
-    const isEdgeLine = lineIndex === 1 || lineIndex === lineCount;
-    const base = weight < 2.8 ? 22 : 8;
-    return isEdgeLine ? base * .45 : base;
-  }
-
-  function getLongWordLinePenalty(units, start, end, layoutAnalysis = {}) {
-    const longest = String(layoutAnalysis.longestWord || "").toLowerCase();
-    if (!longest || layoutAnalysis.longestWordLength < 9) return 0;
-
-    const lineText = units.slice(start, end).map((unit) => unit.cleanText).join("").toLowerCase();
-    if (!lineText.includes(longest)) return 0;
-
-    const extraLetters = Math.max(0, lineText.length - layoutAnalysis.longestWordLength);
-    const extraRatio = extraLetters / Math.max(1, layoutAnalysis.longestWordLength);
-
-    return extraRatio > 1.1 ? 12 : extraRatio > .7 ? 5 : 0;
-  }
-
-  function getLineBalanceSpread(weights) {
-    if (!weights.length) return 0;
-    const average = weights.reduce((sum, weight) => sum + weight, 0) / weights.length;
-    return weights.reduce((worst, weight) => Math.max(worst, Math.abs(weight - average)), 0);
-  }
-
-  function getPreferredPlannedLineCount(units, areaAspect, layoutAnalysis = {}) {
-    const totalWeight = getLineWeight(units, 0, units.length);
-    const rough = Math.sqrt(totalWeight / Math.max(.35, areaAspect));
-    const longWordBoost = layoutAnalysis.longestWordLength >= 9 ? 1 : 0;
-    return clamp(Math.round(rough * .72) + longWordBoost, 3, Math.min(12, units.length));
   }
 
   function renderLockedVerseHtml(lines) {
@@ -988,7 +989,7 @@
     text.style.fontSize = "";
     text.style.lineHeight = "";
     text.style.maxWidth = "100%";
-    text.style.width = "100%";
+    text.style.width = "auto";
     text.style.marginLeft = "auto";
     text.style.marginRight = "auto";
 
@@ -1003,23 +1004,23 @@
       const textLength = getVerseText().length;
       const stageWidth = stageEl?.getBoundingClientRect?.().width || boxRect.width;
       const isWideStage = stageWidth >= 640;
-      const layoutAnalysis = getVerseLayoutAnalysis();
       const units = getVerseLineUnits();
 
       if (!units.length) return;
 
-      const lineCandidates = getPlannedLineCandidates(units, boxRect, layoutAnalysis);
+      const lineCandidates = getPlannedLineCandidates(units, boxRect);
       const lineHeights = isWideStage
-        ? [1.24, 1.16, 1.10, 1.04, 1.0, .96, .92]
+        ? [1.16, 1.10, 1.04, 1.0, .96, .92]
         : [1.08, 1.04, 1.0, .96, .92];
 
       const minSize = textLength > 190 ? 13 : textLength > 140 ? 15 : 17;
       const maxSize = isWideStage
-        ? (textLength < 65 ? 118 : textLength < 115 ? 96 : textLength < 180 ? 78 : 62)
-        : (textLength < 65 ? 112 : textLength < 115 ? 92 : textLength < 180 ? 72 : 58);
+        ? (textLength < 65 ? 128 : textLength < 115 ? 104 : textLength < 180 ? 82 : 64)
+        : (textLength < 65 ? 118 : textLength < 115 ? 96 : textLength < 180 ? 76 : 60);
 
-      const safeWidth = Math.max(80, box.clientWidth - 8);
-      const safeHeight = Math.max(80, box.clientHeight - 8);
+      const safeWidth = Math.max(80, box.clientWidth - 10);
+      const safeHeight = Math.max(80, box.clientHeight - 10);
+      const availableAspect = safeWidth / safeHeight;
 
       let best = null;
 
@@ -1027,7 +1028,7 @@
         applyLockedVerseHtml(lines);
 
         for (const lineHeight of lineHeights) {
-          text.style.width = "100%";
+          text.style.width = "auto";
           text.style.maxWidth = "100%";
           text.style.marginLeft = "auto";
           text.style.marginRight = "auto";
@@ -1037,11 +1038,13 @@
           let high = maxSize;
           let bestSize = minSize;
 
-          for (let i = 0; i < 14; i += 1) {
+          for (let i = 0; i < 15; i += 1) {
             const mid = (low + high) / 2;
             text.style.fontSize = `${mid}px`;
 
-            if (text.scrollWidth > safeWidth || text.scrollHeight > safeHeight) {
+            const metrics = getLockedVerseMetrics(text);
+
+            if (metrics.width > safeWidth || metrics.height > safeHeight) {
               high = mid;
             } else {
               bestSize = mid;
@@ -1051,30 +1054,33 @@
 
           text.style.fontSize = `${bestSize}px`;
 
-          if (text.scrollWidth > safeWidth + 2 || text.scrollHeight > safeHeight + 2) continue;
+          const metrics = getLockedVerseMetrics(text);
+          if (metrics.width > safeWidth + 2 || metrics.height > safeHeight + 2) continue;
 
-          const textRect = text.getBoundingClientRect();
-          const widthFill = safeWidth ? textRect.width / safeWidth : 0;
-          const heightFill = safeHeight ? textRect.height / safeHeight : 0;
-          const boundaryFill = Math.max(widthFill, heightFill);
-          const balanceFill = Math.min(widthFill, heightFill);
-          const areaAspect = safeWidth / safeHeight;
-          const textAspect = textRect.height ? textRect.width / textRect.height : 1;
-          const aspectScore = 32 * (1 - Math.min(1, Math.abs(Math.log(textAspect / Math.max(.1, areaAspect))) / 1.2));
-          const boundaryScore = 44 * Math.min(1, boundaryFill);
-          const balanceScore = 20 * Math.min(1, balanceFill / .68);
-          const fontScore = 26 * Math.min(1, bestSize / (isWideStage ? 88 : 76));
-          const lineScore = scoreLockedLinePattern(lines, layoutAnalysis);
+          const textAspect = metrics.height ? metrics.width / metrics.height : 1;
+          const aspectDeviation = Math.abs(Math.log(textAspect / Math.max(.1, availableAspect)));
+          const boundaryFill = Math.max(
+            safeWidth ? metrics.width / safeWidth : 0,
+            safeHeight ? metrics.height / safeHeight : 0
+          );
+          const areaFill = (safeWidth && safeHeight)
+            ? (metrics.width * metrics.height) / (safeWidth * safeHeight)
+            : 0;
 
-          const score = aspectScore + boundaryScore + balanceScore + fontScore + lineScore;
+          const score =
+            (100 - Math.min(100, aspectDeviation * 60)) +
+            (boundaryFill * 55) +
+            (areaFill * 20) +
+            (bestSize * .18);
 
           const result = {
             score,
             fontSize: Math.floor(bestSize * 10) / 10,
             lineHeight,
             lines,
-            width: Math.round(textRect.width),
-            height: Math.round(textRect.height)
+            width: Math.round(metrics.width),
+            height: Math.round(metrics.height),
+            aspectDeviation
           };
 
           if (!best || result.score > best.score) {
@@ -1089,9 +1095,11 @@
         text.style.fontSize = `${best.fontSize}px`;
         text.style.lineHeight = String(best.lineHeight);
         text.style.maxWidth = "100%";
-        text.style.width = "100%";
+        text.style.width = "auto";
+        text.style.marginLeft = "auto";
+        text.style.marginRight = "auto";
         text.dataset.scrubFitFontSize = String(best.fontSize);
-        text.dataset.scrubFitArea = "planned";
+        text.dataset.scrubFitArea = "planned-aspect";
         text.dataset.scrubFitLines = String(best.lines.length);
         text.dataset.scrubFitWidth = String(best.width);
         text.dataset.scrubFitHeight = String(best.height);
@@ -1101,44 +1109,15 @@
           glowText.style.fontSize = `${best.fontSize}px`;
           glowText.style.lineHeight = String(best.lineHeight);
           glowText.style.maxWidth = "100%";
-          glowText.style.width = "100%";
+          glowText.style.width = "auto";
+          glowText.style.marginLeft = "auto";
+          glowText.style.marginRight = "auto";
         }
       }
     });
   }
 
-  function scoreLockedLinePattern(lines, layoutAnalysis = {}) {
-    if (!Array.isArray(lines) || !lines.length) return 0;
 
-    let score = 0;
-    const longest = String(layoutAnalysis.longestWord || "").toLowerCase();
-
-    lines.forEach((lineUnits, index) => {
-      const lineText = lineUnits.map((unit) => unit.cleanText).join("");
-      const lineWeight = lineUnits.reduce((total, unit, unitIndex) => {
-        return total + unit.width + (unitIndex > 0 ? estimateCharacterWidth(" ") : 0);
-      }, 0);
-
-      const isEdgeLine = index === 0 || index === lines.length - 1;
-
-      if (lineWeight < 2.8) {
-        score -= isEdgeLine ? 5 : 14;
-      } else if (lineWeight < 4.7) {
-        score -= isEdgeLine ? 1 : 5;
-      }
-
-      if (longest && lineText.toLowerCase().includes(longest) && layoutAnalysis.longestWordLength >= 9) {
-        const extraLetters = Math.max(0, lineText.length - layoutAnalysis.longestWordLength);
-        const extraRatio = extraLetters / Math.max(1, layoutAnalysis.longestWordLength);
-
-        if (extraRatio <= .7) score += 9;
-        else if (extraRatio <= 1.1) score += 3;
-        else score -= 5;
-      }
-    });
-
-    return score;
-  }
 
 
   function getDesiredLineRange(textLength, isDesktopStage, layoutAnalysis = {}, stageWidth = 0) {
