@@ -20,6 +20,7 @@
   // Set to null to disable.
   const DEBUG_SKIP_ROUND_ID = "archaeology";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
+  const VERSE_FIT_DEBUG = true;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
 
@@ -506,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.31",
+      debugBadge: "SS 5.32",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -628,6 +629,7 @@
           <canvas class="scrub-cover-canvas" id="scrubCoverCanvas" aria-label="Scrub cover"></canvas>
           <div class="scrub-object-layer" id="scrubObjectLayer"></div>
           <div class="scrub-reward-layer" id="scrubRewardLayer"></div>
+          <div class="scrub-fit-debug" id="scrubFitDebug" aria-hidden="true"></div>
         </div>
 
         ${window.VerseGameShell.gameMenuHtml({
@@ -738,6 +740,50 @@
       .reduce((total, char) => total + estimateCharacterWidth(char), 0);
   }
 
+  function getVisibleLineCharacterCount(lineUnits) {
+    if (!Array.isArray(lineUnits)) return 0;
+    return lineUnits.map((unit) => unit.text || "").join(" ").length;
+  }
+
+  function getLineCountRangeForTextLength(textLength, unitCount) {
+    const maxLines = Math.min(unitCount, textLength < 70 ? 8 : textLength < 115 ? 10 : 14);
+    const minLines = Math.min(maxLines, textLength < 70 ? 3 : textLength < 115 ? 4 : 5);
+
+    return {
+      minLines,
+      maxLines
+    };
+  }
+
+  function setVerseFitDebugInfo(info = {}) {
+    const debug = document.getElementById("scrubFitDebug");
+    if (!debug) return;
+
+    if (!VERSE_FIT_DEBUG) {
+      debug.textContent = "";
+      debug.classList.remove("is-visible");
+      return;
+    }
+
+    debug.classList.add("is-visible");
+
+    const rows = [
+      `SS 5.32 FIT`,
+      `chars: ${info.textLength ?? "?"}`,
+      `units: ${info.unitCount ?? "?"}`,
+      `range: ${info.minLines ?? "?"}-${info.maxLines ?? "?"}`,
+      `box: ${info.boxWidth ?? "?"}x${info.boxHeight ?? "?"}`,
+      `aspect: ${info.boxAspect ?? "?"}`,
+      `safe: ${info.safeWidth ?? "?"}x${info.safeHeight ?? "?"}`,
+      `lines: ${info.lines ?? "?"}`,
+      `font: ${info.fontSize ?? "?"}`,
+      `text: ${info.textWidth ?? "?"}x${info.textHeight ?? "?"}`,
+      `fit: ${info.fitArea ?? "?"}`
+    ];
+
+    debug.textContent = rows.join("\n");
+  }
+
   function getVerseLineUnits() {
     const tokens = window.VerseGameShell.tokenizeVerseForBuild(getVerseText());
     const plan = hidePlanEntries();
@@ -799,8 +845,7 @@
 
     const textLength = getVerseText().length;
     const areaAspect = boxRect.width / boxRect.height;
-    const maxLines = Math.min(units.length, textLength < 70 ? 8 : textLength < 115 ? 10 : 14);
-    const minLines = Math.min(maxLines, textLength < 70 ? 3 : textLength < 115 ? 4 : 5);
+    const { minLines, maxLines } = getLineCountRangeForTextLength(textLength, units.length);
     const allCandidates = [];
 
     for (let lineCount = minLines; lineCount <= maxLines; lineCount += 1) {
@@ -1008,6 +1053,7 @@
 
       if (!units.length) return;
 
+      const lineRange = getLineCountRangeForTextLength(textLength, units.length);
       const lineCandidates = getPlannedLineCandidates(units, boxRect);
       const lineHeights = isWideStage
         ? [1.16, 1.10, 1.04, 1.0, .96, .92]
@@ -1089,6 +1135,26 @@
         }
       }
 
+      if (!best) {
+        setVerseFitDebugInfo({
+          textLength,
+          unitCount: units.length,
+          minLines: lineRange.minLines,
+          maxLines: lineRange.maxLines,
+          boxWidth: Math.round(boxRect.width),
+          boxHeight: Math.round(boxRect.height),
+          boxAspect: (boxRect.width / boxRect.height).toFixed(2),
+          safeWidth,
+          safeHeight,
+          lines: "none",
+          fontSize: "none",
+          textWidth: "none",
+          textHeight: "none",
+          fitArea: "no-fit"
+        });
+        return;
+      }
+
       if (best) {
         applyLockedVerseHtml(best.lines);
 
@@ -1103,6 +1169,22 @@
         text.dataset.scrubFitLines = String(best.lines.length);
         text.dataset.scrubFitWidth = String(best.width);
         text.dataset.scrubFitHeight = String(best.height);
+        setVerseFitDebugInfo({
+          textLength,
+          unitCount: units.length,
+          minLines: lineRange.minLines,
+          maxLines: lineRange.maxLines,
+          boxWidth: Math.round(boxRect.width),
+          boxHeight: Math.round(boxRect.height),
+          boxAspect: (boxRect.width / boxRect.height).toFixed(2),
+          safeWidth,
+          safeHeight,
+          lines: best.lines.length,
+          fontSize: best.fontSize,
+          textWidth: best.width,
+          textHeight: best.height,
+          fitArea: text.dataset.scrubFitArea
+        });
 
         const glowText = document.getElementById("scrubGlowVerseText");
         if (glowText) {

@@ -642,6 +642,29 @@ body{
   color: #25384a;
 }
 
+.scrub-fit-debug {
+  position: absolute;
+  z-index: 95;
+  right: calc(8px + env(safe-area-inset-right));
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  display: none;
+  max-width: min(58vw, 270px);
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, .78);
+  color: #ffffff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.25;
+  white-space: pre-wrap;
+  text-align: left;
+  pointer-events: none;
+}
+
+.scrub-fit-debug.is-visible {
+  display: block;
+}
+
 .scrub-cover-canvas{
   position: absolute;
   inset: 0;
