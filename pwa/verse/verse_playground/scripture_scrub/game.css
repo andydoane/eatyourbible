@@ -223,6 +223,7 @@ body{
 
 .scrub-token-word{
   color: var(--scrub-text);
+  white-space: nowrap;
 }
 
 .scrub-token-word.is-special{

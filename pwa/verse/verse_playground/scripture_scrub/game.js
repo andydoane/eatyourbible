@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.24",
+      debugBadge: "SS 5.25",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -721,12 +721,21 @@
       .filter((entry) => entry.key);
 
     const seen = new Map();
+    const html = [];
 
-    return tokens.map((token) => {
-      if (!token) return "";
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
+      if (!token) continue;
 
-      if (token.kind === "space") return escapeHtml(token.text);
-      if (token.kind === "punct") return `<span class="scrub-token-punct">${escapeHtml(token.text)}</span>`;
+      if (token.kind === "space") {
+        html.push(escapeHtml(token.text));
+        continue;
+      }
+
+      if (token.kind === "punct") {
+        html.push(`<span class="scrub-token-punct">${escapeHtml(token.text)}</span>`);
+        continue;
+      }
 
       const key = window.VerseGameShell.normalizeWord(token.text);
       const count = (seen.get(key) || 0) + 1;
@@ -737,8 +746,20 @@
       const style = match ? ` style="--scrub-special-color:${escapeHtml(match.color)}"` : "";
       const cls = match ? "scrub-token-word is-special" : "scrub-token-word";
 
-      return `<span class="${cls}"${style}>${escapeHtml(token.text)}</span>`;
-    }).join("");
+      let text = token.text;
+
+      // Keep trailing punctuation attached to the word before it.
+      // This makes “beginning,” behave like one visual unit for wrapping,
+      // fitting, Glow, and Rainbow canvas drawing.
+      while (tokens[i + 1]?.kind === "punct") {
+        i += 1;
+        text += tokens[i].text;
+      }
+
+      html.push(`<span class="${cls}"${style}>${escapeHtml(text)}</span>`);
+    }
+
+    return html.join("");
   }
 
   function fitVerseToScreen() {
