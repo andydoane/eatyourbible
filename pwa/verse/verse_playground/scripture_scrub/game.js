@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.38",
+      debugBadge: "SS 5.39",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -3460,6 +3460,19 @@
     }
   }
 
+  function restartCookieNibbleAnimation(cookie, biteClass) {
+    if (!cookie || !biteClass) return;
+
+    cookie.classList.remove("scrub-cookie-bite-1", "scrub-cookie-bite-2");
+
+    // Force the browser to notice that the animation class was removed.
+    // Without this, the second bite may not replay the same nibble animation.
+    void cookie.offsetWidth;
+
+    cookie.classList.add(biteClass);
+  }
+
+
   function biteCookie(cookie) {
     const currentBites = Number(cookie.dataset.bites || 0);
     const nextBites = currentBites + 1;
@@ -3475,8 +3488,7 @@
 
     if (nextBites < 3) {
       cookie.dataset.bites = String(nextBites);
-      cookie.classList.remove("scrub-cookie-bite-1", "scrub-cookie-bite-2");
-      cookie.classList.add(`scrub-cookie-bite-${nextBites}`);
+      restartCookieNibbleAnimation(cookie, `scrub-cookie-bite-${nextBites}`);
 
       const img = cookie.querySelector(".scrub-cookie-img");
       if (img) img.src = IMAGE_BASE + COOKIE_IMAGES[nextBites];
