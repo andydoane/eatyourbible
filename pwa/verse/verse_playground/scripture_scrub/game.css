@@ -1254,8 +1254,22 @@ body{
   animation: scrubStickerCurlWobble 1250ms cubic-bezier(.18,.8,.24,1) forwards;
 }
 
+.scrub-archaeology-found .scrub-scripture-card {
+  z-index: 1;
+}
+
 .scrub-archaeology-found .scrub-cover-canvas {
+  z-index: 8;
   pointer-events: none;
+}
+
+.scrub-archaeology-found .scrub-bible-layer {
+  z-index: 12;
+}
+
+.scrub-archaeology-found .scrub-reward-layer {
+  z-index: 90;
+  pointer-events: auto;
 }
 
 .scrub-archaeology-found-panel {
