@@ -20,7 +20,7 @@
   // Set to null to disable.
   const DEBUG_SKIP_ROUND_ID = "archaeology";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
-  const VERSE_FIT_DEBUG = true;
+  const VERSE_FIT_DEBUG = false;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
 
@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.37",
+      debugBadge: "SS 5.38",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -768,7 +768,7 @@
     debug.classList.add("is-visible");
 
     const rows = [
-      `SS 5.37 FIT`,
+      `SS 5.38 FIT`,
       `chars: ${info.textLength ?? "?"}`,
       `units: ${info.unitCount ?? "?"}`,
       `range: ${info.minLines ?? "?"}-${info.maxLines ?? "?"}`,
@@ -1081,7 +1081,11 @@
     const glowText = document.getElementById("scrubGlowVerseText");
 
     if (text) text.innerHTML = html;
-    if (glowText) glowText.innerHTML = html;
+
+    if (glowText) {
+      delete glowText.dataset.scrubRainbowLetters;
+      glowText.innerHTML = html;
+    }
   }
 
   function hidePlanEntries() {
@@ -2440,8 +2444,8 @@
       const startOffset = textSize * (.24 + Math.random() * .16);
       const speed = textSize * (3.25 + Math.random() * 1.65);
 
-      // Diameter is roughly 1/8 of a verse letter, with a little variation.
-      const size = clamp(textSize * (.032 + Math.random() * .026), 2, 7);
+      // Radius is based on verse text size, so larger verse text gets larger sparkles.
+      const size = clamp(textSize * (.06 + Math.random() * .045), 4, 12);
 
       rainbowTrailParticles.push({
         x: x + Math.cos(angle) * startOffset,
@@ -2455,8 +2459,8 @@
       });
     }
 
-    if (rainbowTrailParticles.length > 90) {
-      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 90);
+    if (rainbowTrailParticles.length > 54) {
+      rainbowTrailParticles.splice(0, rainbowTrailParticles.length - 54);
     }
 
     if (!rainbowTrailAnimationFrame) {
