@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.13",
+      debugBadge: "SS 5.14",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -2569,19 +2569,66 @@
     if (ratio >= roundCompletionThreshold()) completeRound();
   }
 
+  function generateCookieCoverPositions({
+    count,
+    width,
+    height,
+    size
+  } = {}) {
+    const safeCount = Math.max(1, Number(count) || 1);
+    const cookieSize = Math.max(1, Number(size) || 160);
+
+    // Cookies are large, so use a wide grid instead of the generic centered object layout.
+    // Allow centers slightly offscreen so the edges and corners get covered too.
+    const minX = -cookieSize * .18;
+    const maxX = width + cookieSize * .18;
+    const minY = Math.max(cookieSize * .16, height * .08);
+    const maxY = height + cookieSize * .14;
+
+    const usableW = maxX - minX;
+    const usableH = maxY - minY;
+
+    const cols = Math.ceil(Math.sqrt(safeCount * (usableW / Math.max(1, usableH))));
+    const rows = Math.ceil(safeCount / cols);
+    const cellW = usableW / cols;
+    const cellH = usableH / rows;
+
+    const positions = [];
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        const edgeBiasX = col === 0
+          ? -cellW * .12
+          : col === cols - 1
+            ? cellW * .12
+            : 0;
+        const edgeBiasY = row === rows - 1 ? cellH * .10 : 0;
+
+        const x = minX + cellW * (col + .5) + edgeBiasX + (Math.random() - .5) * cellW * .34;
+        const y = minY + cellH * (row + .5) + edgeBiasY + (Math.random() - .5) * cellH * .34;
+
+        positions.push({
+          x: clamp(x, -cookieSize * .22, width + cookieSize * .22),
+          y: clamp(y, cookieSize * .10, height + cookieSize * .16)
+        });
+      }
+    }
+
+    return shuffle(positions).slice(0, safeCount);
+  }
+
+
   function setupCookies(width, height) {
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
-    const count = clamp(Math.round(width / 32), 14, 22);
     const size = getCoverObjectSize("cookie", width);
-    const positions = generateCoverPositions({
+    const count = clamp(Math.round((width * height) / (size * size) * 1.32), 16, 24);
+    const positions = generateCookieCoverPositions({
       count,
       width,
       height,
-      jitter: 0.62,
-      topRatio: 0.10,
-      heightRatio: 0.82
+      size
     });
 
     objectTotal = count;
@@ -2676,10 +2723,10 @@
     if (!layer || !stageEl) return;
 
     const stageRect = stageEl.getBoundingClientRect();
-    const count = isFinalBite ? 22 : 9;
-    const distance = cookieSize * (isFinalBite ? .42 : .22);
-    const crumbSizeMin = cookieSize * (isFinalBite ? .025 : .018);
-    const crumbSizeMax = cookieSize * (isFinalBite ? .06 : .04);
+    const count = isFinalBite ? 28 : 12;
+    const distance = cookieSize * (isFinalBite ? .52 : .28);
+    const crumbSizeMin = cookieSize * (isFinalBite ? .065 : .03);
+    const crumbSizeMax = cookieSize * (isFinalBite ? .14 : .07);
     const colors = ["#5c3418", "#7a471f", "#9a632f", "#c4894a", "#e0b36f"];
 
     for (let i = 0; i < count; i += 1) {
