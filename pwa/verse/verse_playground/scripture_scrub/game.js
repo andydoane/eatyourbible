@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.36",
+      debugBadge: "SS 5.37",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -768,7 +768,7 @@
     debug.classList.add("is-visible");
 
     const rows = [
-      `SS 5.36 FIT`,
+      `SS 5.37 FIT`,
       `chars: ${info.textLength ?? "?"}`,
       `units: ${info.unitCount ?? "?"}`,
       `range: ${info.minLines ?? "?"}-${info.maxLines ?? "?"}`,
@@ -1022,7 +1022,7 @@
     if (widthFill < .96 || heightFill > .94) return fit;
 
     const startLineHeight = Number(fit.lineHeight) || 1;
-    const maxLineHeight = isWideStage ? 1.32 : 1.24;
+    const maxLineHeight = 1.24;
 
     if (startLineHeight >= maxLineHeight) return fit;
 
@@ -1163,8 +1163,7 @@
       if (!boxRect.width || !boxRect.height) return;
 
       const textLength = getVerseText().length;
-      const stageWidth = stageEl?.getBoundingClientRect?.().width || boxRect.width;
-      const isWideStage = stageWidth >= 640;
+      const isWideStage = false;
       const units = getVerseLineUnits();
 
       if (!units.length) return;
