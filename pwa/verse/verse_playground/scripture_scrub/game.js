@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.32",
+      debugBadge: "SS 5.33",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -768,7 +768,7 @@
     debug.classList.add("is-visible");
 
     const rows = [
-      `SS 5.32 FIT`,
+      `SS 5.33 FIT`,
       `chars: ${info.textLength ?? "?"}`,
       `units: ${info.unitCount ?? "?"}`,
       `range: ${info.minLines ?? "?"}-${info.maxLines ?? "?"}`,
@@ -778,6 +778,7 @@
       `lines: ${info.lines ?? "?"}`,
       `font: ${info.fontSize ?? "?"}`,
       `text: ${info.textWidth ?? "?"}x${info.textHeight ?? "?"}`,
+      `over: ${info.overflowWidth ?? "?"}x${info.overflowHeight ?? "?"}`,
       `fit: ${info.fitArea ?? "?"}`
     ];
 
@@ -1069,6 +1070,7 @@
       const availableAspect = safeWidth / safeHeight;
 
       let best = null;
+      let fallback = null;
 
       for (const lines of lineCandidates) {
         applyLockedVerseHtml(lines);
@@ -1101,7 +1103,9 @@
           text.style.fontSize = `${bestSize}px`;
 
           const metrics = getLockedVerseMetrics(text);
-          if (metrics.width > safeWidth + 2 || metrics.height > safeHeight + 2) continue;
+          const overflowWidth = Math.max(0, Math.round(metrics.width - safeWidth));
+          const overflowHeight = Math.max(0, Math.round(metrics.height - safeHeight));
+          const perfectFit = overflowWidth <= 2 && overflowHeight <= 2;
 
           const textAspect = metrics.height ? metrics.width / metrics.height : 1;
           const aspectDeviation = Math.abs(Math.log(textAspect / Math.max(.1, availableAspect)));
@@ -1113,29 +1117,40 @@
             ? (metrics.width * metrics.height) / (safeWidth * safeHeight)
             : 0;
 
-          const score =
+          const baseScore =
             (100 - Math.min(100, aspectDeviation * 60)) +
-            (boundaryFill * 55) +
-            (areaFill * 20) +
+            (Math.min(1.2, boundaryFill) * 55) +
+            (Math.min(1.2, areaFill) * 20) +
             (bestSize * .18);
 
+          const overflowPenalty = (overflowWidth * 2.4) + (overflowHeight * 2.4);
+
           const result = {
-            score,
+            score: perfectFit ? baseScore : baseScore - overflowPenalty,
             fontSize: Math.floor(bestSize * 10) / 10,
             lineHeight,
             lines,
             width: Math.round(metrics.width),
             height: Math.round(metrics.height),
-            aspectDeviation
+            overflowWidth,
+            overflowHeight,
+            aspectDeviation,
+            fitArea: perfectFit ? "planned-aspect" : "fallback-overflow"
           };
 
-          if (!best || result.score > best.score) {
-            best = result;
+          if (perfectFit) {
+            if (!best || result.score > best.score) {
+              best = result;
+            }
+          } else if (!fallback || result.score > fallback.score) {
+            fallback = result;
           }
         }
       }
 
-      if (!best) {
+      const finalFit = best || fallback;
+
+      if (!finalFit) {
         setVerseFitDebugInfo({
           textLength,
           unitCount: units.length,
@@ -1150,25 +1165,30 @@
           fontSize: "none",
           textWidth: "none",
           textHeight: "none",
+          overflowWidth: "none",
+          overflowHeight: "none",
           fitArea: "no-fit"
         });
         return;
       }
 
-      if (best) {
-        applyLockedVerseHtml(best.lines);
+      if (finalFit) {
+        applyLockedVerseHtml(finalFit.lines);
 
-        text.style.fontSize = `${best.fontSize}px`;
-        text.style.lineHeight = String(best.lineHeight);
+        text.style.fontSize = `${finalFit.fontSize}px`;
+        text.style.lineHeight = String(finalFit.lineHeight);
         text.style.maxWidth = "100%";
         text.style.width = "auto";
         text.style.marginLeft = "auto";
         text.style.marginRight = "auto";
-        text.dataset.scrubFitFontSize = String(best.fontSize);
-        text.dataset.scrubFitArea = "planned-aspect";
-        text.dataset.scrubFitLines = String(best.lines.length);
-        text.dataset.scrubFitWidth = String(best.width);
-        text.dataset.scrubFitHeight = String(best.height);
+        text.dataset.scrubFitFontSize = String(finalFit.fontSize);
+        text.dataset.scrubFitArea = finalFit.fitArea;
+        text.dataset.scrubFitLines = String(finalFit.lines.length);
+        text.dataset.scrubFitWidth = String(finalFit.width);
+        text.dataset.scrubFitHeight = String(finalFit.height);
+        text.dataset.scrubFitOverflowWidth = String(finalFit.overflowWidth);
+        text.dataset.scrubFitOverflowHeight = String(finalFit.overflowHeight);
+
         setVerseFitDebugInfo({
           textLength,
           unitCount: units.length,
@@ -1179,17 +1199,19 @@
           boxAspect: (boxRect.width / boxRect.height).toFixed(2),
           safeWidth,
           safeHeight,
-          lines: best.lines.length,
-          fontSize: best.fontSize,
-          textWidth: best.width,
-          textHeight: best.height,
+          lines: finalFit.lines.length,
+          fontSize: finalFit.fontSize,
+          textWidth: finalFit.width,
+          textHeight: finalFit.height,
+          overflowWidth: finalFit.overflowWidth,
+          overflowHeight: finalFit.overflowHeight,
           fitArea: text.dataset.scrubFitArea
         });
 
         const glowText = document.getElementById("scrubGlowVerseText");
         if (glowText) {
-          glowText.style.fontSize = `${best.fontSize}px`;
-          glowText.style.lineHeight = String(best.lineHeight);
+          glowText.style.fontSize = `${finalFit.fontSize}px`;
+          glowText.style.lineHeight = String(finalFit.lineHeight);
           glowText.style.maxWidth = "100%";
           glowText.style.width = "auto";
           glowText.style.marginLeft = "auto";
