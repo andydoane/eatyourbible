@@ -43,9 +43,12 @@
   ];
 
   const SOUND_BASE_PATH = "./scripture_scrub_sounds/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
   const SILENCE_AUDIO_PATH = "../../verse_audio/silence.mp3";
 
   const SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
     bite1: `${SOUND_BASE_PATH}scripture_scrub_bite_1.mp3`,
     bite2: `${SOUND_BASE_PATH}scripture_scrub_bite_2.mp3`,
     bite3: `${SOUND_BASE_PATH}scripture_scrub_bite_3.mp3`,
@@ -55,7 +58,11 @@
     glow: `${SOUND_BASE_PATH}scripture_scrub_glow.mp3`,
     leaves: `${SOUND_BASE_PATH}scripture_scrub_leaves.mp3`,
     mower: `${SOUND_BASE_PATH}scripture_scrub_mower.mp3`,
-    peel: `${SOUND_BASE_PATH}scripture_scrub_peel.mp3`,
+    pop1: `${SOUND_BASE_PATH}scripture_scrub_pop_1.mp3`,
+    pop2: `${SOUND_BASE_PATH}scripture_scrub_pop_2.mp3`,
+    pop3: `${SOUND_BASE_PATH}scripture_scrub_pop_3.mp3`,
+    pop4: `${SOUND_BASE_PATH}scripture_scrub_pop_4.mp3`,
+    pop5: `${SOUND_BASE_PATH}scripture_scrub_pop_5.mp3`,
     rainbow: `${SOUND_BASE_PATH}scripture_scrub_rainbow.mp3`,
     splat: `${SOUND_BASE_PATH}scripture_scrub_splat.mp3`,
     squeak: `${SOUND_BASE_PATH}scripture_scrub_squeak.mp3`,
@@ -64,15 +71,16 @@
 
   const SOUND_TUNING = {
     masterVolume: 0.85,
-    progressStepPercent: 5,
+    progressStepPercent: 2,
     volumes: {
+      uiTap: 0.42,
       bite: 0.72,
       chalk: 0.62,
       dig: 0.64,
       glow: 0.62,
       leaves: 0.48,
       mower: 0.48,
-      peel: 0.62,
+      stickerPop: 0.58,
       rainbow: 0.62,
       splat: 0.62,
       squeak: 0.58,
@@ -378,6 +386,8 @@
   let silenceAudio = null;
   const soundBuffers = new Map();
   let lastCookieBiteSound = null;
+  let lastStickerPopSound = null;
+  let lastUiTapSound = "uiTap2";
   let roundIntroSoundPlayedFor = null;
   let lastProgressToneStep = 0;
   let mowerSoundAudio = null;
@@ -550,6 +560,19 @@
     playGameSound(key, "bite");
   }
 
+  function playRandomStickerPopSound() {
+    const choices = ["pop1", "pop2", "pop3", "pop4", "pop5"].filter((key) => key !== lastStickerPopSound);
+    const key = choices[Math.floor(Math.random() * choices.length)] || "pop1";
+    lastStickerPopSound = key;
+    playGameSound(key, "stickerPop");
+  }
+
+  function playUiTapSound() {
+    const key = lastUiTapSound === "uiTap1" ? "uiTap2" : "uiTap1";
+    lastUiTapSound = key;
+    playGameSound(key, "uiTap");
+  }
+
   function getRoundIntroSoundKey(round) {
     if (!round) return "popup";
 
@@ -574,6 +597,7 @@
   function isProgressToneRound(round) {
     return round?.id === "mud"
       || round?.id === "paint"
+      || round?.id === "fog"
       || round?.id === "chalkboard"
       || round?.id === "glow"
       || round?.id === "rainbow";
@@ -837,7 +861,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.43",
+      debugBadge: "SS 5.44",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -845,9 +869,13 @@
       helpText: "How to Play",
       backLabel: "Back to Playground",
       theme: GAME_THEME,
-      onBack: () => window.VerseGameBridge.exitGame(),
+      onBack: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
       onStart: () => {
         unlockAudio();
+        playUiTapSound();
         beginScrubRun();
       }
     });
@@ -994,9 +1022,12 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
+        if (!muted) playUiTapSound();
         if (muted) stopMowerSound();
       },
       onHowToPlay: () => {
+        playUiTapSound();
+
         const menu = document.getElementById(MENU_OVERLAY_ID);
 
         if (menu) {
@@ -1006,13 +1037,18 @@
 
         window.VerseGameShell.openHelp?.(HELP_OVERLAY_ID, "back", "Back");
       },
-      onExit: () => window.VerseGameBridge.exitGame(),
+      onExit: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
       onOpen: () => {
+        playUiTapSound();
         menuOpen = true;
         const root = document.getElementById("scrubGame");
         if (root) root.classList.add("scrub-is-paused");
       },
       onClose: () => {
+        playUiTapSound();
         menuOpen = false;
         const root = document.getElementById("scrubGame");
         if (root) root.classList.remove("scrub-is-paused");
@@ -3488,41 +3524,40 @@
     stageEl.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
       dismissInstructionChip();
-      rakeLeavesAt(event.clientX, event.clientY);
+      tapLeafAt(event.clientX, event.clientY);
     };
 
-    stageEl.onpointermove = (event) => {
-      if (menuOpen || completionLocked) return;
-      if (event.buttons || event.pointerType === "touch") {
-        dismissInstructionChip();
-        rakeLeavesAt(event.clientX, event.clientY);
-      }
-    };
+    stageEl.onpointermove = null;
   }
 
-  function rakeLeavesAt(clientX, clientY) {
+  function tapLeafAt(clientX, clientY) {
     const leaves = Array.from(document.querySelectorAll(".scrub-leaf:not(.is-raked)"));
     const stageWidth = stageEl?.getBoundingClientRect?.().width || 420;
     const hitRadius = getCoverObjectSize("leaf", stageWidth) * .54;
-    let leafSoundPlayed = false;
+
+    let closestLeaf = null;
+    let closestDistance = Infinity;
 
     for (const leaf of leaves) {
       const rect = leaf.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
+      const distance = Math.hypot(cx - clientX, cy - clientY);
 
-      if (Math.hypot(cx - clientX, cy - clientY) <= hitRadius) {
-        if (!leafSoundPlayed) {
-          unlockAudio();
-          playGameSound("leaves");
-          leafSoundPlayed = true;
-        }
-
-        leaf.classList.add("is-raked");
-        leaf.dataset.cleared = "1";
-        objectCleared += 1;
+      if (distance <= hitRadius && distance < closestDistance) {
+        closestLeaf = leaf;
+        closestDistance = distance;
       }
     }
+
+    if (!closestLeaf) return;
+
+    unlockAudio();
+    playGameSound("leaves");
+
+    closestLeaf.classList.add("is-raked");
+    closestLeaf.dataset.cleared = "1";
+    objectCleared += 1;
 
     const ratio = objectTotal ? objectCleared / objectTotal : 0;
     updateProgress(ratio);
@@ -4275,7 +4310,7 @@
     if (!btn || btn.classList.contains("is-peeled") || completionLocked) return;
 
     unlockAudio();
-    playGameSound("peel");
+    playRandomStickerPopSound();
 
     STICKER_PEEL_STYLES.forEach((styleName) => {
       btn.classList.remove(styleName);
