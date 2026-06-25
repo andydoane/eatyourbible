@@ -456,25 +456,29 @@
   }
 
   async function unlockAudio() {
-    if (audioUnlocked || audioUnlockStarted) return;
+    if (audioUnlockStarted) return;
     audioUnlockStarted = true;
 
     try {
+      const ctx = getAudioContext();
+      const needsResume = !audioUnlocked || ctx?.state === "suspended";
+
       if (!silenceAudio) {
         silenceAudio = new Audio(SILENCE_AUDIO_PATH);
         silenceAudio.preload = "auto";
         silenceAudio.volume = 0;
       }
 
-      silenceAudio.currentTime = 0;
-      await silenceAudio.play().catch(() => { });
+      if (needsResume) {
+        silenceAudio.currentTime = 0;
+        await silenceAudio.play().catch(() => { });
+      }
 
-      const ctx = getAudioContext();
       if (ctx?.state === "suspended") {
         await ctx.resume().catch(() => { });
       }
 
-      if (ctx) {
+      if (ctx && needsResume) {
         const oscillator = ctx.createOscillator();
         const gain = ctx.createGain();
         gain.gain.value = 0.0001;
@@ -646,26 +650,33 @@
     const ctx = getAudioContext();
     if (!ctx || muted) return;
 
+    const startTone = () => {
+      if (muted) return;
+
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const now = ctx.currentTime;
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.03);
+    };
+
     if (ctx.state === "suspended") {
-      ctx.resume().catch(() => { });
+      ctx.resume().then(startTone).catch(() => { });
+      return;
     }
 
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const now = ctx.currentTime;
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(frequency, now);
-
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-
-    oscillator.start(now);
-    oscillator.stop(now + duration + 0.03);
+    startTone();
   }
 
   function startMowerSound(duration) {
@@ -4576,6 +4587,9 @@
     if (!btn) return;
 
     btn.onclick = () => {
+      unlockAudio();
+      playUiTapSound();
+
       if (isFinalRound) {
         renderEndScreen();
         return;
