@@ -223,6 +223,11 @@ body{
   hyphens: none;
 }
 
+.scrub-verse-line {
+  display: block;
+  white-space: nowrap;
+}
+
 .scrub-token-word{
   color: var(--scrub-text);
 }

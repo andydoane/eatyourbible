@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.28",
+      debugBadge: "SS 5.29",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -721,6 +721,207 @@
     };
   }
 
+
+  function estimateCharacterWidth(char) {
+    if (!char) return 0;
+    if (/\s/.test(char)) return .38;
+    if (/[ilI1j.,;:'’!|]/.test(char)) return .34;
+    if (/[frt]/i.test(char)) return .62;
+    if (/[mwWM]/.test(char)) return 1.25;
+    if (/[A-Z]/.test(char)) return 1.04;
+    return .86;
+  }
+
+  function estimateTextWidthUnits(value) {
+    return String(value || "")
+      .split("")
+      .reduce((total, char) => total + estimateCharacterWidth(char), 0);
+  }
+
+  function getVerseLineUnits() {
+    const tokens = window.VerseGameShell.tokenizeVerseForBuild(getVerseText());
+    const plan = hidePlanEntries();
+    const normalizedPlan = plan
+      .map((entry, index) => ({
+        key: window.VerseGameShell.normalizeWord(entry?.word || ""),
+        occurrence: Math.max(1, Number(entry?.occurrence) || 1),
+        color: SPECIAL_COLORS[index % SPECIAL_COLORS.length]
+      }))
+      .filter((entry) => entry.key);
+
+    const seen = new Map();
+    const units = [];
+
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
+      if (!token || token.kind !== "word") continue;
+
+      const key = window.VerseGameShell.normalizeWord(token.text);
+      const count = (seen.get(key) || 0) + 1;
+      seen.set(key, count);
+
+      const planIndex = normalizedPlan.findIndex((entry) => entry.key === key && entry.occurrence === count);
+      const match = planIndex >= 0 ? normalizedPlan[planIndex] : null;
+      const style = match ? ` style="--scrub-special-color:${escapeHtml(match.color)}"` : "";
+      const cls = match ? "scrub-token-word is-special" : "scrub-token-word";
+
+      let text = token.text;
+
+      while (tokens[i + 1]?.kind === "punct") {
+        i += 1;
+        text += tokens[i].text;
+      }
+
+      units.push({
+        text,
+        cleanText: text.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g, ""),
+        width: estimateTextWidthUnits(text),
+        html: `<span class="${cls}"${style}>${escapeHtml(text)}</span>`
+      });
+    }
+
+    return units;
+  }
+
+  function getLineWeight(units, start, end) {
+    let total = 0;
+
+    for (let i = start; i < end; i += 1) {
+      total += units[i]?.width || 0;
+      if (i > start) total += estimateCharacterWidth(" ");
+    }
+
+    return total;
+  }
+
+  function getPlannedLineCandidates(units, boxRect, layoutAnalysis = {}) {
+    if (!units.length || !boxRect?.width || !boxRect?.height) return [];
+
+    const textLength = getVerseText().length;
+    const areaAspect = boxRect.width / boxRect.height;
+    const maxLines = Math.min(units.length, textLength < 70 ? 7 : textLength < 115 ? 9 : 13);
+    const minLines = Math.min(maxLines, textLength < 70 ? 3 : textLength < 115 ? 4 : 5);
+    const candidates = [];
+
+    for (let lineCount = minLines; lineCount <= maxLines; lineCount += 1) {
+      const candidate = buildBestLinePlanForCount(units, lineCount, areaAspect, layoutAnalysis);
+      if (candidate?.lines?.length) candidates.push(candidate);
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates.slice(0, 8).map((candidate) => candidate.lines);
+  }
+
+  function buildBestLinePlanForCount(units, lineCount, areaAspect, layoutAnalysis = {}) {
+    const n = units.length;
+    if (!n || lineCount < 1 || lineCount > n) return null;
+
+    const totalWeight = getLineWeight(units, 0, n);
+    const targetLineWeight = totalWeight / lineCount;
+    const dp = Array.from({ length: lineCount + 1 }, () => Array(n + 1).fill(Infinity));
+    const prev = Array.from({ length: lineCount + 1 }, () => Array(n + 1).fill(-1));
+
+    dp[0][0] = 0;
+
+    for (let line = 1; line <= lineCount; line += 1) {
+      for (let end = line; end <= n; end += 1) {
+        for (let start = line - 1; start < end; start += 1) {
+          if (!Number.isFinite(dp[line - 1][start])) continue;
+
+          const weight = getLineWeight(units, start, end);
+          const shortPenalty = getShortLinePenalty(weight, line, lineCount);
+          const raggedPenalty = Math.pow(weight - targetLineWeight, 2) * .16;
+          const longWordPenalty = getLongWordLinePenalty(units, start, end, layoutAnalysis);
+          const cost = dp[line - 1][start] + raggedPenalty + shortPenalty + longWordPenalty;
+
+          if (cost < dp[line][end]) {
+            dp[line][end] = cost;
+            prev[line][end] = start;
+          }
+        }
+      }
+    }
+
+    if (!Number.isFinite(dp[lineCount][n])) return null;
+
+    const lines = [];
+    let end = n;
+
+    for (let line = lineCount; line >= 1; line -= 1) {
+      const start = prev[line][end];
+      if (start < 0) return null;
+      lines.unshift(units.slice(start, end));
+      end = start;
+    }
+
+    const weights = lines.map((lineUnits) => {
+      return lineUnits.reduce((total, unit, index) => {
+        return total + unit.width + (index > 0 ? estimateCharacterWidth(" ") : 0);
+      }, 0);
+    });
+
+    const widest = Math.max(...weights);
+    const estimatedAspect = widest / Math.max(1, lineCount * 1.04);
+    const aspectScore = 46 * (1 - Math.min(1, Math.abs(Math.log(estimatedAspect / Math.max(.1, areaAspect))) / 1.1));
+    const balanceScore = 22 * (1 - Math.min(1, getLineBalanceSpread(weights) / Math.max(1, widest)));
+    const lineCountScore = 16 * (1 - Math.min(1, Math.abs(lineCount - getPreferredPlannedLineCount(units, areaAspect, layoutAnalysis)) / 5));
+
+    return {
+      lines,
+      score: aspectScore + balanceScore + lineCountScore - dp[lineCount][n] * .025
+    };
+  }
+
+  function getShortLinePenalty(weight, lineIndex, lineCount) {
+    if (weight >= 4.7) return 0;
+
+    const isEdgeLine = lineIndex === 1 || lineIndex === lineCount;
+    const base = weight < 2.8 ? 22 : 8;
+    return isEdgeLine ? base * .45 : base;
+  }
+
+  function getLongWordLinePenalty(units, start, end, layoutAnalysis = {}) {
+    const longest = String(layoutAnalysis.longestWord || "").toLowerCase();
+    if (!longest || layoutAnalysis.longestWordLength < 9) return 0;
+
+    const lineText = units.slice(start, end).map((unit) => unit.cleanText).join("").toLowerCase();
+    if (!lineText.includes(longest)) return 0;
+
+    const extraLetters = Math.max(0, lineText.length - layoutAnalysis.longestWordLength);
+    const extraRatio = extraLetters / Math.max(1, layoutAnalysis.longestWordLength);
+
+    return extraRatio > 1.1 ? 12 : extraRatio > .7 ? 5 : 0;
+  }
+
+  function getLineBalanceSpread(weights) {
+    if (!weights.length) return 0;
+    const average = weights.reduce((sum, weight) => sum + weight, 0) / weights.length;
+    return weights.reduce((worst, weight) => Math.max(worst, Math.abs(weight - average)), 0);
+  }
+
+  function getPreferredPlannedLineCount(units, areaAspect, layoutAnalysis = {}) {
+    const totalWeight = getLineWeight(units, 0, units.length);
+    const rough = Math.sqrt(totalWeight / Math.max(.35, areaAspect));
+    const longWordBoost = layoutAnalysis.longestWordLength >= 9 ? 1 : 0;
+    return clamp(Math.round(rough * .72) + longWordBoost, 3, Math.min(12, units.length));
+  }
+
+  function renderLockedVerseHtml(lines) {
+    return lines.map((lineUnits) => {
+      const html = lineUnits.map((unit) => unit.html).join(" ");
+      return `<span class="scrub-verse-line">${html}</span>`;
+    }).join("");
+  }
+
+  function applyLockedVerseHtml(lines) {
+    const html = renderLockedVerseHtml(lines);
+    const text = document.getElementById("scrubVerseText");
+    const glowText = document.getElementById("scrubGlowVerseText");
+
+    if (text) text.innerHTML = html;
+    if (glowText) glowText.innerHTML = html;
+  }
+
   function hidePlanEntries() {
     return Array.isArray(verseJson?.hidePlan) ? verseJson.hidePlan : [];
   }
@@ -800,31 +1001,34 @@
       if (!boxRect.width || !boxRect.height) return;
 
       const textLength = getVerseText().length;
-      const layoutAnalysis = getVerseLayoutAnalysis();
       const stageWidth = stageEl?.getBoundingClientRect?.().width || boxRect.width;
-      const isDesktopStage = stageWidth >= 700;
+      const isWideStage = stageWidth >= 640;
+      const layoutAnalysis = getVerseLayoutAnalysis();
+      const units = getVerseLineUnits();
+
+      if (!units.length) return;
+
+      const lineCandidates = getPlannedLineCandidates(units, boxRect, layoutAnalysis);
+      const lineHeights = isWideStage
+        ? [1.24, 1.16, 1.10, 1.04, 1.0, .96, .92]
+        : [1.08, 1.04, 1.0, .96, .92];
 
       const minSize = textLength > 190 ? 13 : textLength > 140 ? 15 : 17;
-      const isWideStage = stageWidth >= 640;
+      const maxSize = isWideStage
+        ? (textLength < 65 ? 118 : textLength < 115 ? 96 : textLength < 180 ? 78 : 62)
+        : (textLength < 65 ? 112 : textLength < 115 ? 92 : textLength < 180 ? 72 : 58);
 
-      let maxSize = textLength < 65 ? 76 : textLength < 115 ? 62 : textLength < 180 ? 50 : 42;
-
-      if (isWideStage) {
-        maxSize += textLength < 65 ? 14 : textLength < 115 ? 10 : textLength < 180 ? 6 : 4;
-      }
-
-      const desiredLines = getDesiredLineRange(textLength, isDesktopStage, layoutAnalysis, stageWidth);
-      const widthCandidates = getVerseWidthCandidates(stageWidth, textLength, layoutAnalysis);
-      const lineHeights = isWideStage
-        ? [1.32, 1.24, 1.16, 1.10, 1.04, 1.0, .96, .92, .88]
-        : [1.04, 1.0, .96, .92, .88];
+      const safeWidth = Math.max(80, box.clientWidth - 8);
+      const safeHeight = Math.max(80, box.clientHeight - 8);
 
       let best = null;
 
-      for (const maxWidthPx of widthCandidates) {
+      for (const lines of lineCandidates) {
+        applyLockedVerseHtml(lines);
+
         for (const lineHeight of lineHeights) {
           text.style.width = "100%";
-          text.style.maxWidth = `${maxWidthPx}px`;
+          text.style.maxWidth = "100%";
           text.style.marginLeft = "auto";
           text.style.marginRight = "auto";
           text.style.lineHeight = String(lineHeight);
@@ -833,11 +1037,11 @@
           let high = maxSize;
           let bestSize = minSize;
 
-          for (let i = 0; i < 13; i += 1) {
+          for (let i = 0; i < 14; i += 1) {
             const mid = (low + high) / 2;
             text.style.fontSize = `${mid}px`;
 
-            if (verseOverflows(box, text)) {
+            if (text.scrollWidth > safeWidth || text.scrollHeight > safeHeight) {
               high = mid;
             } else {
               bestSize = mid;
@@ -847,26 +1051,30 @@
 
           text.style.fontSize = `${bestSize}px`;
 
-          if (verseOverflows(box, text)) continue;
+          if (text.scrollWidth > safeWidth + 2 || text.scrollHeight > safeHeight + 2) continue;
 
-          const metrics = getVerseFitMetrics(box, text);
-          const score = scoreVerseFit({
-            metrics,
-            desiredLines,
-            textLength,
-            stageWidth,
-            boxRect,
-            maxWidthPx,
-            fontSize: bestSize,
-            layoutAnalysis
-          });
+          const textRect = text.getBoundingClientRect();
+          const widthFill = safeWidth ? textRect.width / safeWidth : 0;
+          const heightFill = safeHeight ? textRect.height / safeHeight : 0;
+          const boundaryFill = Math.max(widthFill, heightFill);
+          const balanceFill = Math.min(widthFill, heightFill);
+          const areaAspect = safeWidth / safeHeight;
+          const textAspect = textRect.height ? textRect.width / textRect.height : 1;
+          const aspectScore = 32 * (1 - Math.min(1, Math.abs(Math.log(textAspect / Math.max(.1, areaAspect))) / 1.2));
+          const boundaryScore = 44 * Math.min(1, boundaryFill);
+          const balanceScore = 20 * Math.min(1, balanceFill / .68);
+          const fontScore = 26 * Math.min(1, bestSize / (isWideStage ? 88 : 76));
+          const lineScore = scoreLockedLinePattern(lines, layoutAnalysis);
+
+          const score = aspectScore + boundaryScore + balanceScore + fontScore + lineScore;
 
           const result = {
             score,
             fontSize: Math.floor(bestSize * 10) / 10,
             lineHeight,
-            maxWidthPx,
-            metrics
+            lines,
+            width: Math.round(textRect.width),
+            height: Math.round(textRect.height)
           };
 
           if (!best || result.score > best.score) {
@@ -876,18 +1084,62 @@
       }
 
       if (best) {
+        applyLockedVerseHtml(best.lines);
+
         text.style.fontSize = `${best.fontSize}px`;
         text.style.lineHeight = String(best.lineHeight);
-        text.style.maxWidth = `${best.maxWidthPx}px`;
+        text.style.maxWidth = "100%";
         text.style.width = "100%";
         text.dataset.scrubFitFontSize = String(best.fontSize);
-        text.dataset.scrubFitArea = "poster";
-        text.dataset.scrubFitLines = String(best.metrics.lines);
-        text.dataset.scrubFitWidth = String(Math.round(best.metrics.width));
-        text.dataset.scrubFitHeight = String(Math.round(best.metrics.height));
+        text.dataset.scrubFitArea = "planned";
+        text.dataset.scrubFitLines = String(best.lines.length);
+        text.dataset.scrubFitWidth = String(best.width);
+        text.dataset.scrubFitHeight = String(best.height);
+
+        const glowText = document.getElementById("scrubGlowVerseText");
+        if (glowText) {
+          glowText.style.fontSize = `${best.fontSize}px`;
+          glowText.style.lineHeight = String(best.lineHeight);
+          glowText.style.maxWidth = "100%";
+          glowText.style.width = "100%";
+        }
       }
     });
   }
+
+  function scoreLockedLinePattern(lines, layoutAnalysis = {}) {
+    if (!Array.isArray(lines) || !lines.length) return 0;
+
+    let score = 0;
+    const longest = String(layoutAnalysis.longestWord || "").toLowerCase();
+
+    lines.forEach((lineUnits, index) => {
+      const lineText = lineUnits.map((unit) => unit.cleanText).join("");
+      const lineWeight = lineUnits.reduce((total, unit, unitIndex) => {
+        return total + unit.width + (unitIndex > 0 ? estimateCharacterWidth(" ") : 0);
+      }, 0);
+
+      const isEdgeLine = index === 0 || index === lines.length - 1;
+
+      if (lineWeight < 2.8) {
+        score -= isEdgeLine ? 5 : 14;
+      } else if (lineWeight < 4.7) {
+        score -= isEdgeLine ? 1 : 5;
+      }
+
+      if (longest && lineText.toLowerCase().includes(longest) && layoutAnalysis.longestWordLength >= 9) {
+        const extraLetters = Math.max(0, lineText.length - layoutAnalysis.longestWordLength);
+        const extraRatio = extraLetters / Math.max(1, layoutAnalysis.longestWordLength);
+
+        if (extraRatio <= .7) score += 9;
+        else if (extraRatio <= 1.1) score += 3;
+        else score -= 5;
+      }
+    });
+
+    return score;
+  }
+
 
   function getDesiredLineRange(textLength, isDesktopStage, layoutAnalysis = {}, stageWidth = 0) {
     const isMobileStage = stageWidth < 640;
