@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.19",
+      debugBadge: "SS 5.20",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -3451,6 +3451,18 @@
       return;
     }
 
+    if (round.kind === "archaeology") {
+      updateProgress(1);
+
+      if (stageEl) {
+        stageEl.classList.add("scrub-round-complete");
+        stageEl.classList.add("scrub-archaeology-found");
+      }
+
+      showArchaeologyFoundReward();
+      return;
+    }
+
     if (round.kind === "mower") {
       animateMowerCoverFade(finishRound);
       return;
@@ -3563,6 +3575,40 @@
       renderRound();
     };
   }
+
+  function showArchaeologyFoundReward() {
+    const layer = document.getElementById("scrubRewardLayer");
+    if (!layer) return;
+
+    const score = archaeologyScore ?? 100;
+    const bible = document.getElementById("scrubBibleTarget");
+    const bibleSrc = bible?.tagName === "IMG" ? bible.getAttribute("src") : "";
+
+    const bibleHtml = bibleSrc
+      ? `<img class="scrub-archaeology-found-bible" src="${escapeHtml(bibleSrc)}" alt="Bible">`
+      : `<div class="scrub-archaeology-found-bible scrub-archaeology-found-bible-fallback" aria-hidden="true">📖</div>`;
+
+    layer.innerHTML = `
+      <button class="scrub-archaeology-found-panel no-zoom" id="scrubArchaeologyFoundPanel" type="button">
+        <div class="scrub-archaeology-found-card">
+          ${bibleHtml}
+          <div class="scrub-archaeology-found-title">You found the Bible!</div>
+          <div class="scrub-archaeology-found-score">Dig Score: ${escapeHtml(score)}</div>
+          <div class="scrub-archaeology-found-continue">Tap to Continue</div>
+        </div>
+      </button>
+    `;
+
+    const panel = document.getElementById("scrubArchaeologyFoundPanel");
+    if (panel) {
+      panel.onclick = () => {
+        renderEndScreen();
+      };
+    }
+
+    launchSparkles();
+  }
+
 
   function showRoundReward({ title, icon, message, primaryText, onPrimary }) {
     const layer = document.getElementById("scrubRewardLayer");
