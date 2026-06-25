@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.39",
+      debugBadge: "SS 5.40",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -768,7 +768,7 @@
     debug.classList.add("is-visible");
 
     const rows = [
-      `SS 5.38 FIT`,
+      `SS 5.40 FIT`,
       `chars: ${info.textLength ?? "?"}`,
       `units: ${info.unitCount ?? "?"}`,
       `range: ${info.minLines ?? "?"}-${info.maxLines ?? "?"}`,
@@ -2402,6 +2402,9 @@
       cancelAnimationFrame(glowTrailAnimationFrame);
       glowTrailAnimationFrame = null;
     }
+
+    const roundId = roundConfig()?.id;
+    if (roundId !== "glow" && roundId !== "rainbow") return;
 
     scheduleGlowMaskApply();
   }
