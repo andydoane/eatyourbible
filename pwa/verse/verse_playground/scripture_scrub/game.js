@@ -42,6 +42,46 @@
     "#7f66c6"
   ];
 
+  const SOUND_BASE_PATH = "./scripture_scrub_sounds/";
+  const SILENCE_AUDIO_PATH = "../../verse_audio/silence.mp3";
+
+  const SOUND_FILES = {
+    bite1: `${SOUND_BASE_PATH}scripture_scrub_bite_1.mp3`,
+    bite2: `${SOUND_BASE_PATH}scripture_scrub_bite_2.mp3`,
+    bite3: `${SOUND_BASE_PATH}scripture_scrub_bite_3.mp3`,
+    chalk: `${SOUND_BASE_PATH}scripture_scrub_chalk.mp3`,
+    complete: `${SOUND_BASE_PATH}scripture_scrub_complete.mp3`,
+    dig: `${SOUND_BASE_PATH}scripture_scrub_dig.mp3`,
+    glow: `${SOUND_BASE_PATH}scripture_scrub_glow.mp3`,
+    leaves: `${SOUND_BASE_PATH}scripture_scrub_leaves.mp3`,
+    mower: `${SOUND_BASE_PATH}scripture_scrub_mower.mp3`,
+    peel: `${SOUND_BASE_PATH}scripture_scrub_peel.mp3`,
+    rainbow: `${SOUND_BASE_PATH}scripture_scrub_rainbow.mp3`,
+    splat: `${SOUND_BASE_PATH}scripture_scrub_splat.mp3`,
+    squeak: `${SOUND_BASE_PATH}scripture_scrub_squeak.mp3`,
+    popup: `${SOUND_BASE_PATH}scripture_scrub_popup.mp3`
+  };
+
+  const SOUND_TUNING = {
+    masterVolume: 0.85,
+    progressStepPercent: 5,
+    volumes: {
+      bite: 0.72,
+      chalk: 0.62,
+      dig: 0.64,
+      glow: 0.62,
+      leaves: 0.48,
+      mower: 0.48,
+      peel: 0.62,
+      rainbow: 0.62,
+      splat: 0.62,
+      squeak: 0.58,
+      popup: 0.56,
+      progressTone: 0.13,
+      completionArpeggio: 0.18
+    }
+  };
+
   const DEFAULT_CANVAS_COMPLETION_THRESHOLD = 0.95;
   const DEFAULT_BRUSH_RADIUS = 38;
   const RESPONSIVE_BRUSH_MIN = 34;
@@ -332,6 +372,17 @@
   let mowerAnimationFrame = null;
   let resizeHandler = null;
 
+  let audioCtx = null;
+  let audioUnlocked = false;
+  let audioUnlockStarted = false;
+  let silenceAudio = null;
+  const soundBuffers = new Map();
+  let lastCookieBiteSound = null;
+  let roundIntroSoundPlayedFor = null;
+  let lastProgressToneStep = 0;
+  let mowerSoundAudio = null;
+  let mowerSoundFrame = null;
+
   const parsedRef = window.VerseGameShell.parseReferenceParts(
     ctx.verseRef,
     ctx.translation,
@@ -383,6 +434,285 @@
       RESPONSIVE_BRUSH_MAX
     );
   }
+
+  function getAudioContext() {
+    if (audioCtx) return audioCtx;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    audioCtx = new AudioContextClass();
+    return audioCtx;
+  }
+
+  async function unlockAudio() {
+    if (audioUnlocked || audioUnlockStarted) return;
+    audioUnlockStarted = true;
+
+    try {
+      if (!silenceAudio) {
+        silenceAudio = new Audio(SILENCE_AUDIO_PATH);
+        silenceAudio.preload = "auto";
+        silenceAudio.volume = 0;
+      }
+
+      silenceAudio.currentTime = 0;
+      await silenceAudio.play().catch(() => { });
+
+      const ctx = getAudioContext();
+      if (ctx?.state === "suspended") {
+        await ctx.resume().catch(() => { });
+      }
+
+      if (ctx) {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001;
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.03);
+      }
+
+      audioUnlocked = true;
+      preloadSoundBuffers();
+    } catch (err) {
+      console.warn("Scripture Scrub: audio unlock failed", err);
+    } finally {
+      audioUnlockStarted = false;
+    }
+  }
+
+  function soundVolume(key) {
+    const volume = SOUND_TUNING.volumes[key] ?? 0.5;
+    return clamp(volume * SOUND_TUNING.masterVolume, 0, 1);
+  }
+
+  async function loadSoundBuffer(key) {
+    if (soundBuffers.has(key)) return soundBuffers.get(key);
+
+    const url = SOUND_FILES[key];
+    const ctx = getAudioContext();
+    if (!url || !ctx) return null;
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arrayBuffer = await res.arrayBuffer();
+      const buffer = await ctx.decodeAudioData(arrayBuffer);
+      soundBuffers.set(key, buffer);
+      return buffer;
+    } catch (err) {
+      console.warn("Scripture Scrub: could not load sound", key, err);
+      soundBuffers.set(key, null);
+      return null;
+    }
+  }
+
+  function preloadSoundBuffers() {
+    Object.keys(SOUND_FILES).forEach((key) => {
+      loadSoundBuffer(key);
+    });
+  }
+
+  async function playGameSound(key, volumeKey = key) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    if (ctx.state === "suspended") {
+      await ctx.resume().catch(() => { });
+    }
+
+    const buffer = await loadSoundBuffer(key);
+    if (!buffer || muted) return;
+
+    try {
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      source.buffer = buffer;
+      gain.gain.value = soundVolume(volumeKey);
+
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+    } catch (err) {
+      console.warn("Scripture Scrub: could not play sound", key, err);
+    }
+  }
+
+  function playRandomCookieBiteSound() {
+    const choices = ["bite1", "bite2", "bite3"].filter((key) => key !== lastCookieBiteSound);
+    const key = choices[Math.floor(Math.random() * choices.length)] || "bite1";
+    lastCookieBiteSound = key;
+    playGameSound(key, "bite");
+  }
+
+  function getRoundIntroSoundKey(round) {
+    if (!round) return "popup";
+
+    if (round.id === "mud" || round.id === "paint") return "splat";
+    if (round.id === "fog") return "squeak";
+    if (round.id === "chalkboard") return "chalk";
+    if (round.id === "glow") return "glow";
+    if (round.id === "rainbow") return "rainbow";
+    if (round.id === "archaeology") return "dig";
+
+    return "popup";
+  }
+
+  function playRoundIntroSoundOnce(round) {
+    const roundKey = `${currentRoundIndex}:${round?.id || ""}`;
+    if (roundIntroSoundPlayedFor === roundKey) return;
+
+    roundIntroSoundPlayedFor = roundKey;
+    playGameSound(getRoundIntroSoundKey(round));
+  }
+
+  function isProgressToneRound(round) {
+    return round?.id === "mud"
+      || round?.id === "paint"
+      || round?.id === "chalkboard"
+      || round?.id === "glow"
+      || round?.id === "rainbow";
+  }
+
+  function resetProgressToneTracking() {
+    lastProgressToneStep = 0;
+  }
+
+  function playProgressToneForRatio(round, ratio) {
+    if (!isProgressToneRound(round) || muted) return;
+
+    const stepPercent = SOUND_TUNING.progressStepPercent || 5;
+    const pct = clamp(ratio * 100, 0, 100);
+    const step = Math.floor(pct / stepPercent);
+
+    if (step <= lastProgressToneStep || step >= Math.floor(100 / stepPercent)) return;
+
+    lastProgressToneStep = step;
+    playProgressToneStep(step);
+  }
+
+  function playProgressToneStep(step) {
+    const scale = [
+      261.63, // C4
+      293.66, // D4
+      329.63, // E4
+      392.00, // G4
+      440.00, // A4
+      523.25, // C5
+      587.33, // D5
+      659.25, // E5
+      783.99, // G5
+      880.00  // A5
+    ];
+
+    const frequency = scale[(step - 1) % scale.length];
+    playToneFrequency(frequency, 0.09, soundVolume("progressTone"));
+  }
+
+  function playCompletionArpeggio() {
+    if (muted) return;
+
+    const notes = [392.00, 523.25, 659.25, 783.99]; // G4 → C5 → E5 → G5
+    notes.forEach((frequency, index) => {
+      setTimeout(() => {
+        playToneFrequency(frequency, 0.13, soundVolume("completionArpeggio"));
+      }, index * 95);
+    });
+  }
+
+  function playToneFrequency(frequency, duration, volume) {
+    const ctx = getAudioContext();
+    if (!ctx || muted) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => { });
+    }
+
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, now);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.03);
+  }
+
+  function startMowerSound(duration) {
+    stopMowerSound();
+
+    if (muted || !SOUND_FILES.mower) return;
+
+    try {
+      mowerSoundAudio = new Audio(SOUND_FILES.mower);
+      mowerSoundAudio.loop = true;
+      mowerSoundAudio.volume = 0;
+      mowerSoundAudio.currentTime = 0;
+
+      const startedAt = performance.now();
+      const maxVolume = soundVolume("mower");
+
+      const updateMowerVolume = () => {
+        if (!mowerSoundAudio) return;
+
+        const elapsed = performance.now() - startedAt;
+        const progress = clamp(elapsed / Math.max(1, duration), 0, 1);
+
+        let envelope = 1;
+        if (progress < 0.18) {
+          envelope = progress / 0.18;
+        } else if (progress > 0.72) {
+          envelope = Math.max(0, (1 - progress) / 0.28);
+        }
+
+        mowerSoundAudio.volume = clamp(maxVolume * envelope, 0, maxVolume);
+
+        if (progress < 1 && mowerSoundAudio) {
+          mowerSoundFrame = requestAnimationFrame(updateMowerVolume);
+          return;
+        }
+
+        stopMowerSound();
+      };
+
+      mowerSoundAudio.play().then(() => {
+        updateMowerVolume();
+      }).catch((err) => {
+        console.warn("Scripture Scrub: mower sound could not start", err);
+        stopMowerSound();
+      });
+    } catch (err) {
+      console.warn("Scripture Scrub: mower sound failed", err);
+      stopMowerSound();
+    }
+  }
+
+  function stopMowerSound() {
+    if (mowerSoundFrame) {
+      cancelAnimationFrame(mowerSoundFrame);
+      mowerSoundFrame = null;
+    }
+
+    if (mowerSoundAudio) {
+      mowerSoundAudio.pause();
+      mowerSoundAudio.currentTime = 0;
+      mowerSoundAudio = null;
+    }
+  }
+
 
   function dismissInstructionChip() {
     const root = document.getElementById("scrubGame");
@@ -507,7 +837,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.42",
+      debugBadge: "SS 5.43",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -516,7 +846,10 @@
       backLabel: "Back to Playground",
       theme: GAME_THEME,
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: beginScrubRun
+      onStart: () => {
+        unlockAudio();
+        beginScrubRun();
+      }
     });
 
     wireTitleSpongeDebugSkip();
@@ -600,6 +933,8 @@
     objectTotal = 0;
     objectCleared = 0;
     menuOpen = false;
+    roundIntroSoundPlayedFor = null;
+    resetProgressToneTracking();
 
     const round = roundConfig();
 
@@ -657,7 +992,10 @@
       closeHelpText: "Close",
       backHelpText: "Back",
       isMuted: () => muted,
-      onMuteToggle: () => { muted = !muted; },
+      onMuteToggle: () => {
+        muted = !muted;
+        if (muted) stopMowerSound();
+      },
       onHowToPlay: () => {
         const menu = document.getElementById(MENU_OVERLAY_ID);
 
@@ -1563,6 +1901,8 @@
     const bibleLayer = document.getElementById("scrubBibleLayer");
     if (objectLayer) objectLayer.innerHTML = "";
     if (bibleLayer) bibleLayer.innerHTML = "";
+
+    playRoundIntroSoundOnce(round);
 
     if (round.kind === "canvas") {
       drawCoverTexture(round.texture, rect.width, rect.height);
@@ -2633,6 +2973,9 @@
     const rotation = fromTop ? 180 : 0;
     const duration = 1250;
 
+    unlockAudio();
+    startMowerSound(duration);
+
     mower.style.top = `${startY}px`;
     mower.style.setProperty("--scrub-mower-rot", `${rotation}deg`);
 
@@ -2703,6 +3046,7 @@
 
   function finishMowerPass({ mower, x, width, stageHeight, round }) {
     mowerAnimationFrame = null;
+    stopMowerSound();
 
     const rectX = x - width / 2;
     const rectY = 0;
@@ -3030,6 +3374,8 @@
     const fill = document.getElementById("scrubProgressFill");
     if (label) label.textContent = `${pct}%`;
     if (fill) fill.style.width = `${pct}%`;
+
+    playProgressToneForRatio(roundConfig(), ratio);
   }
 
   function getCoverObjectSize(kind, stageWidth) {
@@ -3158,6 +3504,7 @@
     const leaves = Array.from(document.querySelectorAll(".scrub-leaf:not(.is-raked)"));
     const stageWidth = stageEl?.getBoundingClientRect?.().width || 420;
     const hitRadius = getCoverObjectSize("leaf", stageWidth) * .54;
+    let leafSoundPlayed = false;
 
     for (const leaf of leaves) {
       const rect = leaf.getBoundingClientRect();
@@ -3165,6 +3512,12 @@
       const cy = rect.top + rect.height / 2;
 
       if (Math.hypot(cx - clientX, cy - clientY) <= hitRadius) {
+        if (!leafSoundPlayed) {
+          unlockAudio();
+          playGameSound("leaves");
+          leafSoundPlayed = true;
+        }
+
         leaf.classList.add("is-raked");
         leaf.dataset.cleared = "1";
         objectCleared += 1;
@@ -3481,6 +3834,9 @@
     const nextBites = currentBites + 1;
     const rect = cookie.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
+
+    unlockAudio();
+    playRandomCookieBiteSound();
 
     launchCookieCrumbs(
       rect.left + rect.width / 2,
@@ -3918,6 +4274,9 @@
   function peelSticker(btn) {
     if (!btn || btn.classList.contains("is-peeled") || completionLocked) return;
 
+    unlockAudio();
+    playGameSound("peel");
+
     STICKER_PEEL_STYLES.forEach((styleName) => {
       btn.classList.remove(styleName);
     });
@@ -4040,6 +4399,8 @@
     if (completionLocked) return;
     completionLocked = true;
     pointerDown = false;
+
+    playCompletionArpeggio();
 
     const round = roundConfig();
 
@@ -4295,6 +4656,8 @@
   }
 
   function cleanupRound() {
+    stopMowerSound();
+
     if (coverageCheckTimer) {
       clearTimeout(coverageCheckTimer);
       coverageCheckTimer = null;
