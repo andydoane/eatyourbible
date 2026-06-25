@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.35 FIT",
+      debugBadge: "SS 5.36",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -768,7 +768,7 @@
     debug.classList.add("is-visible");
 
     const rows = [
-      `SS 5.34 FIT`,
+      `SS 5.36 FIT`,
       `chars: ${info.textLength ?? "?"}`,
       `units: ${info.unitCount ?? "?"}`,
       `range: ${info.minLines ?? "?"}-${info.maxLines ?? "?"}`,
@@ -780,6 +780,7 @@
       `safe: ${info.safeWidth ?? "?"}x${info.safeHeight ?? "?"}`,
       `lines: ${info.lines ?? "?"}`,
       `font: ${info.fontSize ?? "?"}`,
+      `lh: ${info.lineHeight ?? "?"}`,
       `text: ${info.textWidth ?? "?"}x${info.textHeight ?? "?"}`,
       `over: ${info.overflowWidth ?? "?"}x${info.overflowHeight ?? "?"}`,
       `fit: ${info.fitArea ?? "?"}`
@@ -1010,6 +1011,63 @@
     };
   }
 
+  function expandLineHeightIntoVerticalRoom(fit, text, safeWidth, safeHeight, isWideStage) {
+    if (!fit || !text || !safeWidth || !safeHeight) return fit;
+
+    const widthFill = fit.width / safeWidth;
+    const heightFill = fit.height / safeHeight;
+
+    // Only spread lines when the text is basically width-bound
+    // and still has meaningful vertical room left.
+    if (widthFill < .96 || heightFill > .94) return fit;
+
+    const startLineHeight = Number(fit.lineHeight) || 1;
+    const maxLineHeight = isWideStage ? 1.32 : 1.24;
+
+    if (startLineHeight >= maxLineHeight) return fit;
+
+    let low = startLineHeight;
+    let high = maxLineHeight;
+    let bestLineHeight = startLineHeight;
+    let bestMetrics = {
+      width: fit.width,
+      height: fit.height
+    };
+
+    text.style.fontSize = `${fit.fontSize}px`;
+    text.style.width = "auto";
+    text.style.maxWidth = "100%";
+    text.style.marginLeft = "auto";
+    text.style.marginRight = "auto";
+
+    for (let i = 0; i < 14; i += 1) {
+      const mid = (low + high) / 2;
+      text.style.lineHeight = String(mid);
+
+      const metrics = getLockedVerseMetrics(text);
+
+      if (metrics.width <= safeWidth + 2 && metrics.height <= safeHeight + 2) {
+        bestLineHeight = mid;
+        bestMetrics = metrics;
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    const overflowWidth = Math.max(0, Math.round(bestMetrics.width - safeWidth));
+    const overflowHeight = Math.max(0, Math.round(bestMetrics.height - safeHeight));
+
+    return {
+      ...fit,
+      lineHeight: Math.floor(bestLineHeight * 100) / 100,
+      width: Math.round(bestMetrics.width),
+      height: Math.round(bestMetrics.height),
+      overflowWidth,
+      overflowHeight
+    };
+  }
+
   function renderLockedVerseHtml(lines) {
     return lines.map((lineUnits) => {
       const html = lineUnits.map((unit) => unit.html).join("&nbsp;");
@@ -1224,6 +1282,7 @@
           safeHeight,
           lines: "none",
           fontSize: "none",
+          lineHeight: "none",
           textWidth: "none",
           textHeight: "none",
           overflowWidth: "none",
@@ -1234,6 +1293,15 @@
       }
 
       applyLockedVerseHtml(best.lines);
+
+      text.style.fontSize = `${best.fontSize}px`;
+      text.style.lineHeight = String(best.lineHeight);
+      text.style.maxWidth = "100%";
+      text.style.width = "auto";
+      text.style.marginLeft = "auto";
+      text.style.marginRight = "auto";
+
+      best = expandLineHeightIntoVerticalRoom(best, text, safeWidth, safeHeight, isWideStage);
 
       text.style.fontSize = `${best.fontSize}px`;
       text.style.lineHeight = String(best.lineHeight);
@@ -1264,6 +1332,7 @@
         safeHeight,
         lines: best.lines.length,
         fontSize: best.fontSize,
+        lineHeight: best.lineHeight,
         textWidth: best.width,
         textHeight: best.height,
         overflowWidth: best.overflowWidth,
