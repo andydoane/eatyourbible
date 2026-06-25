@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.23",
+      debugBadge: "SS 5.24",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -767,11 +767,19 @@
       const isDesktopStage = stageWidth >= 700;
 
       const minSize = textLength > 190 ? 13 : textLength > 140 ? 15 : 17;
-      const maxSize = textLength < 65 ? 76 : textLength < 115 ? 62 : textLength < 180 ? 50 : 42;
+      const isWideStage = stageWidth >= 640;
+
+      let maxSize = textLength < 65 ? 76 : textLength < 115 ? 62 : textLength < 180 ? 50 : 42;
+
+      if (isWideStage) {
+        maxSize += textLength < 65 ? 14 : textLength < 115 ? 10 : textLength < 180 ? 6 : 4;
+      }
 
       const desiredLines = getDesiredLineRange(textLength, isDesktopStage);
       const widthCandidates = getVerseWidthCandidates(stageWidth, textLength);
-      const lineHeights = [1.04, 1.0, .96, .92, .88];
+      const lineHeights = isWideStage
+        ? [1.32, 1.24, 1.16, 1.10, 1.04, 1.0, .96, .92, .88]
+        : [1.04, 1.0, .96, .92, .88];
 
       let best = null;
 
@@ -851,7 +859,8 @@
   }
 
   function getVerseWidthCandidates(stageWidth, textLength) {
-    const max = Math.min(stageWidth - 36, 760);
+    const maxCap = stageWidth >= 700 ? 820 : 760;
+    const max = Math.min(stageWidth - 36, maxCap);
     const desktopLong = stageWidth >= 700 && textLength >= 150;
     const ratios = desktopLong
       ? [.86, .80, .74, .68, .62, .56]
@@ -916,8 +925,11 @@
     };
   }
 
-  function scoreVerseFit({ metrics, desiredLines, textLength, fontSize }) {
-    const heightTarget = textLength >= 160 ? .80 : .74;
+  function scoreVerseFit({ metrics, desiredLines, textLength, fontSize, stageWidth }) {
+    const isWideStage = Number(stageWidth) >= 640;
+    const heightTarget = isWideStage
+      ? (textLength >= 160 ? .88 : .84)
+      : (textLength >= 160 ? .80 : .74);
     const widthTarget = textLength >= 160 ? .78 : .82;
     const aspectTarget = textLength >= 160 ? 1.35 : 1.75;
 

@@ -216,7 +216,9 @@ body{
   line-height: 1.02;
   text-align: center;
   text-wrap: balance;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 .scrub-token-word{
