@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.34",
+      debugBadge: "SS 5.35 FIT",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -867,55 +867,38 @@
     if (!n || lineCount < 1 || lineCount > n) return [];
 
     const lineHeightUnit = 1.04;
+    const totalWeight = getLineWeight(units, 0, n);
+    const averageLineWidth = totalWeight / lineCount;
+    const aspectTargetWidth = Math.max(.1, areaAspect * lineCount * lineHeightUnit);
     const candidates = [];
-    const beamLimit = 140;
+    const seen = new Set();
 
-    let states = [{
-      nextIndex: 0,
-      lines: [],
-      weights: []
-    }];
+    const targetWidths = [
+      averageLineWidth,
+      aspectTargetWidth,
+      (averageLineWidth + aspectTargetWidth) / 2,
+      averageLineWidth * .86,
+      averageLineWidth * 1.14,
+      aspectTargetWidth * .86,
+      aspectTargetWidth * 1.14
+    ]
+      .filter((value) => Number.isFinite(value) && value > 0)
+      .map((value) => Math.round(value * 100) / 100)
+      .filter((value, index, list) => list.indexOf(value) === index);
 
-    for (let lineIndex = 0; lineIndex < lineCount; lineIndex += 1) {
-      const nextStates = [];
-      const linesLeftAfterThis = lineCount - lineIndex - 1;
+    for (const targetWidth of targetWidths) {
+      const lines = buildBestWeightedLinePlanForTarget(units, lineCount, targetWidth);
+      if (!lines || !isValidWeightedLinePlan(lines)) continue;
 
-      for (const state of states) {
-        const minEnd = state.nextIndex + 1;
-        const maxEnd = n - linesLeftAfterThis;
+      const key = getLinePlanKey(lines);
+      if (seen.has(key)) continue;
+      seen.add(key);
 
-        for (let end = minEnd; end <= maxEnd; end += 1) {
-          const lineUnits = units.slice(state.nextIndex, end);
-          const weight = getLineWeight(units, state.nextIndex, end);
-
-          nextStates.push({
-            nextIndex: end,
-            lines: [...state.lines, lineUnits],
-            weights: [...state.weights, weight]
-          });
-        }
-      }
-
-      nextStates.sort((a, b) => {
-        const aDeviation = getPartialAspectDeviation(a.weights, lineCount, lineHeightUnit, areaAspect);
-        const bDeviation = getPartialAspectDeviation(b.weights, lineCount, lineHeightUnit, areaAspect);
-        return aDeviation - bDeviation;
-      });
-
-      states = nextStates.slice(0, beamLimit);
-    }
-
-    for (const state of states) {
-      if (state.nextIndex !== n) continue;
-
-      const widest = Math.max(...state.weights);
-      const estimatedAspect = widest / Math.max(.1, lineCount * lineHeightUnit);
-      const aspectDeviation = Math.abs(Math.log(estimatedAspect / Math.max(.1, areaAspect)));
-
+      const scored = scoreWeightedLinePlanAspect(lines, areaAspect, lineHeightUnit);
       candidates.push({
-        lines: state.lines,
-        aspectDeviation,
-        estimatedAspect
+        lines,
+        aspectDeviation: scored.aspectDeviation,
+        estimatedAspect: scored.estimatedAspect
       });
     }
 
@@ -923,12 +906,83 @@
     return candidates.slice(0, 8);
   }
 
-  function getPartialAspectDeviation(weights, finalLineCount, lineHeightUnit, areaAspect) {
-    if (!weights.length) return Infinity;
+  function buildBestWeightedLinePlanForTarget(units, lineCount, targetWidth) {
+    const n = units.length;
+    const dp = Array.from({ length: lineCount + 1 }, () => Array(n + 1).fill(Infinity));
+    const prev = Array.from({ length: lineCount + 1 }, () => Array(n + 1).fill(-1));
 
-    const widest = Math.max(...weights);
-    const estimatedAspect = widest / Math.max(.1, finalLineCount * lineHeightUnit);
-    return Math.abs(Math.log(estimatedAspect / Math.max(.1, areaAspect)));
+    dp[0][0] = 0;
+
+    for (let line = 1; line <= lineCount; line += 1) {
+      for (let end = line; end <= n; end += 1) {
+        const linesLeft = lineCount - line;
+        if (n - end < linesLeft) continue;
+
+        for (let start = line - 1; start < end; start += 1) {
+          if (!Number.isFinite(dp[line - 1][start])) continue;
+
+          const lineUnits = units.slice(start, end);
+          if (getVisibleLineCharacterCount(lineUnits) < 5) continue;
+
+          const width = getLineWeight(units, start, end);
+          const ratio = width / Math.max(.1, targetWidth);
+          const widthCost = Math.pow(Math.log(Math.max(.05, ratio)), 2);
+          const cost = dp[line - 1][start] + widthCost;
+
+          if (cost < dp[line][end]) {
+            dp[line][end] = cost;
+            prev[line][end] = start;
+          }
+        }
+      }
+    }
+
+    if (!Number.isFinite(dp[lineCount][n])) return null;
+
+    const lines = [];
+    let end = n;
+
+    for (let line = lineCount; line >= 1; line -= 1) {
+      const start = prev[line][end];
+      if (start < 0) return null;
+
+      lines.unshift(units.slice(start, end));
+      end = start;
+    }
+
+    return lines;
+  }
+
+  function isValidWeightedLinePlan(lines) {
+    return Array.isArray(lines)
+      && lines.length > 0
+      && lines.every((lineUnits) => getVisibleLineCharacterCount(lineUnits) >= 5);
+  }
+
+  function getEstimatedLineUnitsWidth(lineUnits) {
+    if (!Array.isArray(lineUnits)) return 0;
+
+    return lineUnits.reduce((total, unit, index) => {
+      return total + (unit?.width || 0) + (index > 0 ? estimateCharacterWidth(" ") : 0);
+    }, 0);
+  }
+
+  function scoreWeightedLinePlanAspect(lines, areaAspect, lineHeightUnit = 1.04) {
+    const widths = lines.map((lineUnits) => getEstimatedLineUnitsWidth(lineUnits));
+    const widest = Math.max(...widths);
+    const estimatedAspect = widest / Math.max(.1, lines.length * lineHeightUnit);
+    const aspectDeviation = Math.abs(Math.log(estimatedAspect / Math.max(.1, areaAspect)));
+
+    return {
+      estimatedAspect,
+      aspectDeviation
+    };
+  }
+
+  function getLinePlanKey(lines) {
+    return lines
+      .map((lineUnits) => lineUnits.map((unit) => unit.text || "").join(" "))
+      .join("\n");
   }
 
   function getLockedVerseMetrics(text) {
