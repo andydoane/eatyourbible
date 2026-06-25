@@ -466,7 +466,9 @@
       if (!silenceAudio) {
         silenceAudio = new Audio(SILENCE_AUDIO_PATH);
         silenceAudio.preload = "auto";
-        silenceAudio.volume = 0;
+        silenceAudio.loop = false;
+        silenceAudio.volume = 0.001;
+        silenceAudio.setAttribute("playsinline", "true");
       }
 
       if (needsResume) {
@@ -481,15 +483,16 @@
       if (ctx && needsResume) {
         const oscillator = ctx.createOscillator();
         const gain = ctx.createGain();
-        gain.gain.value = 0.0001;
+        const now = ctx.currentTime;
+
+        gain.gain.setValueAtTime(0.0001, now);
         oscillator.connect(gain);
         gain.connect(ctx.destination);
-        oscillator.start();
-        oscillator.stop(ctx.currentTime + 0.03);
+        oscillator.start(now);
+        oscillator.stop(now + 0.03);
       }
 
       audioUnlocked = true;
-      preloadSoundBuffers();
     } catch (err) {
       console.warn("Scripture Scrub: audio unlock failed", err);
     } finally {
@@ -532,6 +535,8 @@
   async function playGameSound(key, volumeKey = key) {
     if (muted) return;
 
+    await unlockAudio();
+
     const ctx = getAudioContext();
     if (!ctx) return;
 
@@ -540,7 +545,7 @@
     }
 
     const buffer = await loadSoundBuffer(key);
-    if (!buffer || muted) return;
+    if (!buffer || muted || ctx.state === "suspended") return;
 
     try {
       const source = ctx.createBufferSource();
@@ -595,7 +600,10 @@
     if (roundIntroSoundPlayedFor === roundKey) return;
 
     roundIntroSoundPlayedFor = roundKey;
-    playGameSound(getRoundIntroSoundKey(round));
+
+    setTimeout(() => {
+      playGameSound(getRoundIntroSoundKey(round));
+    }, 80);
   }
 
   function isProgressToneRound(round) {
@@ -865,7 +873,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.46",
+      debugBadge: "SS 5.47",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -877,9 +885,8 @@
         playUiTapSound();
         window.VerseGameBridge.exitGame();
       },
-      onStart: () => {
-        unlockAudio();
-        playUiTapSound();
+      onStart: async () => {
+        await unlockAudio();
         beginScrubRun();
       }
     });
@@ -4586,8 +4593,8 @@
     const btn = document.getElementById("scrubNextRoundBtn");
     if (!btn) return;
 
-    btn.onclick = () => {
-      unlockAudio();
+    btn.onclick = async () => {
+      await unlockAudio();
       playUiTapSound();
 
       if (isFinalRound) {
