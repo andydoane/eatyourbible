@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.22",
+      debugBadge: "SS 5.23",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -3656,20 +3656,12 @@
 
   function renderEndScreen() {
     cleanupRound();
-    const score = archaeologyScore ?? 100;
-    const scoreLine = score >= 90
-      ? "Amazing careful digging!"
-      : score >= 75
-        ? "Great explorer digging!"
-        : score >= 55
-          ? "Good dig — you found it!"
-          : "You found the Bible!";
 
     window.VerseGameShell.renderCompleteScreen({
       app,
       title: "Great Scrubbing!",
       icon: "🧽",
-      statsHtml: `<div>${escapeHtml(scoreLine)}</div><div>Careful Dig Score: ${escapeHtml(score)}</div>`,
+      statsHtml: "",
       playAgainText: "Try Again",
       moreGamesText: "More Activities",
       backLabel: "Back to Playground",
