@@ -286,6 +286,10 @@ body{
 
 .scrub-round-cookies .scrub-object-layer {
   pointer-events: auto;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .scrub-round-stickers .scrub-scripture-card {
@@ -1012,6 +1016,11 @@ body{
   cursor: pointer;
   pointer-events: auto;
   touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
   filter: drop-shadow(0 7px 5px rgba(70, 38, 18, .22));
   will-change: transform, opacity;
 }
@@ -1026,7 +1035,10 @@ body{
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+  -webkit-user-select: none;
   user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
 }
 
 .scrub-cookie-fallback {

@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.15",
+      debugBadge: "SS 5.16",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -2578,96 +2578,64 @@
     const safeCount = Math.max(1, Number(count) || 1);
     const cookieSize = Math.max(1, Number(size) || 160);
 
-    // Random candidate + farthest-point selection:
-    // keeps coverage even without visible grid rows.
-    const minX = -cookieSize * .24;
-    const maxX = width + cookieSize * .24;
-    const minY = Math.max(cookieSize * .08, height * .055);
-    const maxY = height + cookieSize * .18;
+    // Loose honeycomb: enough structure to cover the verse, enough jitter/overlap
+    // to avoid visible rows or a too-perfect scatter.
+    const offscreen = cookieSize * .10;
+    const spacingX = cookieSize * .64;
+    const spacingY = cookieSize * .58;
+    const minX = -offscreen;
+    const maxX = width + offscreen;
+    const minY = Math.max(cookieSize * .12, height * .075);
+    const maxY = height + offscreen;
 
-    const candidates = [];
-    const candidateCount = Math.max(180, safeCount * 32);
+    const cols = Math.max(4, Math.ceil((width + offscreen * 2) / spacingX) + 1);
+    const rows = Math.max(5, Math.ceil((maxY - minY) / spacingY) + 1);
+    const buckets = [];
 
-    for (let i = 0; i < candidateCount; i += 1) {
-      let x = minX + Math.random() * (maxX - minX);
-      let y = minY + Math.random() * (maxY - minY);
+    for (let row = 0; row < rows; row += 1) {
+      const rowItems = [];
+      const rowOffset = row % 2 === 0 ? 0 : spacingX * .5;
+      const rowWobble = (Math.random() - .5) * spacingX * .30;
 
-      // Add occasional edge-biased candidates so corners/sides stay covered.
-      const edgeRoll = Math.random();
-      if (edgeRoll < .18) {
-        x = Math.random() < .5
-          ? minX + Math.random() * cookieSize * .36
-          : maxX - Math.random() * cookieSize * .36;
-      } else if (edgeRoll < .32) {
-        y = Math.random() < .5
-          ? minY + Math.random() * cookieSize * .40
-          : maxY - Math.random() * cookieSize * .40;
+      for (let col = 0; col < cols; col += 1) {
+        const x = minX + col * spacingX + rowOffset + rowWobble + (Math.random() - .5) * spacingX * .46;
+        const y = minY + row * spacingY + (Math.random() - .5) * spacingY * .62;
+
+        rowItems.push({
+          x: clamp(x, -cookieSize * .12, width + cookieSize * .12),
+          y: clamp(y, cookieSize * .10, height + cookieSize * .12),
+          row
+        });
       }
 
-      candidates.push({
-        x: clamp(x, minX, maxX),
-        y: clamp(y, minY, maxY)
-      });
+      buckets.push(shuffle(rowItems));
     }
 
     const positions = [];
+    let bucketIndex = Math.floor(Math.random() * buckets.length);
 
-    while (positions.length < safeCount && candidates.length) {
-      let bestIndex = 0;
-      let bestScore = -Infinity;
+    while (positions.length < safeCount && buckets.some((bucket) => bucket.length)) {
+      const bucket = buckets[bucketIndex % buckets.length];
 
-      candidates.forEach((candidate, index) => {
-        let nearest = Infinity;
+      if (bucket.length) {
+        const candidate = bucket.shift();
+        const nearest = positions.reduce((best, position) => {
+          return Math.min(best, Math.hypot(candidate.x - position.x, candidate.y - position.y));
+        }, Infinity);
 
-        if (!positions.length) {
-          const centerDistance = Math.hypot(candidate.x - width / 2, candidate.y - height / 2);
-          nearest = centerDistance * .35 + Math.random() * cookieSize;
-        } else {
-          positions.forEach((position) => {
-            nearest = Math.min(
-              nearest,
-              Math.hypot(candidate.x - position.x, candidate.y - position.y)
-            );
-          });
-        }
-
-        const edgeBonus =
-          candidate.x < cookieSize * .08 ||
-            candidate.x > width - cookieSize * .08 ||
-            candidate.y < cookieSize * .12 ||
-            candidate.y > height - cookieSize * .12
-            ? cookieSize * .10
-            : 0;
-
-        const randomTieBreaker = Math.random() * cookieSize * .10;
-        const score = nearest + edgeBonus + randomTieBreaker;
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestIndex = index;
-        }
-      });
-
-      const [chosen] = candidates.splice(bestIndex, 1);
-
-      positions.push({
-        x: clamp(chosen.x, -cookieSize * .24, width + cookieSize * .24),
-        y: clamp(chosen.y, cookieSize * .08, height + cookieSize * .18)
-      });
-
-      // Remove candidates that are extremely close to the chosen spot.
-      for (let i = candidates.length - 1; i >= 0; i -= 1) {
-        const candidate = candidates[i];
-        const distance = Math.hypot(candidate.x - chosen.x, candidate.y - chosen.y);
-
-        if (distance < cookieSize * .42) {
-          candidates.splice(i, 1);
+        // Allow overlap, but avoid placing two centers almost on top of each other
+        // unless we are running out of candidates.
+        const remaining = buckets.reduce((total, item) => total + item.length, 0);
+        if (nearest > cookieSize * .42 || remaining < safeCount - positions.length) {
+          positions.push(candidate);
         }
       }
+
+      bucketIndex += 1 + Math.floor(Math.random() * 2);
     }
 
-    // Randomize append order so overlap/z-order does not reveal selection order.
-    return shuffle(positions).slice(0, safeCount);
+    // Remove the helper-only row property and randomize DOM/z-order.
+    return shuffle(positions).slice(0, safeCount).map(({ x, y }) => ({ x, y }));
   }
 
 
@@ -2710,6 +2678,7 @@
       img.className = "scrub-cookie-img";
       img.src = IMAGE_BASE + COOKIE_IMAGES[0];
       img.alt = "";
+      img.draggable = false;
 
       img.onerror = () => {
         img.remove();
