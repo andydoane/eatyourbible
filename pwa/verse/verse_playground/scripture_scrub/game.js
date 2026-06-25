@@ -621,21 +621,14 @@
   }
 
   function playProgressToneStep(step) {
-    const scale = [
-      261.63, // C4
-      293.66, // D4
-      329.63, // E4
-      392.00, // G4
-      440.00, // A4
-      523.25, // C5
-      587.33, // D5
-      659.25, // E5
-      783.99, // G5
-      880.00  // A5
-    ];
+    // 50 chromatic notes: one half-step per progress tone.
+    // With 2% progress increments, this covers the whole round without looping.
+    const baseFrequency = 261.63; // C4
+    const maxChromaticStep = 49;
+    const chromaticStep = clamp(step - 1, 0, maxChromaticStep);
+    const frequency = baseFrequency * Math.pow(2, chromaticStep / 12);
 
-    const frequency = scale[(step - 1) % scale.length];
-    playToneFrequency(frequency, 0.09, soundVolume("progressTone"));
+    playToneFrequency(frequency, 0.075, soundVolume("progressTone"));
   }
 
   function playCompletionArpeggio() {
@@ -861,7 +854,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.44",
+      debugBadge: "SS 5.45",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
