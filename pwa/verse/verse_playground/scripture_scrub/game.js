@@ -67,79 +67,11 @@
       introTitle: "Wipe off the Mud",
       icon: "🟤",
       intro: "Wipe off the mud.",
-      instruction: "Wipe away the mud.",
+      instruction: "Wipe the mud!",
       kind: "canvas",
       texture: "mud",
       rewardIcon: "✨",
       rewardTitle: "Squeaky clean!"
-    },
-    {
-      id: "paint",
-      title: "Paint Splash",
-      introTitle: "Clean the Paint",
-      icon: "🎨",
-      intro: "Clean off the paint.",
-      instruction: "Clean the paint.",
-      kind: "canvas",
-      texture: "paint",
-      rewardIcon: "🌈",
-      rewardTitle: "Paint cleared!"
-    },
-    {
-      id: "fog",
-      title: "Foggy Window",
-      introTitle: "Wipe the Fog",
-      icon: "🪟",
-      intro: "Wipe off the foggy window.",
-      instruction: "Wipe the fog.",
-      kind: "canvas",
-      texture: "fog",
-      rewardIcon: "☀️",
-      rewardTitle: "Now you can see it!"
-    },
-    {
-      id: "chalkboard",
-      title: "Chalkboard Erase",
-      introTitle: "Erase the Chalkboard",
-      icon: "✏️",
-      intro: "Erase the chalkboard.",
-      instruction: "Erase the chalk.",
-      kind: "chalkboard",
-      rewardIcon: "🧽",
-      rewardTitle: "Board erased!"
-    },
-    {
-      id: "glow",
-      title: "Glow in the Dark",
-      introTitle: "Reveal the Glow",
-      icon: "🌟",
-      intro: "Reveal the glowing verse.",
-      instruction: "Make it glow.",
-      kind: "glow",
-      rewardIcon: "✨",
-      rewardTitle: "Glowing bright!"
-    },
-    {
-      id: "rainbow",
-      title: "Rainbow Reveal",
-      introTitle: "Reveal the Rainbow",
-      icon: "🌈",
-      intro: "Reveal the rainbow.",
-      instruction: "Reveal the Rainbow.",
-      kind: "rainbow",
-      rewardIcon: "🌈",
-      rewardTitle: "Rainbow revealed!"
-    },
-    {
-      id: "leaves",
-      title: "Raking Leaves",
-      introTitle: "Rake the Leaves",
-      icon: "🍂",
-      intro: "Rake the leaves.",
-      instruction: "Rake the leaves.",
-      kind: "leaves",
-      rewardIcon: "🍁",
-      rewardTitle: "Leaves raked!"
     },
     {
       id: "stickers",
@@ -147,10 +79,45 @@
       introTitle: "Peel the Stickers",
       icon: "😀",
       intro: "Peel off the stickers, one at a time.",
-      instruction: "Peel the stickers.",
+      instruction: "Peel the stickers!",
       kind: "stickers",
       rewardIcon: "⭐",
       rewardTitle: "Stickers peeled!"
+    },
+    {
+      id: "paint",
+      title: "Paint Splash",
+      introTitle: "Clean the Paint",
+      icon: "🎨",
+      intro: "Clean off the paint.",
+      instruction: "Clean the paint!",
+      kind: "canvas",
+      texture: "paint",
+      rewardIcon: "🌈",
+      rewardTitle: "Paint cleared!"
+    },
+    {
+      id: "leaves",
+      title: "Raking Leaves",
+      introTitle: "Rake the Leaves",
+      icon: "🍂",
+      intro: "Rake the leaves.",
+      instruction: "Rake the leaves!",
+      kind: "leaves",
+      rewardIcon: "🍁",
+      rewardTitle: "Leaves raked!"
+    },
+    {
+      id: "fog",
+      title: "Foggy Window",
+      introTitle: "Wipe the Fog",
+      icon: "🪟",
+      intro: "Wipe off the foggy window.",
+      instruction: "Wipe the fog!",
+      kind: "canvas",
+      texture: "fog",
+      rewardIcon: "☀️",
+      rewardTitle: "Now you can see it!"
     },
     {
       id: "cookies",
@@ -163,17 +130,49 @@
       rewardIcon: "🍪",
       rewardTitle: "Cookies gone!"
     },
-
+    {
+      id: "glow",
+      title: "Glow in the Dark",
+      introTitle: "Reveal the Glow",
+      icon: "🌟",
+      intro: "Reveal the glowing verse.",
+      instruction: "Make it glow!",
+      kind: "glow",
+      rewardIcon: "✨",
+      rewardTitle: "Glowing bright!"
+    },
     {
       id: "mower",
       title: "Mowing Grass",
       introTitle: "Mow the Grass",
       icon: "🌱",
       intro: "Mow the grass.",
-      instruction: "Tap a spot to send the mower.",
+      instruction: "Mow the grass!",
       kind: "mower",
       rewardIcon: "🌿",
       rewardTitle: "Grass mowed!"
+    },
+    {
+      id: "chalkboard",
+      title: "Chalkboard Erase",
+      introTitle: "Erase the Chalkboard",
+      icon: "✏️",
+      intro: "Erase the chalkboard.",
+      instruction: "Erase the chalk!",
+      kind: "chalkboard",
+      rewardIcon: "🧽",
+      rewardTitle: "Board erased!"
+    },
+    {
+      id: "rainbow",
+      title: "Rainbow Reveal",
+      introTitle: "Reveal the Rainbow",
+      icon: "🌈",
+      intro: "Reveal the rainbow.",
+      instruction: "Reveal the Rainbow!",
+      kind: "rainbow",
+      rewardIcon: "🌈",
+      rewardTitle: "Rainbow revealed!"
     },
     {
       id: "archaeology",
@@ -181,7 +180,7 @@
       introTitle: "Find the Bible",
       icon: "🏺",
       intro: "Dig carefully. Find the hidden Bible!",
-      instruction: "Dig carefully — uncover the Bible!",
+      instruction: "Uncover the Bible!",
       kind: "archaeology",
       texture: "dirt",
       rewardIcon: "📖",
@@ -507,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.18",
+      debugBadge: "SS 5.19",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
