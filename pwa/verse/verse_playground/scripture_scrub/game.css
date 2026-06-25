@@ -261,6 +261,33 @@ body{
   border-color: rgba(255, 255, 255, .65);
 }
 
+.scrub-round-cookies .scrub-scripture-card {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, .34), transparent 24%),
+    radial-gradient(circle at 82% 24%, rgba(255, 255, 255, .22), transparent 28%),
+    linear-gradient(145deg, #8fcfff 0%, #62b9ef 58%, #4aa5dc 100%);
+}
+
+.scrub-round-cookies .scrub-verse-text,
+.scrub-round-cookies .scrub-token-word,
+.scrub-round-cookies .scrub-token-word.is-special,
+.scrub-round-cookies .scrub-token-punct {
+  color: #ffffff;
+  text-shadow:
+    0 3px 0 rgba(37, 82, 124, .26),
+    0 0 14px rgba(37, 82, 124, .28);
+}
+
+.scrub-round-cookies .scrub-ref-pill {
+  background: rgba(255, 255, 255, .96);
+  color: #7a471f;
+  border-color: rgba(255, 255, 255, .72);
+}
+
+.scrub-round-cookies .scrub-object-layer {
+  pointer-events: auto;
+}
+
 .scrub-round-stickers .scrub-scripture-card {
   background:
     linear-gradient(rgba(255, 255, 255, .10), rgba(255, 255, 255, .10)),
@@ -973,6 +1000,61 @@ body{
   animation: scrubLeafFall var(--scrub-fall-ms, 1100ms) ease-in forwards;
 }
 
+.scrub-cookie {
+  position: absolute;
+  width: var(--scrub-object-size, clamp(150px, 26vw, 230px));
+  height: var(--scrub-object-size, clamp(150px, 26vw, 230px));
+  border: 0;
+  padding: 0;
+  background: transparent;
+  transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg));
+  transform-origin: 50% 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  filter: drop-shadow(0 7px 5px rgba(70, 38, 18, .22));
+  will-change: transform, opacity;
+}
+
+.scrub-cookie:active {
+  transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) scale(.94);
+}
+
+.scrub-cookie-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.scrub-cookie-fallback {
+  display: grid;
+  place-items: center;
+  font-size: clamp(96px, 22vw, 180px);
+  line-height: 1;
+}
+
+.scrub-cookie-bite-1,
+.scrub-cookie-bite-2 {
+  animation: scrubCookieNibble 160ms ease-out both;
+}
+
+.scrub-cookie.is-eaten {
+  pointer-events: none;
+  animation: scrubCookieGone 300ms ease-in forwards;
+}
+
+.scrub-cookie-crumb {
+  position: absolute;
+  z-index: 50;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: scrubCookieCrumbFly var(--scrub-crumb-ms, 520ms) ease-out forwards;
+}
+
 .scrub-round-stickers .scrub-object-layer .scrub-sticker{
   position: absolute !important;
   border: none;
@@ -1257,6 +1339,46 @@ body{
   0%{ opacity: 0; transform: translate(-50%, -50%) scale(.35) rotate(0deg); }
   18%{ opacity: 1; }
   100%{ opacity: 0; transform: translate(var(--spark-x), var(--spark-y)) scale(1.15) rotate(160deg); }
+}
+
+@keyframes scrubCookieNibble {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) scale(1);
+  }
+
+  45% {
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) scale(.88);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) scale(1);
+  }
+}
+
+@keyframes scrubCookieGone {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) scale(.35);
+  }
+}
+
+@keyframes scrubCookieCrumbFly {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--scrub-crumb-x, 0px)),
+        calc(-50% + var(--scrub-crumb-y, 0px))) scale(.35) rotate(var(--scrub-crumb-rot, 120deg));
+  }
 }
 
 @keyframes scrubLeafFall{

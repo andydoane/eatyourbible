@@ -16,9 +16,9 @@
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
-  // Set to one of: "mud", "paint", "fog", "chalkboard", "glow", "rainbow", "leaves", "stickers", "mower", "archaeology"
+  // Set to one of: "mud", "paint", "fog", "chalkboard", "glow", "rainbow", "leaves", "stickers", "cookies", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "rainbow";
+  const DEBUG_SKIP_ROUND_ID = "cookies";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
@@ -152,6 +152,17 @@
       rewardIcon: "⭐",
       rewardTitle: "Stickers peeled!"
     },
+    {
+      id: "cookies",
+      title: "Cookie Crunch",
+      introTitle: "Cookie Crunch",
+      icon: "🍪",
+      intro: "Eat the cookies.",
+      instruction: "Eat the cookies!",
+      kind: "cookies",
+      rewardIcon: "🍪",
+      rewardTitle: "Cookies gone!"
+    },
 
     {
       id: "mower",
@@ -208,6 +219,13 @@
     "scripture_scrub_blob_10.svg",
     "scripture_scrub_blob_11.svg"
   ];
+
+  const COOKIE_IMAGES = [
+    "scripture_scrub_cookie_1.png",
+    "scripture_scrub_cookie_2.png",
+    "scripture_scrub_cookie_3.png"
+  ];
+
 
   const STICKER_EMOJIS = ["😀", "⭐", "❤️", "🌈", "🦊", "🐬", "🍇", "🎈", "🧁", "🚀", "🌻", "🦁", "🐢", "🍕"];
 
@@ -276,6 +294,7 @@
   let mowerImage = null;
   let chalkboardImage = null;
   let leafImages = [];
+  let cookieImages = [];
   let paintBlobImages = [];
 
   let currentRoundIndex = 0;
@@ -445,6 +464,22 @@
     return loaded.filter(Boolean);
   }
 
+  async function loadCookieImages() {
+    const loaded = await Promise.all(COOKIE_IMAGES.map((fileName) => new Promise((resolve) => {
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        console.warn("Scripture Scrub: could not load cookie image", fileName);
+        resolve(null);
+      };
+      img.src = `${IMAGE_BASE}${fileName}`;
+    })));
+
+    return loaded.filter(Boolean);
+  }
+
+
   async function loadPaintBlobImages() {
     const loaded = await Promise.all(PAINT_BLOB_IMAGES.map((fileName) => new Promise((resolve) => {
       const img = new Image();
@@ -472,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.12",
+      debugBadge: "SS 5.13",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -966,6 +1001,7 @@
 
     if (round.kind === "leaves") setupLeaves(rect.width, rect.height);
     if (round.kind === "stickers") setupStickers(rect.width, rect.height);
+    if (round.kind === "cookies") setupCookies(rect.width, rect.height);
   }
 
   function setupClearMask(width, height) {
@@ -2395,6 +2431,10 @@
       return clamp(width * .19, 112, 172);
     }
 
+    if (kind === "cookie") {
+      return clamp(width * .265, 150, 230);
+    }
+
     return clamp(width * .24, 136, 220);
   }
 
@@ -2528,6 +2568,142 @@
 
     if (ratio >= roundCompletionThreshold()) completeRound();
   }
+
+  function setupCookies(width, height) {
+    const layer = document.getElementById("scrubObjectLayer");
+    if (!layer) return;
+
+    const count = clamp(Math.round(width / 32), 14, 22);
+    const size = getCoverObjectSize("cookie", width);
+    const positions = generateCoverPositions({
+      count,
+      width,
+      height,
+      jitter: 0.62,
+      topRatio: 0.10,
+      heightRatio: 0.82
+    });
+
+    objectTotal = count;
+    objectCleared = 0;
+    updateProgress(0);
+
+    for (let i = 0; i < count; i += 1) {
+      const pos = positions[i] || {
+        x: width * (0.04 + Math.random() * 0.92),
+        y: height * (0.12 + Math.random() * 0.76)
+      };
+
+      const cookie = document.createElement("button");
+      cookie.className = "scrub-cookie";
+      cookie.type = "button";
+      cookie.setAttribute("aria-label", "Eat cookie");
+      cookie.style.width = `${size}px`;
+      cookie.style.height = `${size}px`;
+      cookie.style.left = `${pos.x}px`;
+      cookie.style.top = `${pos.y}px`;
+      cookie.style.setProperty("--scrub-rot", `${Math.round(-38 + Math.random() * 76)}deg`);
+      cookie.dataset.bites = "0";
+      cookie.dataset.cleared = "0";
+
+      const img = document.createElement("img");
+      img.className = "scrub-cookie-img";
+      img.src = IMAGE_BASE + COOKIE_IMAGES[0];
+      img.alt = "";
+
+      img.onerror = () => {
+        img.remove();
+        cookie.textContent = "🍪";
+        cookie.classList.add("scrub-cookie-fallback");
+      };
+
+      cookie.appendChild(img);
+
+      cookie.addEventListener("pointerdown", (event) => {
+        if (menuOpen || completionLocked || cookie.dataset.cleared === "1") return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        dismissInstructionChip();
+        biteCookie(cookie);
+      });
+
+      layer.appendChild(cookie);
+    }
+  }
+
+  function biteCookie(cookie) {
+    const currentBites = Number(cookie.dataset.bites || 0);
+    const nextBites = currentBites + 1;
+    const rect = cookie.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+
+    launchCookieCrumbs(
+      rect.left + rect.width / 2,
+      rect.top + rect.height / 2,
+      size,
+      nextBites >= 3
+    );
+
+    if (nextBites < 3) {
+      cookie.dataset.bites = String(nextBites);
+      cookie.classList.remove("scrub-cookie-bite-1", "scrub-cookie-bite-2");
+      cookie.classList.add(`scrub-cookie-bite-${nextBites}`);
+
+      const img = cookie.querySelector(".scrub-cookie-img");
+      if (img) img.src = IMAGE_BASE + COOKIE_IMAGES[nextBites];
+
+      return;
+    }
+
+    cookie.dataset.bites = "3";
+    cookie.dataset.cleared = "1";
+    cookie.classList.add("is-eaten");
+    cookie.disabled = true;
+
+    objectCleared += 1;
+
+    const ratio = objectTotal ? objectCleared / objectTotal : 0;
+    updateProgress(ratio);
+
+    if (ratio >= 1) {
+      setTimeout(() => completeRound(), 260);
+    }
+  }
+
+  function launchCookieCrumbs(clientX, clientY, cookieSize, isFinalBite) {
+    const layer = document.getElementById("scrubRewardLayer") || document.getElementById("scrubObjectLayer");
+    if (!layer || !stageEl) return;
+
+    const stageRect = stageEl.getBoundingClientRect();
+    const count = isFinalBite ? 22 : 9;
+    const distance = cookieSize * (isFinalBite ? .42 : .22);
+    const crumbSizeMin = cookieSize * (isFinalBite ? .025 : .018);
+    const crumbSizeMax = cookieSize * (isFinalBite ? .06 : .04);
+    const colors = ["#5c3418", "#7a471f", "#9a632f", "#c4894a", "#e0b36f"];
+
+    for (let i = 0; i < count; i += 1) {
+      const crumb = document.createElement("span");
+      const angle = Math.random() * Math.PI * 2;
+      const travel = distance * (.35 + Math.random() * .75);
+      const size = crumbSizeMin + Math.random() * (crumbSizeMax - crumbSizeMin);
+
+      crumb.className = "scrub-cookie-crumb";
+      crumb.style.left = `${clientX - stageRect.left}px`;
+      crumb.style.top = `${clientY - stageRect.top}px`;
+      crumb.style.width = `${size}px`;
+      crumb.style.height = `${size}px`;
+      crumb.style.background = colors[Math.floor(Math.random() * colors.length)];
+      crumb.style.setProperty("--scrub-crumb-x", `${Math.cos(angle) * travel}px`);
+      crumb.style.setProperty("--scrub-crumb-y", `${Math.sin(angle) * travel - cookieSize * .08}px`);
+      crumb.style.setProperty("--scrub-crumb-rot", `${Math.round(-180 + Math.random() * 360)}deg`);
+      crumb.style.setProperty("--scrub-crumb-ms", `${isFinalBite ? 620 + Math.round(Math.random() * 260) : 420 + Math.round(Math.random() * 160)}ms`);
+
+      layer.appendChild(crumb);
+      crumb.addEventListener("animationend", () => crumb.remove(), { once: true });
+    }
+  }
+
 
   function makeStickerDeck(items, copies = 1) {
     const deck = [];
@@ -3305,6 +3481,7 @@
   mowerImage = await loadMowerImage();
   chalkboardImage = await loadChalkboardImage();
   leafImages = await loadLeafImages();
+  cookieImages = await loadCookieImages();
   paintBlobImages = await loadPaintBlobImages();
   await waitForLocalFonts();
   renderTitleScreen();
