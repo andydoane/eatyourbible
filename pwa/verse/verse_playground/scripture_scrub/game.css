@@ -210,6 +210,8 @@ body{
 .scrub-verse-text{
   width: 100%;
   max-width: min(100%, 760px);
+  box-sizing: border-box;
+  padding-inline: clamp(10px, 2.4vw, 20px);
   color: var(--scrub-text);
   font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
   font-weight: 400;
@@ -223,7 +225,6 @@ body{
 
 .scrub-token-word{
   color: var(--scrub-text);
-  white-space: nowrap;
 }
 
 .scrub-token-word.is-special{

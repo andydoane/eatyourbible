@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.25",
+      debugBadge: "SS 5.26",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -881,7 +881,8 @@
 
   function getVerseWidthCandidates(stageWidth, textLength) {
     const maxCap = stageWidth >= 700 ? 820 : 760;
-    const max = Math.min(stageWidth - 36, maxCap);
+    const edgeSafety = stageWidth < 420 ? 26 : stageWidth < 700 ? 32 : 40;
+    const max = Math.min(stageWidth - 36 - edgeSafety, maxCap);
     const desktopLong = stageWidth >= 700 && textLength >= 150;
     const ratios = desktopLong
       ? [.86, .80, .74, .68, .62, .56]
@@ -968,7 +969,20 @@
 
   function verseOverflows(box, text) {
     const fudge = 2;
-    return text.scrollWidth > box.clientWidth + fudge || text.scrollHeight > box.clientHeight + fudge;
+    const edgeSafety = 10;
+
+    const boxRect = box.getBoundingClientRect();
+    const textRect = text.getBoundingClientRect();
+
+    const overOwnWidth = text.scrollWidth > text.clientWidth + fudge;
+    const overOwnHeight = text.scrollHeight > text.clientHeight + fudge;
+
+    const overBoxRight = textRect.right > boxRect.right - edgeSafety;
+    const overBoxLeft = textRect.left < boxRect.left + edgeSafety;
+    const overBoxBottom = textRect.bottom > boxRect.bottom + fudge;
+    const overBoxTop = textRect.top < boxRect.top - fudge;
+
+    return overOwnWidth || overOwnHeight || overBoxRight || overBoxLeft || overBoxBottom || overBoxTop;
   }
 
   function setupRoundVisuals(round) {
