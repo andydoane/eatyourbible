@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.16",
+      debugBadge: "SS 5.17",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -2577,65 +2577,150 @@
   } = {}) {
     const safeCount = Math.max(1, Number(count) || 1);
     const cookieSize = Math.max(1, Number(size) || 160);
+    const stageRect = stageEl?.getBoundingClientRect?.();
+    const verse = document.getElementById("scrubVerseText");
+    const verseRect = verse?.getBoundingClientRect?.();
 
-    // Loose honeycomb: enough structure to cover the verse, enough jitter/overlap
-    // to avoid visible rows or a too-perfect scatter.
-    const offscreen = cookieSize * .10;
-    const spacingX = cookieSize * .64;
-    const spacingY = cookieSize * .58;
-    const minX = -offscreen;
-    const maxX = width + offscreen;
-    const minY = Math.max(cookieSize * .12, height * .075);
-    const maxY = height + offscreen;
+    const fallbackZone = {
+      left: width * .10,
+      top: height * .28,
+      right: width * .90,
+      bottom: height * .78
+    };
 
-    const cols = Math.max(4, Math.ceil((width + offscreen * 2) / spacingX) + 1);
-    const rows = Math.max(5, Math.ceil((maxY - minY) / spacingY) + 1);
-    const buckets = [];
-
-    for (let row = 0; row < rows; row += 1) {
-      const rowItems = [];
-      const rowOffset = row % 2 === 0 ? 0 : spacingX * .5;
-      const rowWobble = (Math.random() - .5) * spacingX * .30;
-
-      for (let col = 0; col < cols; col += 1) {
-        const x = minX + col * spacingX + rowOffset + rowWobble + (Math.random() - .5) * spacingX * .46;
-        const y = minY + row * spacingY + (Math.random() - .5) * spacingY * .62;
-
-        rowItems.push({
-          x: clamp(x, -cookieSize * .12, width + cookieSize * .12),
-          y: clamp(y, cookieSize * .10, height + cookieSize * .12),
-          row
-        });
+    const verseZone = stageRect?.width && verseRect?.width
+      ? {
+        left: verseRect.left - stageRect.left,
+        top: verseRect.top - stageRect.top,
+        right: verseRect.right - stageRect.left,
+        bottom: verseRect.bottom - stageRect.top
       }
+      : fallbackZone;
 
-      buckets.push(shuffle(rowItems));
+    // Expand beyond the text so cookies cover the verse without needing
+    // exact edge-to-edge placement.
+    const padX = cookieSize * .46;
+    const padY = cookieSize * .42;
+
+    let zone = {
+      left: clamp(verseZone.left - padX, cookieSize * .18, width - cookieSize * .18),
+      top: clamp(verseZone.top - padY, cookieSize * .16, height - cookieSize * .18),
+      right: clamp(verseZone.right + padX, cookieSize * .18, width - cookieSize * .18),
+      bottom: clamp(verseZone.bottom + padY, cookieSize * .16, height - cookieSize * .10)
+    };
+
+    const minZoneW = cookieSize * 2.15;
+    const minZoneH = cookieSize * 2.45;
+    const zoneCenterX = clamp((zone.left + zone.right) / 2, cookieSize * .25, width - cookieSize * .25);
+    const zoneCenterY = clamp((zone.top + zone.bottom) / 2, cookieSize * .25, height - cookieSize * .20);
+
+    if (zone.right - zone.left < minZoneW) {
+      zone.left = clamp(zoneCenterX - minZoneW / 2, cookieSize * .10, width - cookieSize * .40);
+      zone.right = clamp(zoneCenterX + minZoneW / 2, cookieSize * .40, width - cookieSize * .10);
+    }
+
+    if (zone.bottom - zone.top < minZoneH) {
+      zone.top = clamp(zoneCenterY - minZoneH / 2, cookieSize * .10, height - cookieSize * .45);
+      zone.bottom = clamp(zoneCenterY + minZoneH / 2, cookieSize * .45, height - cookieSize * .08);
     }
 
     const positions = [];
-    let bucketIndex = Math.floor(Math.random() * buckets.length);
+    const preferredMinDistance = cookieSize * .70;
+    const hardMinDistance = cookieSize * .58;
 
-    while (positions.length < safeCount && buckets.some((bucket) => bucket.length)) {
-      const bucket = buckets[bucketIndex % buckets.length];
+    function randomInZone() {
+      return {
+        x: zone.left + Math.random() * Math.max(1, zone.right - zone.left),
+        y: zone.top + Math.random() * Math.max(1, zone.bottom - zone.top)
+      };
+    }
 
-      if (bucket.length) {
-        const candidate = bucket.shift();
-        const nearest = positions.reduce((best, position) => {
-          return Math.min(best, Math.hypot(candidate.x - position.x, candidate.y - position.y));
-        }, Infinity);
+    function randomInHalo() {
+      const side = Math.floor(Math.random() * 4);
+      const halo = cookieSize * .42;
 
-        // Allow overlap, but avoid placing two centers almost on top of each other
-        // unless we are running out of candidates.
-        const remaining = buckets.reduce((total, item) => total + item.length, 0);
-        if (nearest > cookieSize * .42 || remaining < safeCount - positions.length) {
-          positions.push(candidate);
+      if (side === 0) {
+        return {
+          x: zone.left + Math.random() * Math.max(1, zone.right - zone.left),
+          y: zone.top - Math.random() * halo
+        };
+      }
+
+      if (side === 1) {
+        return {
+          x: zone.right + Math.random() * halo,
+          y: zone.top + Math.random() * Math.max(1, zone.bottom - zone.top)
+        };
+      }
+
+      if (side === 2) {
+        return {
+          x: zone.left + Math.random() * Math.max(1, zone.right - zone.left),
+          y: zone.bottom + Math.random() * halo
+        };
+      }
+
+      return {
+        x: zone.left - Math.random() * halo,
+        y: zone.top + Math.random() * Math.max(1, zone.bottom - zone.top)
+      };
+    }
+
+    function nearestDistance(point) {
+      return positions.reduce((best, position) => {
+        return Math.min(best, Math.hypot(point.x - position.x, point.y - position.y));
+      }, Infinity);
+    }
+
+    while (positions.length < safeCount) {
+      let best = null;
+      let bestScore = -Infinity;
+
+      for (let i = 0; i < 80; i += 1) {
+        const point = Math.random() < .84 ? randomInZone() : randomInHalo();
+
+        const clamped = {
+          x: clamp(point.x, cookieSize * .08, width - cookieSize * .08),
+          y: clamp(point.y, cookieSize * .08, height - cookieSize * .08)
+        };
+
+        const nearest = nearestDistance(clamped);
+
+        if (nearest < hardMinDistance) continue;
+
+        // Prefer mild overlap / close spacing, but reject heavy stacking.
+        const overlapSweetSpot = 1 - Math.min(1, Math.abs(nearest - cookieSize * .76) / (cookieSize * .46));
+        const centerPull = 1 - Math.min(
+          1,
+          Math.hypot(clamped.x - zoneCenterX, clamped.y - zoneCenterY) / (cookieSize * 2.6)
+        );
+        const randomMess = Math.random() * .22;
+
+        const score = overlapSweetSpot * 1.2 + centerPull * .65 + randomMess;
+
+        if (nearest >= preferredMinDistance && score > bestScore) {
+          best = clamped;
+          bestScore = score;
+        } else if (!best && score > bestScore) {
+          best = clamped;
+          bestScore = score;
         }
       }
 
-      bucketIndex += 1 + Math.floor(Math.random() * 2);
+      if (best) {
+        positions.push(best);
+        continue;
+      }
+
+      // Last-resort placement: still centered around the verse, but less strict.
+      const fallback = Math.random() < .9 ? randomInZone() : randomInHalo();
+      positions.push({
+        x: clamp(fallback.x, cookieSize * .08, width - cookieSize * .08),
+        y: clamp(fallback.y, cookieSize * .08, height - cookieSize * .08)
+      });
     }
 
-    // Remove the helper-only row property and randomize DOM/z-order.
-    return shuffle(positions).slice(0, safeCount).map(({ x, y }) => ({ x, y }));
+    return shuffle(positions).slice(0, safeCount);
   }
 
 
@@ -2644,7 +2729,7 @@
     if (!layer) return;
 
     const size = getCoverObjectSize("cookie", width);
-    const count = clamp(Math.round((width * height) / (size * size) * 1.32), 16, 24);
+    const count = clamp(Math.round((width * height) / (size * size) * 1.12), 13, 18);
     const positions = generateCookieCoverPositions({
       count,
       width,
