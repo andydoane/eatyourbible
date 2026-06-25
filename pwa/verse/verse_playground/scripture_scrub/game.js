@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.21",
+      debugBadge: "SS 5.22",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -3590,10 +3590,12 @@
 
     layer.innerHTML = `
       <button class="scrub-archaeology-found-panel no-zoom" id="scrubArchaeologyFoundPanel" type="button">
-        <div class="scrub-archaeology-found-card">
-          ${bibleHtml}
-          <div class="scrub-archaeology-found-title">You found the Bible!</div>
-          <div class="scrub-archaeology-found-score">Dig Score: ${escapeHtml(score)}</div>
+        <div class="scrub-archaeology-found-stack">
+          <div class="scrub-archaeology-found-card">
+            ${bibleHtml}
+            <div class="scrub-archaeology-found-title">You found the Bible!</div>
+            <div class="scrub-archaeology-found-score">Dig Score: ${escapeHtml(score)}</div>
+          </div>
           <div class="scrub-archaeology-found-continue">Tap to Continue</div>
         </div>
       </button>
