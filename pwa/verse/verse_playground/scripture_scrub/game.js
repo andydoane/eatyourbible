@@ -506,7 +506,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.30",
+      debugBadge: "SS 5.31",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -909,7 +909,7 @@
 
   function renderLockedVerseHtml(lines) {
     return lines.map((lineUnits) => {
-      const html = lineUnits.map((unit) => unit.html).join(" ");
+      const html = lineUnits.map((unit) => unit.html).join("&nbsp;");
       return `<span class="scrub-verse-line">${html}</span>`;
     }).join("");
   }
@@ -1018,7 +1018,7 @@
         ? (textLength < 65 ? 128 : textLength < 115 ? 104 : textLength < 180 ? 82 : 64)
         : (textLength < 65 ? 118 : textLength < 115 ? 96 : textLength < 180 ? 76 : 60);
 
-      const safeWidth = Math.max(80, box.clientWidth - 10);
+      const safeWidth = Math.max(80, box.clientWidth - 30);
       const safeHeight = Math.max(80, box.clientHeight - 10);
       const availableAspect = safeWidth / safeHeight;
 
