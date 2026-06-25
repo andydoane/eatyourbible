@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.14",
+      debugBadge: "SS 5.15",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -2578,42 +2578,95 @@
     const safeCount = Math.max(1, Number(count) || 1);
     const cookieSize = Math.max(1, Number(size) || 160);
 
-    // Cookies are large, so use a wide grid instead of the generic centered object layout.
-    // Allow centers slightly offscreen so the edges and corners get covered too.
-    const minX = -cookieSize * .18;
-    const maxX = width + cookieSize * .18;
-    const minY = Math.max(cookieSize * .16, height * .08);
-    const maxY = height + cookieSize * .14;
+    // Random candidate + farthest-point selection:
+    // keeps coverage even without visible grid rows.
+    const minX = -cookieSize * .24;
+    const maxX = width + cookieSize * .24;
+    const minY = Math.max(cookieSize * .08, height * .055);
+    const maxY = height + cookieSize * .18;
 
-    const usableW = maxX - minX;
-    const usableH = maxY - minY;
+    const candidates = [];
+    const candidateCount = Math.max(180, safeCount * 32);
 
-    const cols = Math.ceil(Math.sqrt(safeCount * (usableW / Math.max(1, usableH))));
-    const rows = Math.ceil(safeCount / cols);
-    const cellW = usableW / cols;
-    const cellH = usableH / rows;
+    for (let i = 0; i < candidateCount; i += 1) {
+      let x = minX + Math.random() * (maxX - minX);
+      let y = minY + Math.random() * (maxY - minY);
+
+      // Add occasional edge-biased candidates so corners/sides stay covered.
+      const edgeRoll = Math.random();
+      if (edgeRoll < .18) {
+        x = Math.random() < .5
+          ? minX + Math.random() * cookieSize * .36
+          : maxX - Math.random() * cookieSize * .36;
+      } else if (edgeRoll < .32) {
+        y = Math.random() < .5
+          ? minY + Math.random() * cookieSize * .40
+          : maxY - Math.random() * cookieSize * .40;
+      }
+
+      candidates.push({
+        x: clamp(x, minX, maxX),
+        y: clamp(y, minY, maxY)
+      });
+    }
 
     const positions = [];
 
-    for (let row = 0; row < rows; row += 1) {
-      for (let col = 0; col < cols; col += 1) {
-        const edgeBiasX = col === 0
-          ? -cellW * .12
-          : col === cols - 1
-            ? cellW * .12
+    while (positions.length < safeCount && candidates.length) {
+      let bestIndex = 0;
+      let bestScore = -Infinity;
+
+      candidates.forEach((candidate, index) => {
+        let nearest = Infinity;
+
+        if (!positions.length) {
+          const centerDistance = Math.hypot(candidate.x - width / 2, candidate.y - height / 2);
+          nearest = centerDistance * .35 + Math.random() * cookieSize;
+        } else {
+          positions.forEach((position) => {
+            nearest = Math.min(
+              nearest,
+              Math.hypot(candidate.x - position.x, candidate.y - position.y)
+            );
+          });
+        }
+
+        const edgeBonus =
+          candidate.x < cookieSize * .08 ||
+            candidate.x > width - cookieSize * .08 ||
+            candidate.y < cookieSize * .12 ||
+            candidate.y > height - cookieSize * .12
+            ? cookieSize * .10
             : 0;
-        const edgeBiasY = row === rows - 1 ? cellH * .10 : 0;
 
-        const x = minX + cellW * (col + .5) + edgeBiasX + (Math.random() - .5) * cellW * .34;
-        const y = minY + cellH * (row + .5) + edgeBiasY + (Math.random() - .5) * cellH * .34;
+        const randomTieBreaker = Math.random() * cookieSize * .10;
+        const score = nearest + edgeBonus + randomTieBreaker;
 
-        positions.push({
-          x: clamp(x, -cookieSize * .22, width + cookieSize * .22),
-          y: clamp(y, cookieSize * .10, height + cookieSize * .16)
-        });
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = index;
+        }
+      });
+
+      const [chosen] = candidates.splice(bestIndex, 1);
+
+      positions.push({
+        x: clamp(chosen.x, -cookieSize * .24, width + cookieSize * .24),
+        y: clamp(chosen.y, cookieSize * .08, height + cookieSize * .18)
+      });
+
+      // Remove candidates that are extremely close to the chosen spot.
+      for (let i = candidates.length - 1; i >= 0; i -= 1) {
+        const candidate = candidates[i];
+        const distance = Math.hypot(candidate.x - chosen.x, candidate.y - chosen.y);
+
+        if (distance < cookieSize * .42) {
+          candidates.splice(i, 1);
+        }
       }
     }
 
+    // Randomize append order so overlap/z-order does not reveal selection order.
     return shuffle(positions).slice(0, safeCount);
   }
 
