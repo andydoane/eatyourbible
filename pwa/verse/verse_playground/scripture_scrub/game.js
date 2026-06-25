@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.33",
+      debugBadge: "SS 5.34",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -768,10 +768,13 @@
     debug.classList.add("is-visible");
 
     const rows = [
-      `SS 5.33 FIT`,
+      `SS 5.34 FIT`,
       `chars: ${info.textLength ?? "?"}`,
       `units: ${info.unitCount ?? "?"}`,
       `range: ${info.minLines ?? "?"}-${info.maxLines ?? "?"}`,
+      `cand: ${info.candidateCount ?? "?"}`,
+      `tried: ${info.triedCount ?? "?"}`,
+      `perfect: ${info.perfectCount ?? "?"}`,
       `box: ${info.boxWidth ?? "?"}x${info.boxHeight ?? "?"}`,
       `aspect: ${info.boxAspect ?? "?"}`,
       `safe: ${info.safeWidth ?? "?"}x${info.safeHeight ?? "?"}`,
@@ -1056,6 +1059,8 @@
 
       const lineRange = getLineCountRangeForTextLength(textLength, units.length);
       const lineCandidates = getPlannedLineCandidates(units, boxRect);
+      const candidateCount = lineCandidates.length;
+
       const lineHeights = isWideStage
         ? [1.16, 1.10, 1.04, 1.0, .96, .92]
         : [1.08, 1.04, 1.0, .96, .92];
@@ -1070,7 +1075,8 @@
       const availableAspect = safeWidth / safeHeight;
 
       let best = null;
-      let fallback = null;
+      let triedCount = 0;
+      let perfectCount = 0;
 
       for (const lines of lineCandidates) {
         applyLockedVerseHtml(lines);
@@ -1107,6 +1113,12 @@
           const overflowHeight = Math.max(0, Math.round(metrics.height - safeHeight));
           const perfectFit = overflowWidth <= 2 && overflowHeight <= 2;
 
+          triedCount += 1;
+
+          if (!perfectFit) continue;
+
+          perfectCount += 1;
+
           const textAspect = metrics.height ? metrics.width / metrics.height : 1;
           const aspectDeviation = Math.abs(Math.log(textAspect / Math.max(.1, availableAspect)));
           const boundaryFill = Math.max(
@@ -1117,16 +1129,14 @@
             ? (metrics.width * metrics.height) / (safeWidth * safeHeight)
             : 0;
 
-          const baseScore =
+          const score =
             (100 - Math.min(100, aspectDeviation * 60)) +
-            (Math.min(1.2, boundaryFill) * 55) +
-            (Math.min(1.2, areaFill) * 20) +
+            (boundaryFill * 55) +
+            (areaFill * 20) +
             (bestSize * .18);
 
-          const overflowPenalty = (overflowWidth * 2.4) + (overflowHeight * 2.4);
-
           const result = {
-            score: perfectFit ? baseScore : baseScore - overflowPenalty,
+            score,
             fontSize: Math.floor(bestSize * 10) / 10,
             lineHeight,
             lines,
@@ -1135,27 +1145,24 @@
             overflowWidth,
             overflowHeight,
             aspectDeviation,
-            fitArea: perfectFit ? "planned-aspect" : "fallback-overflow"
+            fitArea: "planned-aspect"
           };
 
-          if (perfectFit) {
-            if (!best || result.score > best.score) {
-              best = result;
-            }
-          } else if (!fallback || result.score > fallback.score) {
-            fallback = result;
+          if (!best || result.score > best.score) {
+            best = result;
           }
         }
       }
 
-      const finalFit = best || fallback;
-
-      if (!finalFit) {
+      if (!best) {
         setVerseFitDebugInfo({
           textLength,
           unitCount: units.length,
           minLines: lineRange.minLines,
           maxLines: lineRange.maxLines,
+          candidateCount,
+          triedCount,
+          perfectCount,
           boxWidth: Math.round(boxRect.width),
           boxHeight: Math.round(boxRect.height),
           boxAspect: (boxRect.width / boxRect.height).toFixed(2),
@@ -1172,56 +1179,55 @@
         return;
       }
 
-      if (finalFit) {
-        applyLockedVerseHtml(finalFit.lines);
+      applyLockedVerseHtml(best.lines);
 
-        text.style.fontSize = `${finalFit.fontSize}px`;
-        text.style.lineHeight = String(finalFit.lineHeight);
-        text.style.maxWidth = "100%";
-        text.style.width = "auto";
-        text.style.marginLeft = "auto";
-        text.style.marginRight = "auto";
-        text.dataset.scrubFitFontSize = String(finalFit.fontSize);
-        text.dataset.scrubFitArea = finalFit.fitArea;
-        text.dataset.scrubFitLines = String(finalFit.lines.length);
-        text.dataset.scrubFitWidth = String(finalFit.width);
-        text.dataset.scrubFitHeight = String(finalFit.height);
-        text.dataset.scrubFitOverflowWidth = String(finalFit.overflowWidth);
-        text.dataset.scrubFitOverflowHeight = String(finalFit.overflowHeight);
+      text.style.fontSize = `${best.fontSize}px`;
+      text.style.lineHeight = String(best.lineHeight);
+      text.style.maxWidth = "100%";
+      text.style.width = "auto";
+      text.style.marginLeft = "auto";
+      text.style.marginRight = "auto";
+      text.dataset.scrubFitFontSize = String(best.fontSize);
+      text.dataset.scrubFitArea = best.fitArea;
+      text.dataset.scrubFitLines = String(best.lines.length);
+      text.dataset.scrubFitWidth = String(best.width);
+      text.dataset.scrubFitHeight = String(best.height);
+      text.dataset.scrubFitOverflowWidth = String(best.overflowWidth);
+      text.dataset.scrubFitOverflowHeight = String(best.overflowHeight);
 
-        setVerseFitDebugInfo({
-          textLength,
-          unitCount: units.length,
-          minLines: lineRange.minLines,
-          maxLines: lineRange.maxLines,
-          boxWidth: Math.round(boxRect.width),
-          boxHeight: Math.round(boxRect.height),
-          boxAspect: (boxRect.width / boxRect.height).toFixed(2),
-          safeWidth,
-          safeHeight,
-          lines: finalFit.lines.length,
-          fontSize: finalFit.fontSize,
-          textWidth: finalFit.width,
-          textHeight: finalFit.height,
-          overflowWidth: finalFit.overflowWidth,
-          overflowHeight: finalFit.overflowHeight,
-          fitArea: text.dataset.scrubFitArea
-        });
+      setVerseFitDebugInfo({
+        textLength,
+        unitCount: units.length,
+        minLines: lineRange.minLines,
+        maxLines: lineRange.maxLines,
+        candidateCount,
+        triedCount,
+        perfectCount,
+        boxWidth: Math.round(boxRect.width),
+        boxHeight: Math.round(boxRect.height),
+        boxAspect: (boxRect.width / boxRect.height).toFixed(2),
+        safeWidth,
+        safeHeight,
+        lines: best.lines.length,
+        fontSize: best.fontSize,
+        textWidth: best.width,
+        textHeight: best.height,
+        overflowWidth: best.overflowWidth,
+        overflowHeight: best.overflowHeight,
+        fitArea: text.dataset.scrubFitArea
+      });
 
-        const glowText = document.getElementById("scrubGlowVerseText");
-        if (glowText) {
-          glowText.style.fontSize = `${finalFit.fontSize}px`;
-          glowText.style.lineHeight = String(finalFit.lineHeight);
-          glowText.style.maxWidth = "100%";
-          glowText.style.width = "auto";
-          glowText.style.marginLeft = "auto";
-          glowText.style.marginRight = "auto";
-        }
+      const glowText = document.getElementById("scrubGlowVerseText");
+      if (glowText) {
+        glowText.style.fontSize = `${best.fontSize}px`;
+        glowText.style.lineHeight = String(best.lineHeight);
+        glowText.style.maxWidth = "100%";
+        glowText.style.width = "auto";
+        glowText.style.marginLeft = "auto";
+        glowText.style.marginRight = "auto";
       }
     });
   }
-
-
 
 
   function getDesiredLineRange(textLength, isDesktopStage, layoutAnalysis = {}, stageWidth = 0) {
