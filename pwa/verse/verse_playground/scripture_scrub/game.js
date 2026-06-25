@@ -18,7 +18,7 @@
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
   // Set to one of: "mud", "paint", "fog", "chalkboard", "glow", "rainbow", "leaves", "stickers", "cookies", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "archaeology";
+  const DEBUG_SKIP_ROUND_ID = "chalkboard";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
   const VERSE_FIT_DEBUG = false;
 
