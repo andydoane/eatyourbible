@@ -507,7 +507,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.17",
+      debugBadge: "SS 5.18",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -2723,13 +2723,75 @@
     return shuffle(positions).slice(0, safeCount);
   }
 
+  function addReferenceCookiePosition({
+    positions,
+    width,
+    height,
+    size
+  } = {}) {
+    if (!Array.isArray(positions) || !positions.length || !stageEl) return;
+
+    const pill = document.getElementById("scrubRefPill");
+    const stageRect = stageEl.getBoundingClientRect();
+    const pillRect = pill?.getBoundingClientRect?.();
+
+    if (!pillRect?.width || !pillRect?.height || !stageRect.width || !stageRect.height) return;
+
+    const pillLeft = pillRect.left - stageRect.left;
+    const pillTop = pillRect.top - stageRect.top;
+
+    // Keep the cookie centered somewhere across the pill area.
+    const xMin = pillLeft + pillRect.width * .18;
+    const xMax = pillLeft + pillRect.width * .82;
+
+    // Let it move up/down by up to 1/3 of a cookie height.
+    const baseY = pillTop + pillRect.height * .5;
+    const yJitter = size * .33;
+
+    let best = null;
+    let bestScore = -Infinity;
+
+    for (let i = 0; i < 14; i += 1) {
+      const candidate = {
+        x: clamp(
+          xMin + Math.random() * Math.max(1, xMax - xMin),
+          size * .12,
+          width - size * .12
+        ),
+        y: clamp(
+          baseY + (Math.random() - .5) * yJitter * 2,
+          size * .12,
+          height - size * .12
+        )
+      };
+
+      const nearest = positions.reduce((bestDistance, position) => {
+        return Math.min(bestDistance, Math.hypot(candidate.x - position.x, candidate.y - position.y));
+      }, Infinity);
+
+      // We still want overlap, just not a giant stack right on top of another cookie.
+      const overlapSweetSpot = 1 - Math.min(1, Math.abs(nearest - size * .76) / (size * .34));
+      const verticalSweetSpot = 1 - Math.min(1, Math.abs(candidate.y - baseY) / Math.max(1, yJitter));
+      const score = overlapSweetSpot * 1.1 + verticalSweetSpot * .35 + Math.random() * .12;
+
+      if (score > bestScore) {
+        best = candidate;
+        bestScore = score;
+      }
+    }
+
+    if (best) {
+      positions.push(best);
+    }
+  }
+
 
   function setupCookies(width, height) {
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
     const size = getCoverObjectSize("cookie", width);
-    const count = clamp(Math.round((width * height) / (size * size) * 1.12), 13, 18);
+    const count = clamp(Math.round((width * height) / (size * size) * 1.06), 12, 17);
     const positions = generateCookieCoverPositions({
       count,
       width,
@@ -2737,11 +2799,18 @@
       size
     });
 
-    objectTotal = count;
+    addReferenceCookiePosition({
+      positions,
+      width,
+      height,
+      size
+    });
+
+    objectTotal = positions.length;
     objectCleared = 0;
     updateProgress(0);
 
-    for (let i = 0; i < count; i += 1) {
+    for (let i = 0; i < positions.length; i += 1) {
       const pos = positions[i] || {
         x: width * (0.04 + Math.random() * 0.92),
         y: height * (0.12 + Math.random() * 0.76)
