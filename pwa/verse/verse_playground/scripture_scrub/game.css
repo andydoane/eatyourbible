@@ -557,10 +557,8 @@ body{
   z-index: 8;
 }
 
-.scrub-round-rainbow .scrub-stage.scrub-round-complete .scrub-verse-text,
-.scrub-round-rainbow .scrub-stage.scrub-round-complete .scrub-token-word,
-.scrub-round-rainbow .scrub-stage.scrub-round-complete .scrub-token-word.is-special {
-  animation: scrubRainbowCompletePulse 900ms ease-in-out both;
+.scrub-round-rainbow .scrub-stage.scrub-round-complete #scrubVerseText {
+  animation: scrubRainbowBaseFadeOut 420ms ease-out both;
 }
 
 .scrub-round-rainbow .scrub-instruction-chip {
@@ -568,6 +566,16 @@ body{
   --scrub-chip-fg: #333333;
   --scrub-chip-border: #ffc751;
   --scrub-chip-shadow: rgba(0, 0, 0, .42);
+}
+
+@keyframes scrubRainbowBaseFadeOut {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes scrubRainbowCompletePulse {
