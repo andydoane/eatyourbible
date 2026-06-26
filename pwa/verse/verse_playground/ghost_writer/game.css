@@ -453,6 +453,44 @@ body {
   text-align: center;
 }
 
+@media (min-width: 700px) and (min-height: 700px) {
+  .ghost-writer-root.is-training-screen .ghost-writer-stage {
+    width: min(620px, 100%);
+  }
+
+  .ghost-training-card {
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .ghost-training-topline {
+    flex: 0 0 auto;
+  }
+
+  .ghost-training-draw-pad {
+    flex: 0 0 auto;
+    align-items: center;
+    padding: 12px;
+  }
+
+  .ghost-training-card .ghost-draw-wrap {
+    flex: 0 0 auto;
+    width: min(70vmin, 520px);
+    max-width: 520px;
+    max-height: 520px;
+  }
+
+  .ghost-training-card .ghost-train-actions {
+    flex: 0 0 auto;
+    margin-top: 0;
+  }
+
+  .ghost-validation-message {
+    flex: 0 0 auto;
+    margin-top: 0;
+  }
+}
+
 .vm-btn[disabled] {
   opacity: .45;
   cursor: not-allowed;
