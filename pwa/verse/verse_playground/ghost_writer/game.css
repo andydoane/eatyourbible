@@ -75,6 +75,14 @@ body {
   touch-action: manipulation;
 }
 
+.vm-title-icon,
+.vm-game-title-icon,
+.vm-title-screen [aria-hidden="true"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .ghost-writer-root {
   position: relative;
   min-height: 100svh;

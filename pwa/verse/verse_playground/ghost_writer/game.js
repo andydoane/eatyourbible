@@ -777,7 +777,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.2",
+      debugBadge: "GW 1.3",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -912,16 +912,10 @@
   function wirePunctuationRecorderTitleHotspot() {
     if (!ENABLE_PUNCTUATION_RECORDER || state.screen !== "intro") return;
 
-    const hotspot = document.createElement("button");
-    hotspot.className = "ghost-recorder-hotspot";
-    hotspot.type = "button";
-    hotspot.setAttribute("aria-label", "Open punctuation recorder");
-    hotspot.textContent = GAME_ICON;
-    app.appendChild(hotspot);
-
     let timer = null;
     let startX = 0;
     let startY = 0;
+    let armed = false;
     let opened = false;
 
     const cancel = () => {
@@ -929,39 +923,73 @@
         clearTimeout(timer);
         timer = null;
       }
+      armed = false;
     };
 
-    hotspot.addEventListener("pointerdown", (event) => {
-      if (!ENABLE_PUNCTUATION_RECORDER) return;
+    const targetLooksLikeTitleGhost = (target) => {
+      let node = target;
+
+      while (node && node !== app && node !== document.body) {
+        const text = String(node.textContent || "").trim();
+
+        if (text.includes(GAME_ICON) && text.length <= 6) {
+          return true;
+        }
+
+        node = node.parentElement;
+      }
+
+      return false;
+    };
+
+    app.addEventListener("pointerdown", (event) => {
+      if (!ENABLE_PUNCTUATION_RECORDER || state.screen !== "intro") return;
+      if (!targetLooksLikeTitleGhost(event.target)) return;
+
+      event.preventDefault();
+
       opened = false;
+      armed = true;
       startX = event.clientX || 0;
       startY = event.clientY || 0;
       cancel();
+      armed = true;
 
       timer = setTimeout(() => {
+        if (!armed || state.screen !== "intro") return;
+
         opened = true;
         timer = null;
         renderPunctuationRecorder();
       }, PUNCTUATION_RECORDER_LONG_PRESS_MS);
-    });
+    }, { capture: true });
 
-    hotspot.addEventListener("pointermove", (event) => {
+    app.addEventListener("pointermove", (event) => {
+      if (!armed) return;
+
       const dx = Math.abs((event.clientX || 0) - startX);
       const dy = Math.abs((event.clientY || 0) - startY);
-      if (dx > 18 || dy > 18) cancel();
-    });
 
-    hotspot.addEventListener("pointerup", (event) => {
+      if (dx > 18 || dy > 18) cancel();
+    }, { capture: true });
+
+    app.addEventListener("pointerup", (event) => {
+      if (!armed && !opened) return;
+
       if (opened) event.preventDefault();
       cancel();
-    });
+    }, { capture: true });
 
-    hotspot.addEventListener("pointercancel", cancel);
-    hotspot.addEventListener("click", (event) => {
-      if (opened) event.preventDefault();
-    });
+    app.addEventListener("pointercancel", cancel, { capture: true });
+
+    app.addEventListener("selectstart", (event) => {
+      if (state.screen !== "intro") return;
+      if (!targetLooksLikeTitleGhost(event.target)) return;
+
+      event.preventDefault();
+    }, { capture: true });
   }
-
+  
   function resetPunctuationRecorder() {
     punctuationRecorder.charIndex = 0;
     punctuationRecorder.variationIndex = 0;
