@@ -391,7 +391,7 @@
   let lastUiTapSound = "uiTap2";
   let roundIntroSoundPlayedFor = null;
   let lastProgressToneStep = 0;
-  let lastProgressToneAt = 0;
+  let lastProgressToneAt = -Infinity;
   let mowerSoundAudio = null;
   let mowerSoundFrame = null;
 
@@ -640,7 +640,7 @@
 
   function resetProgressToneTracking() {
     lastProgressToneStep = 0;
-    lastProgressToneAt = 0;
+    lastProgressToneAt = -Infinity;
   }
 
   function playProgressToneForRatio(round, ratio) {
@@ -653,10 +653,7 @@
     if (step <= lastProgressToneStep || step >= Math.floor(100 / stepPercent)) return;
 
     const now = performance.now();
-    if (now - lastProgressToneAt < 90) {
-      lastProgressToneStep = step;
-      return;
-    }
+    if (now - lastProgressToneAt < 90) return;
 
     lastProgressToneStep = step;
     lastProgressToneAt = now;
@@ -927,7 +924,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.49",
+      debugBadge: "SS 5.50",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
