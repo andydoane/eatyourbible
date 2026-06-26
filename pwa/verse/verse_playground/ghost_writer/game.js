@@ -667,6 +667,9 @@
     glyphs: new Map(),
     hasDrawnCurrent: false,
     practiceMarked: false,
+    guideVisible: true,
+    trainingIntroShown: false,
+    trainingIntroActive: false,
     remix: makeDefaultRemixOptions()
   };
 
@@ -780,7 +783,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.6",
+      debugBadge: "GW 1.7",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -827,6 +830,9 @@
     seedBuiltInPunctuationGlyphsForBeginner();
     state.hasDrawnCurrent = false;
     state.practiceMarked = false;
+    state.guideVisible = true;
+    state.trainingIntroShown = false;
+    state.trainingIntroActive = false;
     state.referenceDecorationStyle = chooseReferenceDecorationStyle();
     state.remix = makeDefaultRemixOptions();
 
@@ -1332,54 +1338,89 @@
     return Math.abs(hash) % length;
   }
 
+  function syncGuideVisibility() {
+    const guide = document.getElementById("ghostGuideText");
+    const btn = document.getElementById("ghostGuideToggleBtn");
+
+    if (guide) {
+      guide.classList.toggle("is-faded", !state.guideVisible || state.trainingIntroActive);
+    }
+
+    if (btn) {
+      btn.classList.toggle("is-on", state.guideVisible);
+      btn.classList.toggle("is-off", !state.guideVisible);
+      btn.setAttribute("aria-label", state.guideVisible ? "Hide letter guide" : "Show letter guide");
+      btn.setAttribute("aria-pressed", state.guideVisible ? "true" : "false");
+    }
+  }
+
+  function toggleGuideVisibility() {
+    state.guideVisible = !state.guideVisible;
+    syncGuideVisibility();
+  }
+
+
   function renderTraining() {
     clearGuideTimer();
     state.screen = "training";
+    state.trainingIntroActive = false;
 
     const char = currentChar();
     const total = Math.max(1, state.requiredChars.length);
-    const progress = state.currentCharIndex / total;
-    const modeLabel = selectedMode === "advanced" ? "Advanced" : "Beginner";
+    const showIntroMessage = !state.trainingIntroShown;
+
+    if (showIntroMessage) {
+      state.trainingIntroActive = true;
+    }
 
     app.innerHTML = rootHtml(`
-      <div class="ghost-card">
-        <div class="ghost-topline">
-          <span class="ghost-pill">${escapeHtml(modeLabel)}</span>
-          <div class="ghost-progress-track" aria-hidden="true"><div class="ghost-progress-fill" style="width:${Math.round(progress * 100)}%"></div></div>
-          <span class="ghost-pill">${escapeHtml(String(state.currentCharIndex + 1))}/${escapeHtml(String(total))}</span>
-        </div>
-
-        <div class="ghost-prompt">
-          <div class="ghost-prompt-title">Write: ${escapeHtml(char)}</div>
-          <div class="ghost-prompt-sub">Draw the ${escapeHtml(charLabel(char))} nice and big.</div>
+      <div class="ghost-training-card">
+        <div class="ghost-training-topline">
+          <button
+            class="ghost-guide-toggle ${state.guideVisible ? "is-on" : "is-off"}"
+            id="ghostGuideToggleBtn"
+            type="button"
+            aria-label="${state.guideVisible ? "Hide letter guide" : "Show letter guide"}"
+            aria-pressed="${state.guideVisible ? "true" : "false"}"
+          >👁️</button>
+          <div class="ghost-training-title">Write: <span>${escapeHtml(char)}</span></div>
+          <span class="ghost-training-count">${escapeHtml(String(state.currentCharIndex + 1))}/${escapeHtml(String(total))}</span>
         </div>
 
         <div class="ghost-draw-wrap" id="ghostDrawWrap">
-          <div class="ghost-guide-text ${isSymbolChar(char) ? "is-symbol" : ""}" id="ghostGuideText">${escapeHtml(char)}</div>
+          <div class="ghost-draw-instruction ${showIntroMessage ? "" : "is-hidden"}" id="ghostDrawInstruction">Draw each letter nice and big</div>
+          <div class="ghost-guide-text ${isSymbolChar(char) ? "is-symbol" : ""} ${showIntroMessage || !state.guideVisible ? "is-faded" : ""}" id="ghostGuideText">${escapeHtml(char)}</div>
           <canvas id="ghostDrawCanvas" aria-label="Draw ${escapeHtml(charLabel(char))}"></canvas>
         </div>
 
         <div class="ghost-train-actions">
-          <button class="vm-btn vm-btn-secondary" id="ghostClearBtn" type="button">Clear</button>
+          <button class="vm-btn vm-btn-secondary" id="ghostClearBtn" type="button" aria-label="Clear drawing">Clear</button>
+          <button class="vm-btn vm-btn-secondary" id="ghostUndoStrokeBtn" type="button" aria-label="Undo last stroke">↩️</button>
           <button class="vm-btn" id="ghostSaveBtn" type="button" disabled>Save &amp; Next</button>
         </div>
 
         <div class="ghost-validation-message" id="ghostValidationMessage" aria-live="polite"></div>
       </div>
-    `, { menu: true });
+    `, { menu: true, rootClass: "is-training-screen" });
 
     wireMenu();
     setupDrawingCanvas();
     fitGuideCharacter();
+    syncGuideVisibility();
     updateSaveButton();
 
+    document.getElementById("ghostGuideToggleBtn")?.addEventListener("click", toggleGuideVisibility);
     document.getElementById("ghostClearBtn")?.addEventListener("click", clearCurrentDrawing);
+    document.getElementById("ghostUndoStrokeBtn")?.addEventListener("click", undoLastStroke);
     document.getElementById("ghostSaveBtn")?.addEventListener("click", saveCurrentGlyph);
 
-    if (selectedMode === "advanced") {
+    if (showIntroMessage) {
+      state.trainingIntroShown = true;
       guideTimer = setTimeout(() => {
-        document.getElementById("ghostGuideText")?.classList.add("is-faded");
-      }, 950);
+        state.trainingIntroActive = false;
+        document.getElementById("ghostDrawInstruction")?.classList.add("is-hidden");
+        syncGuideVisibility();
+      }, 1500);
     }
   }
 
@@ -1483,17 +1524,36 @@
     }
   }
 
+  function hasCurrentDrawingStrokes() {
+    return (state.currentStrokes || []).some((stroke) => stroke && stroke.length);
+  }
+
+  function redrawCurrentDrawing() {
+    const canvas = document.getElementById("ghostDrawCanvas");
+    if (!canvas) return;
+
+    const width = Number(canvas.dataset.cssWidth) || canvas.getBoundingClientRect().width;
+    const height = Number(canvas.dataset.cssHeight) || canvas.getBoundingClientRect().height;
+    const c = setupCanvasForDpr(canvas, width, height);
+    c.clearRect(0, 0, width, height);
+    drawAllTrainingStrokes(c, width, height);
+  }
+
   function clearCurrentDrawing() {
     state.currentStrokes = [];
     state.currentStroke = null;
     state.hasDrawnCurrent = false;
-    const canvas = document.getElementById("ghostDrawCanvas");
-    if (canvas) {
-      const width = Number(canvas.dataset.cssWidth) || canvas.getBoundingClientRect().width;
-      const height = Number(canvas.dataset.cssHeight) || canvas.getBoundingClientRect().height;
-      const c = setupCanvasForDpr(canvas, width, height);
-      c.clearRect(0, 0, width, height);
-    }
+    redrawCurrentDrawing();
+    updateSaveButton();
+  }
+
+  function undoLastStroke() {
+    if (!hasCurrentDrawingStrokes()) return;
+
+    state.currentStroke = null;
+    state.currentStrokes.pop();
+    state.hasDrawnCurrent = hasCurrentDrawingStrokes();
+    redrawCurrentDrawing();
     updateSaveButton();
   }
 
@@ -1518,6 +1578,7 @@
     }
 
     fitGuideCharacter();
+    syncGuideVisibility();
     updateSaveButton();
   }
 
@@ -1609,11 +1670,17 @@
 
   function updateSaveButton() {
     const btn = document.getElementById("ghostSaveBtn");
+    const clearBtn = document.getElementById("ghostClearBtn");
+    const undoBtn = document.getElementById("ghostUndoStrokeBtn");
     const message = document.getElementById("ghostValidationMessage");
     if (!btn) return;
 
+    const hasStrokes = hasCurrentDrawingStrokes();
     const result = validateCurrentDrawing(currentChar());
     btn.disabled = !result.ok;
+
+    if (clearBtn) clearBtn.disabled = !hasStrokes;
+    if (undoBtn) undoBtn.disabled = !hasStrokes;
 
     if (message) {
       message.textContent = result.message || "";
@@ -5079,11 +5146,6 @@
       guideTimer = null;
     }
   }
-
-  window.addEventListener("resize", () => {
-    if (state.screen === "remix") drawRemixPreview();
-    if (state.screen === "training" || state.screen === "punctuationRecorder") fitGuideCharacter();
-  });
 
   window.addEventListener("resize", () => {
     if (state.screen === "remix") drawRemixPreview();
