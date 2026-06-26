@@ -21,10 +21,10 @@
     { id: "advanced", label: "🌙 Advanced" }
   ];
 
-  const MODES = [
-    { id: "beginner", label: "👻 Beginner" },
-    { id: "advanced", label: "🌙 Advanced" }
-  ];
+  const ENABLE_PUNCTUATION_RECORDER = true;
+  const PUNCTUATION_RECORDER_LONG_PRESS_MS = 1500;
+  const PUNCTUATION_RECORDER_VARIATIONS = 3;
+  const PUNCTUATION_RECORDER_CHARS = [".", ",", ":", ";", "'", "\"", "-", "!", "?"];
 
   const COLOR_PALETTE = {
     red: { label: "Red", value: "#ff5a51" },
@@ -777,7 +777,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.1",
+      debugBadge: "GW 1.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
