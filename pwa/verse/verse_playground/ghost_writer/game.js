@@ -783,7 +783,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.7",
+      debugBadge: "GW 1.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1376,6 +1376,19 @@
     app.innerHTML = rootHtml(`
       <div class="ghost-training-card">
         <div class="ghost-training-topline">
+          <div class="ghost-training-title">Write: <span>${escapeHtml(char)}</span></div>
+          <span class="ghost-training-count">${escapeHtml(String(state.currentCharIndex + 1))}/${escapeHtml(String(total))}</span>
+        </div>
+
+        <div class="ghost-training-draw-pad">
+          <div class="ghost-draw-wrap" id="ghostDrawWrap">
+            <div class="ghost-draw-instruction ${showIntroMessage ? "" : "is-hidden"}" id="ghostDrawInstruction">Draw each letter nice and big</div>
+            <div class="ghost-guide-text ${isSymbolChar(char) ? "is-symbol" : ""} ${showIntroMessage || !state.guideVisible ? "is-faded" : ""}" id="ghostGuideText">${escapeHtml(char)}</div>
+            <canvas id="ghostDrawCanvas" aria-label="Draw ${escapeHtml(charLabel(char))}"></canvas>
+          </div>
+        </div>
+
+        <div class="ghost-train-actions">
           <button
             class="ghost-guide-toggle ${state.guideVisible ? "is-on" : "is-off"}"
             id="ghostGuideToggleBtn"
@@ -1383,17 +1396,6 @@
             aria-label="${state.guideVisible ? "Hide letter guide" : "Show letter guide"}"
             aria-pressed="${state.guideVisible ? "true" : "false"}"
           >👁️</button>
-          <div class="ghost-training-title">Write: <span>${escapeHtml(char)}</span></div>
-          <span class="ghost-training-count">${escapeHtml(String(state.currentCharIndex + 1))}/${escapeHtml(String(total))}</span>
-        </div>
-
-        <div class="ghost-draw-wrap" id="ghostDrawWrap">
-          <div class="ghost-draw-instruction ${showIntroMessage ? "" : "is-hidden"}" id="ghostDrawInstruction">Draw each letter nice and big</div>
-          <div class="ghost-guide-text ${isSymbolChar(char) ? "is-symbol" : ""} ${showIntroMessage || !state.guideVisible ? "is-faded" : ""}" id="ghostGuideText">${escapeHtml(char)}</div>
-          <canvas id="ghostDrawCanvas" aria-label="Draw ${escapeHtml(charLabel(char))}"></canvas>
-        </div>
-
-        <div class="ghost-train-actions">
           <button class="vm-btn vm-btn-secondary" id="ghostClearBtn" type="button" aria-label="Clear drawing">Clear</button>
           <button class="vm-btn vm-btn-secondary" id="ghostUndoStrokeBtn" type="button" aria-label="Undo last stroke">↩️</button>
           <button class="vm-btn" id="ghostSaveBtn" type="button" disabled>Save &amp; Next</button>
