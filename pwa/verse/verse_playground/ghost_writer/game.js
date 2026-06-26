@@ -784,7 +784,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 2.0",
+      debugBadge: "GW 2.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -2000,14 +2000,14 @@
 
     const settingsHtml = isSimple ? `
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Background</div>
+            <div class="ghost-section-title">🖼️ Background</div>
             <div class="ghost-options">
               ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
             </div>
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Writing</div>
+            <div class="ghost-section-title">✏️ Writing</div>
             <div class="ghost-options">
               ${selectTextColorHtml("ghostTextColorSelect", "Writing Color", state.remix.textColor, state.remix.background)}
               ${selectOptionHtml("ghostThicknessSelect", "Line Size", state.remix.thickness, THICKNESS)}
@@ -2015,14 +2015,14 @@
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Verse Tag</div>
+            <div class="ghost-section-title">🏷️ Verse Tag</div>
             <div class="ghost-options">
               ${selectOptionHtml("ghostReferenceDesignSelect", "Verse Design", state.referenceDecorationStyle || "box", REFERENCE_DECORATION_OPTIONS)}
             </div>
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Ghost Magic</div>
+            <div class="ghost-section-title">👻 Ghost Effect</div>
             <div class="ghost-options">
               ${selectOptionHtml("ghostVaporSelect", "Ghost Trail", state.remix.vapor || "normal", VAPOR_LEVELS)}
               ${selectOptionHtml("ghostSpeedSelect", "Ghost Speed", state.remix.speed, SPEEDS)}
@@ -2030,32 +2030,33 @@
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Border</div>
+            <div class="ghost-section-title">🔲 Frame</div>
             <div class="ghost-options">
-              ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
+              ${selectOptionHtml("ghostBorderStyleSelect", "Frame Style", state.remix.borderStyle, BORDER_STYLES)}
             </div>
           </div>
 
           <div class="ghost-remix-section ghost-remix-section-actions">
-            <div class="ghost-section-title">Actions</div>
+            <div class="ghost-section-title">🎬 Actions</div>
             <div class="ghost-remix-actions">
               <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
+              <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save Picture</button>
               <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Start Over</button>
               <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
             </div>
           </div>
     ` : `
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Background</div>
+            <div class="ghost-section-title">🖼️ Background</div>
             <div class="ghost-options">
               ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
             </div>
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Writing</div>
+            <div class="ghost-section-title">✏️ Writing</div>
             <div class="ghost-options">
-              ${selectTextColorHtml("ghostTextColorSelect", "Text Color", state.remix.textColor, state.remix.background)}
+              ${selectTextColorHtml("ghostTextColorSelect", "Writing Color", state.remix.textColor, state.remix.background)}
               ${selectOptionHtml("ghostThicknessSelect", "Line Size", state.remix.thickness, THICKNESS)}
               ${selectSimpleHtml("ghostJitterSelect", "Wiggly Placement", state.remix.jitter, { off: "Off", on: "On" })}
               ${selectSimpleHtml("ghostWobbleSelect", "Wobble Letters", state.remix.wobble, { off: "Off", on: "On" })}
@@ -2063,39 +2064,39 @@
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Reference</div>
+            <div class="ghost-section-title">🏷️ Verse Tag</div>
             <div class="ghost-options">
-              ${selectOptionHtml("ghostReferenceDesignSelect", "Reference Design", state.referenceDecorationStyle || "box", REFERENCE_DECORATION_OPTIONS)}
-              ${selectTextColorHtml("ghostReferenceTextColorSelect", "Reference Text Color", state.remix.referenceTextColor || state.remix.textColor, state.remix.background)}
-              ${selectTextColorHtml("ghostReferenceDecorationColorSelect", "Reference Design Color", state.remix.referenceDecorationColor || state.remix.referenceTextColor || state.remix.textColor, state.remix.background)}
+              ${selectOptionHtml("ghostReferenceDesignSelect", "Verse Design", state.referenceDecorationStyle || "box", REFERENCE_DECORATION_OPTIONS)}
+              ${selectTextColorHtml("ghostReferenceTextColorSelect", "Verse Words Color", state.remix.referenceTextColor || state.remix.textColor, state.remix.background)}
+              ${selectTextColorHtml("ghostReferenceDecorationColorSelect", "Verse Design Color", state.remix.referenceDecorationColor || state.remix.referenceTextColor || state.remix.textColor, state.remix.background)}
             </div>
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Ghost Effect</div>
+            <div class="ghost-section-title">👻 Ghost Effect</div>
             <div class="ghost-options">
-              ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
+              ${selectOptionHtml("ghostToolSelect", "Writing Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
               ${selectOptionHtml("ghostVaporSelect", "Ghost Trail", state.remix.vapor || "normal", VAPOR_LEVELS)}
-              ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
+              ${selectOptionHtml("ghostSpeedSelect", "Ghost Speed", state.remix.speed, SPEEDS)}
             </div>
           </div>
 
           <div class="ghost-remix-section">
-            <div class="ghost-section-title">Border</div>
+            <div class="ghost-section-title">🔲 Frame</div>
             <div class="ghost-options">
-              ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
-              ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
-              ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
+              ${selectOptionHtml("ghostBorderStyleSelect", "Frame Style", state.remix.borderStyle, BORDER_STYLES)}
+              ${selectOptionHtml("ghostBorderThicknessSelect", "Frame Size", state.remix.borderThickness, BORDER_THICKNESS)}
+              ${selectOptionHtml("ghostBorderColorSelect", "Frame Color", state.remix.borderColor, COLOR_PALETTE)}
             </div>
           </div>
 
           <div class="ghost-remix-section ghost-remix-section-actions">
-            <div class="ghost-section-title">Actions &amp; Download</div>
+            <div class="ghost-section-title">🎬 Actions &amp; Download</div>
             <div class="ghost-remix-actions">
               <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
               <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Start Over</button>
-              ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
-              <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
+              ${selectOptionHtml("ghostExportSizeSelect", "Picture Shape", state.remix.exportSize || "square", EXPORT_SIZES)}
+              <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save Picture</button>
               
               <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
             </div>
@@ -2293,7 +2294,12 @@
 
     document.getElementById("ghostSaveImageBtn")?.addEventListener("click", () => {
       sanitizeRemixOptions(state.remix);
-      saveGhostWriterImage({ ...state.remix });
+
+      const imageOptions = state.remixMode === "simple"
+        ? { ...state.remix, exportSize: "phone" }
+        : { ...state.remix };
+
+      saveGhostWriterImage(imageOptions);
     });
 
     const saveVideoBtn = document.getElementById("ghostSaveVideoBtn");
