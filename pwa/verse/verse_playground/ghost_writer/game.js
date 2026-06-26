@@ -32,13 +32,31 @@
 
   const SOUND_FILES = {
     uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
-    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
+    spooky1: `${SOUND_BASE_PATH}ghost_writer_spooky_1.mp3`,
+    spooky2: `${SOUND_BASE_PATH}ghost_writer_spooky_2.mp3`,
+    spooky3: `${SOUND_BASE_PATH}ghost_writer_spooky_3.mp3`,
+    spooky4: `${SOUND_BASE_PATH}ghost_writer_spooky_4.mp3`,
+    spooky5: `${SOUND_BASE_PATH}ghost_writer_spooky_5.mp3`
   };
+
+  const GHOST_SPOOKY_SOUND_KEYS = [
+    "spooky1",
+    "spooky2",
+    "spooky3",
+    "spooky4",
+    "spooky5"
+  ];
 
   const SOUND_TUNING = {
     masterVolume: 0.82,
     volumes: {
-      uiTap: 0.42
+      uiTap: 0.42,
+      ghostSpooky: 0.34
+    },
+    spookyGapMs: {
+      min: 900,
+      max: 1150
     }
   };
   
@@ -660,6 +678,12 @@
   let silenceAudio = null;
   let soundLoadPromise = null;
   let uiSoundFlip = false;
+  let spookySoundActive = false;
+  let spookySoundToken = 0;
+  let spookySoundQueue = [];
+  let spookyLastKey = "";
+  let spookySource = null;
+  let spookyTimer = 0;
   let guideTimer = null;
   let playbackRaf = 0;
   let trainingResizeRaf = 0;
@@ -890,6 +914,146 @@
     void unlockAudio();
   }
 
+  function clearSpookyTimer() {
+    if (spookyTimer) {
+      clearTimeout(spookyTimer);
+      spookyTimer = 0;
+    }
+  }
+
+  function getRandomSpookyGapMs() {
+    const min = Number(SOUND_TUNING.spookyGapMs?.min) || 1000;
+    const max = Number(SOUND_TUNING.spookyGapMs?.max) || min;
+    const low = Math.min(min, max);
+    const high = Math.max(min, max);
+
+    return clamp(low + Math.random() * (high - low), 0, 5000);
+  }
+
+  function shuffleGhostSpookySoundKeys() {
+    const available = GHOST_SPOOKY_SOUND_KEYS.filter((key) => soundBuffers.has(key));
+    const out = [...available];
+
+    for (let i = out.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [out[i], out[j]] = [out[j], out[i]];
+    }
+
+    if (out.length > 1 && out[0] === spookyLastKey) {
+      const swapIndex = out.findIndex((key) => key !== spookyLastKey);
+
+      if (swapIndex > 0) {
+        [out[0], out[swapIndex]] = [out[swapIndex], out[0]];
+      }
+    }
+
+    return out;
+  }
+
+  function chooseGhostSpookySoundKey() {
+    if (!spookySoundQueue.length) {
+      spookySoundQueue = shuffleGhostSpookySoundKeys();
+    }
+
+    return spookySoundQueue.shift() || "";
+  }
+
+  function stopCurrentSpookySource() {
+    const source = spookySource;
+    spookySource = null;
+
+    if (!source) return;
+
+    try {
+      source.onended = null;
+      source.stop(0);
+    } catch (err) {
+      // The source may already be stopped. That is okay.
+    }
+  }
+
+  function stopGhostSpookySounds() {
+    spookySoundActive = false;
+    spookySoundToken += 1;
+    spookySoundQueue = [];
+    clearSpookyTimer();
+    stopCurrentSpookySource();
+  }
+
+  function queueNextGhostSpookySound(token, delayMs = 0) {
+    clearSpookyTimer();
+
+    spookyTimer = setTimeout(() => {
+      spookyTimer = 0;
+      playNextGhostSpookySound(token);
+    }, Math.max(0, delayMs));
+  }
+
+  function playNextGhostSpookySound(token) {
+    if (!spookySoundActive || token !== spookySoundToken || muted) return;
+
+    const ac = getAudioContext();
+
+    if (!ac) return;
+
+    const key = chooseGhostSpookySoundKey();
+    const buffer = key ? soundBuffers.get(key) : null;
+
+    if (!key || !buffer) return;
+
+    try {
+      const source = ac.createBufferSource();
+      const gain = ac.createGain();
+
+      source.buffer = buffer;
+      gain.gain.value = getSoundVolume("ghostSpooky");
+
+      source.connect(gain);
+      gain.connect(ac.destination);
+
+      spookyLastKey = key;
+      spookySource = source;
+
+      source.onended = () => {
+        if (spookySource === source) {
+          spookySource = null;
+        }
+
+        if (!spookySoundActive || token !== spookySoundToken || muted) return;
+
+        queueNextGhostSpookySound(token, getRandomSpookyGapMs());
+      };
+
+      source.start(0);
+    } catch (err) {
+      console.warn(`Ghost Writer could not play spooky sound: ${key}`, err);
+    }
+  }
+
+  function startGhostSpookySounds() {
+    stopGhostSpookySounds();
+
+    if (muted) return;
+
+    spookySoundActive = true;
+    spookySoundToken += 1;
+    spookySoundQueue = [];
+
+    const token = spookySoundToken;
+
+    void (async () => {
+      const unlocked = await unlockAudio();
+
+      if (!unlocked || !spookySoundActive || token !== spookySoundToken || muted) return;
+
+      await loadSoundBuffers();
+
+      if (!spookySoundActive || token !== spookySoundToken || muted) return;
+
+      playNextGhostSpookySound(token);
+    })();
+  }
+
   function escapeHtml(value) {
     if (shell().escapeHtml) return shell().escapeHtml(value);
     return String(value ?? "")
@@ -972,8 +1136,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 2.5",
-            debugBadge: "GW 2.5",
+      debugBadge: "GW 2.7",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1081,6 +1244,7 @@
 
         playUiTapSound();
         muted = true;
+        stopGhostSpookySounds();
         return muted;
       },
       onModeSelect: () => {
@@ -4919,6 +5083,7 @@
 
     clearPlaybackCanvas(c, rect.width, rect.height, options);
     hidePlaybackTool(playbackState);
+    startGhostSpookySounds();
     playbackRaf = requestAnimationFrame(playbackFrame);
   }
 
@@ -5026,6 +5191,7 @@
     if (ps.index >= placements.length) {
       drawCompleteText(ps.c, ps.width, ps.height, ps.options);
       hidePlaybackTool(ps);
+      stopGhostSpookySounds();
 
       const done = ps.onDone;
       playbackState = null;
@@ -5379,6 +5545,8 @@
   }
 
   function stopPlayback() {
+    stopGhostSpookySounds();
+
     if (playbackState) {
       hidePlaybackTool(playbackState);
     }
