@@ -394,6 +394,7 @@
   let lastProgressToneStep = 0;
   let lastProgressToneAt = -Infinity;
   let progressToneReadyAt = 0;
+  let generatedTonePrimed = false;
   let audioDebugInfo = {};
   let mowerSoundAudio = null;
   let mowerSoundFrame = null;
@@ -759,6 +760,8 @@
 
         oscillator.start(now);
         oscillator.stop(now + 0.05);
+
+        generatedTonePrimed = true;
       } catch (err) {
         console.warn("Scripture Scrub: generated tone warmup failed", err);
       }
@@ -1279,14 +1282,7 @@
 
     setupRoundVisuals(round);
 
-    const needsFirstMudToneWarmup = round.id === "mud" && currentRoundIndex === 0;
-    progressToneReadyAt = needsFirstMudToneWarmup ? performance.now() + 180 : 0;
-
-    if (needsFirstMudToneWarmup) {
-      setTimeout(() => {
-        warmUpGeneratedToneAudio();
-      }, 90);
-    }
+    progressToneReadyAt = 0;
   }
 
   function getReferenceDisplay() {
@@ -3474,6 +3470,15 @@
       if (menuOpen || completionLocked) return;
       event.preventDefault();
       dismissInstructionChip();
+
+      // iPad Safari can allow MP3 sounds but still delay generated oscillator tones.
+      // Prime generated tones directly inside the first real scrub gesture.
+      unlockAudio();
+
+      if (!generatedTonePrimed) {
+        warmUpGeneratedToneAudio();
+      }
+
       pointerDown = true;
       lastPoint = getCanvasPoint(event);
       coverCanvas.setPointerCapture?.(event.pointerId);
