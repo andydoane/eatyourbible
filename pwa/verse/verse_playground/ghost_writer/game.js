@@ -640,6 +640,7 @@
   let muted = false;
   let guideTimer = null;
   let playbackRaf = 0;
+  let trainingResizeRaf = 0;
   let playbackState = null;
   let builtInPunctuationGlyphs = {};
   const backgroundImageCache = new Map();
@@ -779,7 +780,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.5",
+      debugBadge: "GW 1.6",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1494,6 +1495,44 @@
       c.clearRect(0, 0, width, height);
     }
     updateSaveButton();
+  }
+
+  function resizeTrainingCanvasIfNeeded() {
+    if (state.screen !== "training" && state.screen !== "punctuationRecorder") return;
+
+    const canvas = document.getElementById("ghostDrawCanvas");
+    const wrap = document.getElementById("ghostDrawWrap");
+    if (!canvas || !wrap) return;
+
+    const rect = wrap.getBoundingClientRect();
+    const nextWidth = Math.max(1, rect.width);
+    const nextHeight = Math.max(1, rect.height);
+    const oldWidth = Number(canvas.dataset.cssWidth) || 0;
+    const oldHeight = Number(canvas.dataset.cssHeight) || 0;
+    const changed = Math.abs(nextWidth - oldWidth) > 1 || Math.abs(nextHeight - oldHeight) > 1;
+
+    if (changed) {
+      const c = setupCanvasForDpr(canvas, nextWidth, nextHeight);
+      c.clearRect(0, 0, nextWidth, nextHeight);
+      drawAllTrainingStrokes(c, nextWidth, nextHeight);
+    }
+
+    fitGuideCharacter();
+    updateSaveButton();
+  }
+
+  function scheduleTrainingCanvasResize() {
+    if (state.screen !== "training" && state.screen !== "punctuationRecorder") return;
+
+    if (trainingResizeRaf) {
+      cancelAnimationFrame(trainingResizeRaf);
+      trainingResizeRaf = 0;
+    }
+
+    trainingResizeRaf = requestAnimationFrame(() => {
+      trainingResizeRaf = 0;
+      resizeTrainingCanvasIfNeeded();
+    });
   }
 
   function getDrawingStats(strokes) {
@@ -5045,6 +5084,21 @@
     if (state.screen === "remix") drawRemixPreview();
     if (state.screen === "training" || state.screen === "punctuationRecorder") fitGuideCharacter();
   });
+
+  window.addEventListener("resize", () => {
+    if (state.screen === "remix") drawRemixPreview();
+    if (state.screen === "training" || state.screen === "punctuationRecorder") {
+      scheduleTrainingCanvasResize();
+    }
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => {
+      if (state.screen === "training" || state.screen === "punctuationRecorder") {
+        scheduleTrainingCanvasResize();
+      }
+    });
+  }
 
   async function boot() {
     try {
