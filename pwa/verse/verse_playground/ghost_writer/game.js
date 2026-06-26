@@ -26,6 +26,22 @@
   const PUNCTUATION_RECORDER_VARIATIONS = 3;
   const PUNCTUATION_RECORDER_CHARS = [".", ",", ":", ";", "'", "\"", "-", "!", "?"];
   const BUILT_IN_PUNCTUATION_GLYPHS_URL = "./ghost-writer-punctuation-glyphs.json";
+  const SOUND_BASE_PATH = "./ghost_writer_sounds/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+  const AUDIO_UNLOCK_SRC = "../../verse_audio/silence.mp3";
+
+  const SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`
+  };
+
+  const SOUND_TUNING = {
+    masterVolume: 0.82,
+    volumes: {
+      uiTap: 0.42
+    }
+  };
+  
 
   const COLOR_PALETTE = {
     red: { label: "Red", value: "#ff5a51" },
@@ -638,6 +654,12 @@
   let parsedRef = null;
   let selectedMode = "beginner";
   let muted = false;
+  let audioContext = null;
+  let audioUnlocked = false;
+  let audioUnlockPromise = null;
+  let silenceAudio = null;
+  let soundLoadPromise = null;
+  let uiSoundFlip = false;
   let guideTimer = null;
   let playbackRaf = 0;
   let trainingResizeRaf = 0;
@@ -646,6 +668,7 @@
   const backgroundImageCache = new Map();
   const borderDoodleImageCache = new Map();
   const tintedBorderDoodleCache = new Map();
+  const soundBuffers = new Map();
 
   const punctuationRecorder = {
     charIndex: 0,
@@ -700,6 +723,171 @@
 
   function bridge() {
     return window.VerseGameBridge || {};
+  }
+
+  function getAudioContext() {
+    if (audioContext) return audioContext;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+      return null;
+    }
+
+    try {
+      audioContext = new AudioContextClass();
+      return audioContext;
+    } catch (err) {
+      console.warn("Ghost Writer could not create audio context", err);
+      return null;
+    }
+  }
+
+  async function unlockAudio() {
+    if (audioUnlocked) return true;
+    if (audioUnlockPromise) return audioUnlockPromise;
+
+    audioUnlockPromise = (async () => {
+      const ac = getAudioContext();
+
+      if (!ac) return false;
+
+      try {
+        if (!silenceAudio) {
+          silenceAudio = new Audio(AUDIO_UNLOCK_SRC);
+          silenceAudio.preload = "auto";
+          silenceAudio.loop = false;
+          silenceAudio.volume = 0.001;
+          silenceAudio.setAttribute("playsinline", "true");
+        }
+
+        try {
+          silenceAudio.currentTime = 0;
+          await silenceAudio.play();
+          silenceAudio.pause();
+          silenceAudio.currentTime = 0;
+        } catch (err) {
+          // iOS sometimes blocks the silence file even during valid gestures.
+          // The oscillator below still gives Web Audio a chance to unlock.
+        }
+
+        if (ac.state === "suspended") {
+          await ac.resume();
+        }
+
+        const oscillator = ac.createOscillator();
+        const gain = ac.createGain();
+
+        gain.gain.value = 0.0001;
+        oscillator.connect(gain);
+        gain.connect(ac.destination);
+        oscillator.start();
+        oscillator.stop(ac.currentTime + 0.03);
+
+        audioUnlocked = true;
+        void loadSoundBuffers();
+
+        return true;
+      } catch (err) {
+        console.warn("Ghost Writer audio unlock failed", err);
+        return false;
+      } finally {
+        audioUnlockPromise = null;
+      }
+    })();
+
+    return audioUnlockPromise;
+  }
+
+  async function loadSoundBuffers() {
+    if (soundLoadPromise) return soundLoadPromise;
+
+    const ac = getAudioContext();
+
+    if (!ac) return false;
+
+    soundLoadPromise = (async () => {
+      const entries = Object.entries(SOUND_FILES);
+
+      await Promise.all(entries.map(async ([key, src]) => {
+        if (soundBuffers.has(key)) return;
+
+        try {
+          const response = await fetch(src, { cache: "force-cache" });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          const data = await response.arrayBuffer();
+          const buffer = await ac.decodeAudioData(data.slice(0));
+          soundBuffers.set(key, buffer);
+        } catch (err) {
+          console.warn(`Ghost Writer could not load sound: ${key}`, err);
+        }
+      }));
+
+      return true;
+    })();
+
+    return soundLoadPromise;
+  }
+
+  function getSoundVolume(volumeKey) {
+    const master = Number(SOUND_TUNING.masterVolume);
+
+    if (!Number.isFinite(master) || master <= 0) {
+      return 0;
+    }
+
+    const named = Number(SOUND_TUNING.volumes?.[volumeKey]);
+
+    if (!Number.isFinite(named)) {
+      return clamp(master, 0, 1);
+    }
+
+    return clamp(master * named, 0, 1);
+  }
+
+  function playGameSound(key, volumeKey = key) {
+    if (muted) return;
+
+    void (async () => {
+      const unlocked = await unlockAudio();
+
+      if (!unlocked || muted) return;
+
+      await loadSoundBuffers();
+
+      const ac = getAudioContext();
+      const buffer = soundBuffers.get(key);
+
+      if (!ac || !buffer) return;
+
+      try {
+        const source = ac.createBufferSource();
+        const gain = ac.createGain();
+
+        source.buffer = buffer;
+        gain.gain.value = getSoundVolume(volumeKey);
+
+        source.connect(gain);
+        gain.connect(ac.destination);
+        source.start(0);
+      } catch (err) {
+        console.warn(`Ghost Writer could not play sound: ${key}`, err);
+      }
+    })();
+  }
+
+  function playUiTapSound() {
+    const key = uiSoundFlip ? "uiTap2" : "uiTap1";
+    uiSoundFlip = !uiSoundFlip;
+    playGameSound(key, "uiTap");
+  }
+
+  function unlockAudioSoon() {
+    void unlockAudio();
   }
 
   function escapeHtml(value) {
@@ -784,15 +972,22 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 2.4",
+      debugBadge: "GW 2.5",
+            debugBadge: "GW 2.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
       helpText: "How to Play",
       backLabel: "Back to Playground",
       theme: GAME_THEME,
-      onBack: () => bridge().exitGame?.(),
-      onStart: () => renderModeSelect()
+      onBack: () => {
+        playUiTapSound();
+        bridge().exitGame?.();
+      },
+      onStart: () => {
+        playUiTapSound();
+        renderModeSelect();
+      }
     });
 
     wirePunctuationRecorderTitleHotspot();
@@ -812,8 +1007,14 @@
       backLabel: "Back to Ghost Writer title",
       theme: GAME_THEME,
       modes: MODES,
-      onBack: () => renderIntro(),
-      onSelect: (mode) => startRun(mode)
+      onBack: () => {
+        playUiTapSound();
+        renderIntro();
+      },
+      onSelect: (mode) => {
+        playUiTapSound();
+        startRun(mode);
+      }
     });
   }
 
@@ -872,13 +1073,31 @@
       helpOverlayId: HELP_OVERLAY_ID,
       isMuted: () => muted,
       onMuteToggle: () => {
-        muted = !muted;
+        if (muted) {
+          muted = false;
+          playUiTapSound();
+          return muted;
+        }
+
+        playUiTapSound();
+        muted = true;
         return muted;
       },
-      onModeSelect: () => renderModeSelect(),
-      onExit: () => bridge().exitGame?.(),
-      onOpen: () => true,
-      onClose: () => { },
+      onModeSelect: () => {
+        playUiTapSound();
+        renderModeSelect();
+      },
+      onExit: () => {
+        playUiTapSound();
+        bridge().exitGame?.();
+      },
+      onOpen: () => {
+        playUiTapSound();
+        return true;
+      },
+      onClose: () => {
+        playUiTapSound();
+      },
       onBackFromHelp: () => { }
     });
   }
@@ -1416,10 +1635,25 @@
     syncGuideVisibility();
     updateSaveButton();
 
-    document.getElementById("ghostGuideToggleBtn")?.addEventListener("click", toggleGuideVisibility);
-    document.getElementById("ghostClearBtn")?.addEventListener("click", clearCurrentDrawing);
-    document.getElementById("ghostUndoStrokeBtn")?.addEventListener("click", undoLastStroke);
-    document.getElementById("ghostSaveBtn")?.addEventListener("click", saveCurrentGlyph);
+    document.getElementById("ghostGuideToggleBtn")?.addEventListener("click", () => {
+      playUiTapSound();
+      toggleGuideVisibility();
+    });
+
+    document.getElementById("ghostClearBtn")?.addEventListener("click", () => {
+      playUiTapSound();
+      clearCurrentDrawing();
+    });
+
+    document.getElementById("ghostUndoStrokeBtn")?.addEventListener("click", () => {
+      playUiTapSound();
+      undoLastStroke();
+    });
+
+    document.getElementById("ghostSaveBtn")?.addEventListener("click", () => {
+      playUiTapSound();
+      saveCurrentGlyph();
+    });
 
     if (showIntroMessage) {
       state.trainingIntroShown = true;
@@ -1461,6 +1695,7 @@
 
     canvas.onpointerdown = (event) => {
       event.preventDefault();
+      unlockAudioSoon();
       canvas.setPointerCapture?.(event.pointerId);
       const point = getPoint(event);
       state.currentStroke = [point];
@@ -1916,6 +2151,7 @@
 
     wireMenu();
     document.getElementById("ghostWriteBtn")?.addEventListener("click", () => {
+      playUiTapSound();
       renderPlayback({
         options: makeDefaultRemixOptions(),
         markPractice: true,
@@ -1958,6 +2194,8 @@
     if (!canvas || !card) return;
 
     remixBtn?.addEventListener("click", () => {
+      playUiTapSound();
+
       if (returnTo === "remix") {
         state.remixMode = "simple";
         renderRemix();
@@ -2282,17 +2520,20 @@
         const nextMode = btn.dataset.remixMode === "more" ? "more" : "simple";
         if (state.remixMode === nextMode) return;
 
+        playUiTapSound();
         state.remixMode = nextMode;
         renderRemix();
       });
     });
 
     document.getElementById("ghostReplayBtn")?.addEventListener("click", () => {
+      playUiTapSound();
       sanitizeRemixOptions(state.remix);
       renderPlayback({ options: { ...state.remix }, markPractice: false, returnTo: "remix" });
     });
 
     document.getElementById("ghostSaveImageBtn")?.addEventListener("click", () => {
+      playUiTapSound();
       sanitizeRemixOptions(state.remix);
 
       const imageOptions = state.remixMode === "simple"
@@ -2309,6 +2550,8 @@
     }
 
     saveVideoBtn?.addEventListener("click", async () => {
+      playUiTapSound();
+
       if (!isReplayVideoSupported()) {
         saveVideoBtn.hidden = true;
         return;
@@ -2331,8 +2574,15 @@
       }
     });
 
-    document.getElementById("ghostAgainBtn")?.addEventListener("click", () => startRun(selectedMode));
-    document.getElementById("ghostBackBtn")?.addEventListener("click", () => bridge().exitGame?.());
+    document.getElementById("ghostAgainBtn")?.addEventListener("click", () => {
+      playUiTapSound();
+      startRun(selectedMode);
+    });
+
+    document.getElementById("ghostBackBtn")?.addEventListener("click", () => {
+      playUiTapSound();
+      bridge().exitGame?.();
+    });
 
     refreshTextColorOptions();
   }
