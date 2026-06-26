@@ -21,6 +21,7 @@
   const DEBUG_SKIP_ROUND_ID = "chalkboard";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
   const VERSE_FIT_DEBUG = false;
+  const AUDIO_DEBUG = true;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
 
@@ -392,6 +393,7 @@
   let roundIntroSoundPlayedFor = null;
   let lastProgressToneStep = 0;
   let lastProgressToneAt = -Infinity;
+  let audioDebugInfo = {};
   let mowerSoundAudio = null;
   let mowerSoundFrame = null;
 
@@ -660,6 +662,98 @@
     playProgressToneStep(step);
   }
 
+  function playProgressToneForRatio(round, ratio) {
+    const roundId = round?.id || "?";
+    const stepPercent = SOUND_TUNING.progressStepPercent || 5;
+    const pct = clamp(ratio * 100, 0, 100);
+    const step = Math.floor(pct / stepPercent);
+    const maxStep = Math.floor(100 / stepPercent);
+    const now = performance.now();
+    const toneAgeMs = Number.isFinite(lastProgressToneAt)
+      ? Math.round(now - lastProgressToneAt)
+      : "first";
+
+    if (!isProgressToneRound(round)) {
+      setAudioDebugInfo({
+        roundId,
+        ratio: ratio.toFixed(3),
+        pct: pct.toFixed(1),
+        step,
+        lastStep: lastProgressToneStep,
+        toneAgeMs,
+        decision: "skip: not progress-tone round"
+      });
+      return;
+    }
+
+    if (muted) {
+      setAudioDebugInfo({
+        roundId,
+        ratio: ratio.toFixed(3),
+        pct: pct.toFixed(1),
+        step,
+        lastStep: lastProgressToneStep,
+        toneAgeMs,
+        decision: "skip: muted"
+      });
+      return;
+    }
+
+    if (step <= lastProgressToneStep) {
+      setAudioDebugInfo({
+        roundId,
+        ratio: ratio.toFixed(3),
+        pct: pct.toFixed(1),
+        step,
+        lastStep: lastProgressToneStep,
+        toneAgeMs,
+        decision: "skip: same/old step"
+      });
+      return;
+    }
+
+    if (step >= maxStep) {
+      setAudioDebugInfo({
+        roundId,
+        ratio: ratio.toFixed(3),
+        pct: pct.toFixed(1),
+        step,
+        lastStep: lastProgressToneStep,
+        toneAgeMs,
+        decision: "skip: near complete"
+      });
+      return;
+    }
+
+    if (now - lastProgressToneAt < 90) {
+      setAudioDebugInfo({
+        roundId,
+        ratio: ratio.toFixed(3),
+        pct: pct.toFixed(1),
+        step,
+        lastStep: lastProgressToneStep,
+        toneAgeMs,
+        decision: "skip: throttle"
+      });
+      return;
+    }
+
+    lastProgressToneStep = step;
+    lastProgressToneAt = now;
+
+    setAudioDebugInfo({
+      roundId,
+      ratio: ratio.toFixed(3),
+      pct: pct.toFixed(1),
+      step,
+      lastStep: lastProgressToneStep,
+      toneAgeMs,
+      decision: "play: progress tone"
+    });
+
+    playProgressToneStep(step);
+  }
+
   function playProgressToneStep(step) {
     // C major wave: climbs up, comes back down, then repeats.
     // C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4
@@ -681,7 +775,15 @@
     ];
 
     const frequency = scale[(step - 1) % scale.length];
-    playToneFrequency(frequency, 0.075, soundVolume("progressTone"));
+    const volume = soundVolume("progressTone");
+
+    setAudioDebugInfo({
+      frequency: frequency.toFixed(2),
+      volume: volume.toFixed(2),
+      decision: "calling playToneFrequency"
+    });
+
+    playToneFrequency(frequency, 0.075, volume);
   }
 
   function playCompletionArpeggio() {
@@ -722,8 +824,17 @@
 
           oscillator.start(now);
           oscillator.stop(now + duration + 0.025);
+
+          setAudioDebugInfo({
+            frequency: frequency.toFixed(2),
+            volume: volume.toFixed(2),
+            decision: "tone started"
+          });
         } catch (err) {
           console.warn("Scripture Scrub: progress tone failed", err);
+          setAudioDebugInfo({
+            decision: `tone error: ${err?.message || err}`
+          });
         }
       };
 
@@ -735,6 +846,9 @@
       startTone();
     } catch (err) {
       console.warn("Scripture Scrub: tone setup failed", err);
+      setAudioDebugInfo({
+        decision: `tone setup error: ${err?.message || err}`
+      });
     }
   }
 
@@ -798,6 +912,66 @@
       mowerSoundAudio.currentTime = 0;
       mowerSoundAudio = null;
     }
+  }
+
+  function setAudioDebugInfo(info = {}) {
+    if (!AUDIO_DEBUG) return;
+
+    audioDebugInfo = {
+      ...audioDebugInfo,
+      ...info,
+      audioState: audioCtx?.state || "none",
+      muted,
+      unlocked: audioUnlocked,
+      at: Math.round(performance.now())
+    };
+
+    renderAudioDebugOverlay();
+  }
+
+  function renderAudioDebugOverlay() {
+    if (!AUDIO_DEBUG) return;
+
+    let panel = document.getElementById("scrubAudioDebug");
+    if (!panel) {
+      panel = document.createElement("pre");
+      panel.id = "scrubAudioDebug";
+      panel.style.position = "fixed";
+      panel.style.left = "8px";
+      panel.style.right = "8px";
+      panel.style.bottom = "8px";
+      panel.style.zIndex = "9999";
+      panel.style.maxHeight = "42vh";
+      panel.style.overflow = "auto";
+      panel.style.margin = "0";
+      panel.style.padding = "10px 12px";
+      panel.style.borderRadius = "12px";
+      panel.style.background = "rgba(0, 0, 0, .82)";
+      panel.style.color = "#ffffff";
+      panel.style.font = "12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+      panel.style.whiteSpace = "pre-wrap";
+      panel.style.pointerEvents = "none";
+      document.body.appendChild(panel);
+    }
+
+    const rows = [
+      "AUDIO DEBUG SS 5.51",
+      `round: ${audioDebugInfo.roundId ?? "?"}`,
+      `ratio: ${audioDebugInfo.ratio ?? "?"}`,
+      `pct: ${audioDebugInfo.pct ?? "?"}`,
+      `step: ${audioDebugInfo.step ?? "?"}`,
+      `lastStep: ${audioDebugInfo.lastStep ?? "?"}`,
+      `decision: ${audioDebugInfo.decision ?? "?"}`,
+      `toneHz: ${audioDebugInfo.frequency ?? "?"}`,
+      `toneVol: ${audioDebugInfo.volume ?? "?"}`,
+      `toneAgeMs: ${audioDebugInfo.toneAgeMs ?? "?"}`,
+      `audioState: ${audioDebugInfo.audioState ?? "?"}`,
+      `unlocked: ${audioDebugInfo.unlocked ?? "?"}`,
+      `muted: ${audioDebugInfo.muted ?? "?"}`,
+      `time: ${audioDebugInfo.at ?? "?"}`
+    ];
+
+    panel.textContent = rows.join("\n");
   }
 
 
@@ -924,7 +1098,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.50",
+      debugBadge: "SS 5.51",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1130,6 +1304,16 @@
     window.addEventListener("resize", resizeHandler);
 
     setupRoundVisuals(round);
+
+    setAudioDebugInfo({
+      roundId: round.id,
+      ratio: "0.000",
+      pct: "0.0",
+      step: 0,
+      lastStep: lastProgressToneStep,
+      toneAgeMs: "first",
+      decision: "round rendered"
+    });
   }
 
   function getReferenceDisplay() {
