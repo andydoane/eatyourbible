@@ -32,35 +32,14 @@
 
   const SOUND_FILES = {
     uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
-    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
-    scribble1: `${SOUND_BASE_PATH}ghost_writer_scribble_1.mp3`,
-    scribble2: `${SOUND_BASE_PATH}ghost_writer_scribble_2.mp3`,
-    scribble3: `${SOUND_BASE_PATH}ghost_writer_scribble_3.mp3`,
-    scribble4: `${SOUND_BASE_PATH}ghost_writer_scribble_4.mp3`,
-    scribble5: `${SOUND_BASE_PATH}ghost_writer_scribble_5.mp3`,
-    scribble6: `${SOUND_BASE_PATH}ghost_writer_scribble_6.mp3`
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`
   };
-
-  const GHOST_SCRIBBLE_SOUND_KEYS = [
-    "scribble1",
-    "scribble2",
-    "scribble3",
-    "scribble4",
-    "scribble5",
-    "scribble6"
-  ];
 
   const SOUND_TUNING = {
     masterVolume: 0.82,
     volumes: {
-      uiTap: 0.42,
-      ghostScribble: 0.32
-    },
-    scribbleGapMs: {
-      min: 0,
-      max: 70
-    },
-    scribbleFadeOutMs: 220
+      uiTap: 0.42
+    }
   };
   
 
@@ -681,12 +660,6 @@
   let silenceAudio = null;
   let soundLoadPromise = null;
   let uiSoundFlip = false;
-  let scribbleSoundActive = false;
-  let scribbleSoundToken = 0;
-  let scribbleLastKey = "";
-  let scribbleSource = null;
-  let scribbleGain = null;
-  let scribbleTimer = 0;
   let guideTimer = null;
   let playbackRaf = 0;
   let trainingResizeRaf = 0;
@@ -917,145 +890,6 @@
     void unlockAudio();
   }
 
-  function clearScribbleTimer() {
-    if (scribbleTimer) {
-      clearTimeout(scribbleTimer);
-      scribbleTimer = 0;
-    }
-  }
-
-  function getRandomScribbleGapMs() {
-    const min = Number(SOUND_TUNING.scribbleGapMs?.min) || 0;
-    const max = Number(SOUND_TUNING.scribbleGapMs?.max) || 0;
-    const low = Math.min(min, max);
-    const high = Math.max(min, max);
-
-    return clamp(low + Math.random() * (high - low), 0, 1000);
-  }
-
-  function chooseGhostScribbleSoundKey() {
-    const available = GHOST_SCRIBBLE_SOUND_KEYS.filter((key) => soundBuffers.has(key));
-
-    if (!available.length) return "";
-
-    const choices = available.length > 1
-      ? available.filter((key) => key !== scribbleLastKey)
-      : available;
-
-    return choices[Math.floor(Math.random() * choices.length)] || available[0] || "";
-  }
-
-  function stopCurrentScribbleSource({ fade = true } = {}) {
-    const source = scribbleSource;
-    const gain = scribbleGain;
-    const ac = getAudioContext();
-
-    scribbleSource = null;
-    scribbleGain = null;
-
-    if (!source) return;
-
-    try {
-      source.onended = null;
-
-      if (fade && gain && ac) {
-        const fadeSeconds = clamp(Number(SOUND_TUNING.scribbleFadeOutMs) || 0, 0, 2000) / 1000;
-        const now = ac.currentTime;
-
-        gain.gain.cancelScheduledValues(now);
-        gain.gain.setValueAtTime(gain.gain.value, now);
-        gain.gain.linearRampToValueAtTime(0.0001, now + fadeSeconds);
-        source.stop(now + fadeSeconds + 0.03);
-      } else {
-        source.stop(0);
-      }
-    } catch (err) {
-      // The source may already be stopped. That is okay.
-    }
-  }
-
-  function stopGhostScribbleSounds({ fade = true } = {}) {
-    scribbleSoundActive = false;
-    scribbleSoundToken += 1;
-    clearScribbleTimer();
-    stopCurrentScribbleSource({ fade });
-  }
-
-  function queueNextGhostScribbleSound(token, delayMs = 0) {
-    clearScribbleTimer();
-
-    scribbleTimer = setTimeout(() => {
-      scribbleTimer = 0;
-      playNextGhostScribbleSound(token);
-    }, Math.max(0, delayMs));
-  }
-
-  function playNextGhostScribbleSound(token) {
-    if (!scribbleSoundActive || token !== scribbleSoundToken || muted) return;
-
-    const ac = getAudioContext();
-
-    if (!ac) return;
-
-    const key = chooseGhostScribbleSoundKey();
-    const buffer = key ? soundBuffers.get(key) : null;
-
-    if (!key || !buffer) return;
-
-    try {
-      const source = ac.createBufferSource();
-      const gain = ac.createGain();
-
-      source.buffer = buffer;
-      gain.gain.value = getSoundVolume("ghostScribble");
-
-      source.connect(gain);
-      gain.connect(ac.destination);
-
-      scribbleLastKey = key;
-      scribbleSource = source;
-      scribbleGain = gain;
-
-      source.onended = () => {
-        if (scribbleSource === source) {
-          scribbleSource = null;
-          scribbleGain = null;
-        }
-
-        if (!scribbleSoundActive || token !== scribbleSoundToken || muted) return;
-
-        queueNextGhostScribbleSound(token, getRandomScribbleGapMs());
-      };
-
-      source.start(0);
-    } catch (err) {
-      console.warn(`Ghost Writer could not play scribble sound: ${key}`, err);
-    }
-  }
-
-  function startGhostScribbleSounds() {
-    stopGhostScribbleSounds({ fade: false });
-
-    if (muted) return;
-
-    scribbleSoundActive = true;
-    scribbleSoundToken += 1;
-
-    const token = scribbleSoundToken;
-
-    void (async () => {
-      const unlocked = await unlockAudio();
-
-      if (!unlocked || !scribbleSoundActive || token !== scribbleSoundToken || muted) return;
-
-      await loadSoundBuffers();
-
-      if (!scribbleSoundActive || token !== scribbleSoundToken || muted) return;
-
-      playNextGhostScribbleSound(token);
-    })();
-  }
-
   function escapeHtml(value) {
     if (shell().escapeHtml) return shell().escapeHtml(value);
     return String(value ?? "")
@@ -1138,7 +972,8 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 2.6",
+      debugBadge: "GW 2.5",
+            debugBadge: "GW 2.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1246,7 +1081,6 @@
 
         playUiTapSound();
         muted = true;
-        stopGhostScribbleSounds({ fade: true });
         return muted;
       },
       onModeSelect: () => {
@@ -5085,7 +4919,6 @@
 
     clearPlaybackCanvas(c, rect.width, rect.height, options);
     hidePlaybackTool(playbackState);
-    startGhostScribbleSounds();
     playbackRaf = requestAnimationFrame(playbackFrame);
   }
 
@@ -5193,7 +5026,6 @@
     if (ps.index >= placements.length) {
       drawCompleteText(ps.c, ps.width, ps.height, ps.options);
       hidePlaybackTool(ps);
-      stopGhostScribbleSounds({ fade: true });
 
       const done = ps.onDone;
       playbackState = null;
@@ -5547,8 +5379,6 @@
   }
 
   function stopPlayback() {
-    stopGhostScribbleSounds({ fade: true });
-
     if (playbackState) {
       hidePlaybackTool(playbackState);
     }
