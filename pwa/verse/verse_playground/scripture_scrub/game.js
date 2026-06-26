@@ -21,7 +21,7 @@
   const DEBUG_SKIP_ROUND_ID = "chalkboard";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
   const VERSE_FIT_DEBUG = false;
-  const AUDIO_DEBUG = true;
+  const AUDIO_DEBUG = false;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
 
