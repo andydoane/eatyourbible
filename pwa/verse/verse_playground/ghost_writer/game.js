@@ -779,7 +779,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.4",
+      debugBadge: "GW 1.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1362,6 +1362,8 @@
           <button class="vm-btn vm-btn-secondary" id="ghostClearBtn" type="button">Clear</button>
           <button class="vm-btn" id="ghostSaveBtn" type="button" disabled>Save &amp; Next</button>
         </div>
+
+        <div class="ghost-validation-message" id="ghostValidationMessage" aria-live="polite"></div>
       </div>
     `, { menu: true });
 
@@ -1427,6 +1429,7 @@
       const previous = stroke[stroke.length - 1];
       stroke.push(point);
       drawTrainingSegment(c, previous, point, rect.width, rect.height);
+      updateSaveButton();
     };
 
     const endStroke = (event) => {
@@ -1493,16 +1496,99 @@
     updateSaveButton();
   }
 
+  function getDrawingStats(strokes) {
+    let strokeCount = 0;
+    let pointCount = 0;
+    let travel = 0;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const stroke of strokes || []) {
+      if (!stroke || !stroke.length) continue;
+
+      strokeCount += 1;
+      pointCount += stroke.length;
+
+      for (const point of stroke) {
+        if (!point) continue;
+
+        const x = clamp(Number(point.x), 0, 1);
+        const y = clamp(Number(point.y), 0, 1);
+
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+
+      travel += strokeDistance(stroke);
+    }
+
+    if (!Number.isFinite(minX)) {
+      minX = .5;
+      minY = .5;
+      maxX = .5;
+      maxY = .5;
+    }
+
+    return {
+      strokeCount,
+      pointCount,
+      travel,
+      width: Math.max(0, maxX - minX),
+      height: Math.max(0, maxY - minY)
+    };
+  }
+
+  function validateCurrentDrawing(char) {
+    if (!state.hasDrawnCurrent) {
+      return { ok: false, message: "" };
+    }
+
+    if (!isAlphaNumericChar(char)) {
+      return { ok: true, message: "" };
+    }
+
+    const stats = getDrawingStats(state.currentStrokes);
+    const isMeaningful =
+      stats.strokeCount >= 1 &&
+      stats.pointCount >= 6 &&
+      stats.travel >= .08 &&
+      Math.max(stats.width, stats.height) >= .07;
+
+    if (isMeaningful) {
+      return { ok: true, message: "" };
+    }
+
+    return {
+      ok: false,
+      message: "Make it a little bigger for the ghost."
+    };
+  }
+
   function updateSaveButton() {
     const btn = document.getElementById("ghostSaveBtn");
+    const message = document.getElementById("ghostValidationMessage");
     if (!btn) return;
-    btn.disabled = !state.hasDrawnCurrent;
+
+    const result = validateCurrentDrawing(currentChar());
+    btn.disabled = !result.ok;
+
+    if (message) {
+      message.textContent = result.message || "";
+    }
   }
 
   function saveCurrentGlyph() {
-    if (!state.hasDrawnCurrent) return;
-
     const char = currentChar();
+    const validation = validateCurrentDrawing(char);
+
+    if (!validation.ok) {
+      updateSaveButton();
+      return;
+    }
     const glyph = makeGlyph(char, state.currentStrokes);
     state.glyphs.set(char, glyph);
 

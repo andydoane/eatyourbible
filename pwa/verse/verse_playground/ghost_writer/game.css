@@ -287,6 +287,16 @@ body {
   font-size: clamp(18px, 4.8vw, 24px);
 }
 
+.ghost-validation-message {
+  min-height: 22px;
+  margin-top: 8px;
+  color: var(--gw-muted);
+  font-size: clamp(14px, 3.7vw, 18px);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+}
+
 .vm-btn[disabled] {
   opacity: .45;
   cursor: not-allowed;
