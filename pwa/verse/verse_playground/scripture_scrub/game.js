@@ -755,23 +755,39 @@
   }
 
   function playProgressToneStep(step) {
-    // C major wave: climbs up, comes back down, then repeats.
-    // C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4
+    // New melody array based on your note sequence
     const scale = [
+      261.63, // C4
+      261.63, // C4
+      293.66, // D4
+      293.66, // D4
+      329.63, // E4
+      392.00, // G4
+      329.63, // E4
+      261.63, // C4
+
+      196.00, // G3 (G↓)
+      261.63, // C4
+      261.63, // C4
+      293.66, // D4
+      349.23, // F4
+      329.63, // E4
+      261.63, // C4
+
+      196.00, // G3 (G↓)
+      261.63, // C4
       261.63, // C4
       293.66, // D4
       329.63, // E4
-      349.23, // F4
       392.00, // G4
+      329.63, // E4
+      261.63, // C4
+
       440.00, // A4
-      493.88, // B4
-      523.25, // C5
-      493.88, // B4
-      440.00, // A4
-      392.00, // G4
+      293.66, // D4
       349.23, // F4
       329.63, // E4
-      293.66  // D4
+      261.63  // C4
     ];
 
     const frequency = scale[(step - 1) % scale.length];
