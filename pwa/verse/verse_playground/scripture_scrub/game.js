@@ -385,11 +385,13 @@
   let audioUnlockStarted = false;
   let silenceAudio = null;
   const soundBuffers = new Map();
+  const soundBufferPromises = new Map();
   let lastCookieBiteSound = null;
   let lastStickerPopSound = null;
   let lastUiTapSound = "uiTap2";
   let roundIntroSoundPlayedFor = null;
   let lastProgressToneStep = 0;
+  let lastProgressToneAt = 0;
   let mowerSoundAudio = null;
   let mowerSoundFrame = null;
 
@@ -455,32 +457,42 @@
     return audioCtx;
   }
 
+  function ensureSilenceAudio() {
+    if (silenceAudio) return silenceAudio;
+
+    silenceAudio = new Audio(SILENCE_AUDIO_PATH);
+    silenceAudio.preload = "auto";
+    silenceAudio.loop = false;
+    silenceAudio.volume = 0.001;
+    silenceAudio.setAttribute("playsinline", "true");
+
+    return silenceAudio;
+  }
+
   async function unlockAudio() {
     if (audioUnlockStarted) return;
     audioUnlockStarted = true;
 
     try {
       const ctx = getAudioContext();
-      const needsResume = !audioUnlocked || ctx?.state === "suspended";
+      const silent = ensureSilenceAudio();
 
-      if (!silenceAudio) {
-        silenceAudio = new Audio(SILENCE_AUDIO_PATH);
-        silenceAudio.preload = "auto";
-        silenceAudio.loop = false;
-        silenceAudio.volume = 0.001;
-        silenceAudio.setAttribute("playsinline", "true");
+      try {
+        silent.currentTime = 0;
+      } catch (err) {
+        // Some iOS versions can object if the media is not ready yet.
       }
 
-      if (needsResume) {
-        silenceAudio.currentTime = 0;
-        await silenceAudio.play().catch(() => { });
+      const silentPlay = silent.play();
+      if (silentPlay && typeof silentPlay.catch === "function") {
+        silentPlay.catch(() => { });
       }
 
       if (ctx?.state === "suspended") {
         await ctx.resume().catch(() => { });
       }
 
-      if (ctx && needsResume) {
+      if (ctx) {
         const oscillator = ctx.createOscillator();
         const gain = ctx.createGain();
         const now = ctx.currentTime;
@@ -507,23 +519,32 @@
 
   async function loadSoundBuffer(key) {
     if (soundBuffers.has(key)) return soundBuffers.get(key);
+    if (soundBufferPromises.has(key)) return soundBufferPromises.get(key);
 
     const url = SOUND_FILES[key];
     const ctx = getAudioContext();
     if (!url || !ctx) return null;
 
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const arrayBuffer = await res.arrayBuffer();
-      const buffer = await ctx.decodeAudioData(arrayBuffer);
-      soundBuffers.set(key, buffer);
-      return buffer;
-    } catch (err) {
-      console.warn("Scripture Scrub: could not load sound", key, err);
-      soundBuffers.set(key, null);
-      return null;
-    }
+    const promise = fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.arrayBuffer();
+      })
+      .then((arrayBuffer) => ctx.decodeAudioData(arrayBuffer))
+      .then((buffer) => {
+        soundBuffers.set(key, buffer);
+        soundBufferPromises.delete(key);
+        return buffer;
+      })
+      .catch((err) => {
+        console.warn("Scripture Scrub: could not load sound", key, err);
+        soundBuffers.set(key, null);
+        soundBufferPromises.delete(key);
+        return null;
+      });
+
+    soundBufferPromises.set(key, promise);
+    return promise;
   }
 
   function preloadSoundBuffers() {
@@ -535,7 +556,9 @@
   async function playGameSound(key, volumeKey = key) {
     if (muted) return;
 
-    await unlockAudio();
+    if (!audioUnlocked) {
+      await unlockAudio();
+    }
 
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -617,6 +640,7 @@
 
   function resetProgressToneTracking() {
     lastProgressToneStep = 0;
+    lastProgressToneAt = 0;
   }
 
   function playProgressToneForRatio(round, ratio) {
@@ -628,7 +652,14 @@
 
     if (step <= lastProgressToneStep || step >= Math.floor(100 / stepPercent)) return;
 
+    const now = performance.now();
+    if (now - lastProgressToneAt < 90) {
+      lastProgressToneStep = step;
+      return;
+    }
+
     lastProgressToneStep = step;
+    lastProgressToneAt = now;
     playProgressToneStep(step);
   }
 
@@ -655,36 +686,46 @@
   }
 
   function playToneFrequency(frequency, duration, volume) {
-    const ctx = getAudioContext();
-    if (!ctx || muted) return;
+    if (muted) return;
 
-    const startTone = () => {
-      if (muted) return;
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
 
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const now = ctx.currentTime;
+      const startTone = () => {
+        if (muted) return;
 
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(frequency, now);
+        try {
+          const oscillator = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const now = ctx.currentTime;
 
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(frequency, now);
 
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), now + 0.012);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
-      oscillator.start(now);
-      oscillator.stop(now + duration + 0.03);
-    };
+          oscillator.connect(gain);
+          gain.connect(ctx.destination);
 
-    if (ctx.state === "suspended") {
-      ctx.resume().then(startTone).catch(() => { });
-      return;
+          oscillator.start(now);
+          oscillator.stop(now + duration + 0.025);
+        } catch (err) {
+          console.warn("Scripture Scrub: progress tone failed", err);
+        }
+      };
+
+      if (ctx.state === "suspended") {
+        ctx.resume().then(startTone).catch(() => { });
+        return;
+      }
+
+      startTone();
+    } catch (err) {
+      console.warn("Scripture Scrub: tone setup failed", err);
     }
-
-    startTone();
   }
 
   function startMowerSound(duration) {
@@ -873,7 +914,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.47",
+      debugBadge: "SS 5.48",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
