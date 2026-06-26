@@ -70,23 +70,23 @@
   };
 
   const SOUND_TUNING = {
-    masterVolume: 0.85,
+    masterVolume: 1,
     progressStepPercent: 2,
     volumes: {
       uiTap: 0.42,
-      bite: 0.72,
-      chalk: 0.62,
+      bite: 0.75,
+      chalk: 0.69,
       dig: 0.64,
-      glow: 0.62,
+      glow: 1,
       leaves: 0.48,
-      mower: 0.48,
-      stickerPop: 0.58,
-      rainbow: 0.62,
-      splat: 0.62,
-      squeak: 0.58,
-      popup: 0.56,
-      progressTone: 0.13,
-      completionArpeggio: 0.18
+      mower: 0.57,
+      stickerPop: 1,
+      rainbow: 0.69,
+      splat: 0.83,
+      squeak: 0.72,
+      popup: 0.8,
+      progressTone: 1,
+      completionArpeggio: 0.98
     }
   };
 
@@ -664,13 +664,26 @@
   }
 
   function playProgressToneStep(step) {
-    // 50 chromatic notes: one half-step per progress tone.
-    // With 2% progress increments, this covers the whole round without looping.
-    const baseFrequency = 261.63; // C4
-    const maxChromaticStep = 49;
-    const chromaticStep = clamp(step - 1, 0, maxChromaticStep);
-    const frequency = baseFrequency * Math.pow(2, chromaticStep / 12);
+    // C major wave: climbs up, comes back down, then repeats.
+    // C4 D4 E4 F4 G4 A4 B4 C5 B4 A4 G4 F4 E4 D4
+    const scale = [
+      261.63, // C4
+      293.66, // D4
+      329.63, // E4
+      349.23, // F4
+      392.00, // G4
+      440.00, // A4
+      493.88, // B4
+      523.25, // C5
+      493.88, // B4
+      440.00, // A4
+      392.00, // G4
+      349.23, // F4
+      329.63, // E4
+      293.66  // D4
+    ];
 
+    const frequency = scale[(step - 1) % scale.length];
     playToneFrequency(frequency, 0.075, soundVolume("progressTone"));
   }
 
@@ -914,7 +927,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.48",
+      debugBadge: "SS 5.49",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
