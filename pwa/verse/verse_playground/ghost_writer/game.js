@@ -21,10 +21,11 @@
     { id: "advanced", label: "🌙 Advanced" }
   ];
 
-  const ENABLE_PUNCTUATION_RECORDER = true;
+  const ENABLE_PUNCTUATION_RECORDER = false;
   const PUNCTUATION_RECORDER_LONG_PRESS_MS = 1500;
   const PUNCTUATION_RECORDER_VARIATIONS = 3;
   const PUNCTUATION_RECORDER_CHARS = [".", ",", ":", ";", "'", "\"", "-", "!", "?"];
+  const BUILT_IN_PUNCTUATION_GLYPHS_URL = "./ghost-writer-punctuation-glyphs.json";
 
   const COLOR_PALETTE = {
     red: { label: "Red", value: "#ff5a51" },
@@ -640,6 +641,7 @@
   let guideTimer = null;
   let playbackRaf = 0;
   let playbackState = null;
+  let builtInPunctuationGlyphs = {};
   const backgroundImageCache = new Map();
   const borderDoodleImageCache = new Map();
   const tintedBorderDoodleCache = new Map();
@@ -777,7 +779,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.3",
+      debugBadge: "GW 1.4",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -815,11 +817,13 @@
     clearGuideTimer();
 
     selectedMode = mode === "advanced" ? "advanced" : "beginner";
+    state.requiredChars = getRequiredCharsForMode(state.fullText, selectedMode);
     state.screen = "training";
     state.currentCharIndex = 0;
     state.currentStrokes = [];
     state.currentStroke = null;
     state.glyphs = new Map();
+    seedBuiltInPunctuationGlyphsForBeginner();
     state.hasDrawnCurrent = false;
     state.practiceMarked = false;
     state.referenceDecorationStyle = chooseReferenceDecorationStyle();
@@ -989,7 +993,7 @@
       event.preventDefault();
     }, { capture: true });
   }
-  
+
   function resetPunctuationRecorder() {
     punctuationRecorder.charIndex = 0;
     punctuationRecorder.variationIndex = 0;
@@ -1193,6 +1197,138 @@
           : "Export will fill in as you save.";
       }
     }, 1400);
+  }
+
+  function isBuiltInPunctuationChar(char) {
+    return PUNCTUATION_RECORDER_CHARS.includes(String(char || ""));
+  }
+
+  function sanitizeBuiltInGlyph(char, glyph) {
+    if (!glyph || !Array.isArray(glyph.strokes)) return null;
+
+    const strokes = glyph.strokes
+      .map((stroke) => (stroke || []).map((p) => ({
+        x: clamp(Number(p.x), 0, 1),
+        y: clamp(Number(p.y), 0, 1),
+        t: Number(p.t) || 0
+      })))
+      .filter((stroke) => stroke.length);
+
+    if (!strokes.length) return null;
+
+    const bounds = glyph.bounds && Number.isFinite(Number(glyph.bounds.width)) && Number.isFinite(Number(glyph.bounds.height))
+      ? {
+        minX: clamp(Number(glyph.bounds.minX), 0, 1),
+        minY: clamp(Number(glyph.bounds.minY), 0, 1),
+        maxX: clamp(Number(glyph.bounds.maxX), 0, 1),
+        maxY: clamp(Number(glyph.bounds.maxY), 0, 1),
+        width: clamp(Number(glyph.bounds.width), .04, 1),
+        height: clamp(Number(glyph.bounds.height), .04, 1)
+      }
+      : computeBounds(strokes);
+
+    return {
+      char,
+      strokes,
+      rawStrokeCount: strokes.length,
+      filteredStrokeCount: strokes.length,
+      bounds,
+      widthRatio: clamp(Number(glyph.widthRatio) || bounds.width || .24, .10, .92),
+      heightRatio: clamp(Number(glyph.heightRatio) || bounds.height || .24, .10, .92)
+    };
+  }
+
+  function normalizeBuiltInPunctuationGlyphs(data) {
+    const out = {};
+
+    for (const char of PUNCTUATION_RECORDER_CHARS) {
+      const list = Array.isArray(data?.[char]) ? data[char] : [];
+      const cleanList = list
+        .map((glyph) => sanitizeBuiltInGlyph(char, glyph))
+        .filter(Boolean)
+        .slice(0, PUNCTUATION_RECORDER_VARIATIONS);
+
+      if (cleanList.length) {
+        out[char] = cleanList;
+      }
+    }
+
+    return out;
+  }
+
+  async function loadBuiltInPunctuationGlyphs() {
+    builtInPunctuationGlyphs = {};
+
+    try {
+      const response = await fetch(BUILT_IN_PUNCTUATION_GLYPHS_URL, { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      builtInPunctuationGlyphs = normalizeBuiltInPunctuationGlyphs(data);
+
+      if (DEBUG_GHOST_WRITER) {
+        console.info("Ghost Writer loaded built-in punctuation glyphs", builtInPunctuationGlyphs);
+      }
+    } catch (err) {
+      builtInPunctuationGlyphs = {};
+      console.warn("Ghost Writer could not load built-in punctuation glyphs. Beginner will train punctuation instead.", err);
+    }
+  }
+
+  function getBuiltInPunctuationGlyphList(char) {
+    const list = builtInPunctuationGlyphs[String(char || "")];
+    return Array.isArray(list) ? list : [];
+  }
+
+  function getRequiredCharsForMode(text, mode) {
+    const chars = extractRequiredChars(text);
+
+    if (mode !== "beginner") {
+      return chars;
+    }
+
+    return chars.filter((char) => {
+      if (isAlphaNumericChar(char)) return true;
+
+      const builtInGlyphs = getBuiltInPunctuationGlyphList(char);
+
+      if (isBuiltInPunctuationChar(char) && builtInGlyphs.length) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  function seedBuiltInPunctuationGlyphsForBeginner() {
+    if (selectedMode !== "beginner") return;
+
+    for (const char of PUNCTUATION_RECORDER_CHARS) {
+      if (!String(state.fullText || "").includes(char)) continue;
+
+      const list = getBuiltInPunctuationGlyphList(char);
+
+      if (list.length) {
+        state.glyphs.set(char, list);
+      }
+    }
+  }
+
+  function getGlyphVariationIndex(char, variantKey, length) {
+    if (!length) return 0;
+
+    const seed = `${ctx.verseId || ""}|${state.fullText || ""}|${char}|${variantKey}`;
+    let hash = 0;
+
+    for (let i = 0; i < seed.length; i += 1) {
+      hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+      hash |= 0;
+    }
+
+    return Math.abs(hash) % length;
   }
 
   function renderTraining() {
@@ -1919,8 +2055,15 @@
   }
 
 
-  function getGlyph(char) {
-    return state.glyphs.get(char) || null;
+  function getGlyph(char, variantKey = 0) {
+    const stored = state.glyphs.get(char);
+
+    if (Array.isArray(stored)) {
+      if (!stored.length) return null;
+      return stored[getGlyphVariationIndex(char, variantKey, stored.length)] || stored[0] || null;
+    }
+
+    return stored || null;
   }
 
   function glyphWidthUnits(char) {
@@ -3814,7 +3957,7 @@
 
       drawGlyph(
         c,
-        getGlyph(item.char),
+        getGlyph(item.char, colorIndex),
         item.x,
         item.y,
         item.w,
@@ -3841,7 +3984,7 @@
 
     drawGlyph(
       c,
-      getGlyph(item.char),
+      getGlyph(item.char, item.colorIndex || 0),
       item.x,
       item.y,
       item.w,
@@ -4034,7 +4177,7 @@
 
     const current = placements[ps.index];
     const isDecoration = current?.type === "referenceDecoration";
-    const glyph = isDecoration ? null : getGlyph(current.char);
+    const glyph = isDecoration ? null : getGlyph(current.char, current.colorIndex || 0);
     const pieces = isDecoration
       ? getReferenceDecorationPieceCount(current.decoration)
       : (glyph ? countStrokePieces(glyph.strokes) : 1);
@@ -4343,7 +4486,7 @@
 
     const current = placements[ps.index];
     const isDecoration = current?.type === "referenceDecoration";
-    const glyph = isDecoration ? null : getGlyph(current.char);
+    const glyph = isDecoration ? null : getGlyph(current.char, current.colorIndex || 0);
     const pieces = isDecoration ? getReferenceDecorationPieceCount(current.decoration) : (glyph ? countStrokePieces(glyph.strokes) : 1);
     const duration = isDecoration
       ? clamp((160 + pieces * 18) * (ps.speed?.multiplier || 1), 180, 900)
@@ -4823,6 +4966,8 @@
     } catch (err) {
       console.warn("Ghost Writer could not load verse context", err);
     }
+
+    await loadBuiltInPunctuationGlyphs();
 
     buildFullText();
     renderIntro();
