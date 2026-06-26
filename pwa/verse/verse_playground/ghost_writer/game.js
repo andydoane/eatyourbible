@@ -784,7 +784,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 2.3",
+      debugBadge: "GW 2.4",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1403,7 +1403,7 @@
           >👁️</button>
           <button class="vm-btn vm-btn-secondary" id="ghostClearBtn" type="button" aria-label="Clear drawing">Clear</button>
           <button class="vm-btn vm-btn-secondary" id="ghostUndoStrokeBtn" type="button" aria-label="Undo last stroke">↩️</button>
-          <button class="vm-btn" id="ghostSaveBtn" type="button" disabled>Save &amp; Next</button>
+          <button class="vm-btn" id="ghostSaveBtn" type="button" disabled>Next</button>
         </div>
 
         <div class="ghost-validation-message" id="ghostValidationMessage" aria-live="polite"></div>

@@ -428,9 +428,11 @@ body {
 }
 
 .ghost-training-card .ghost-train-actions {
-  grid-template-columns: minmax(44px, .75fr) minmax(64px, 1fr) minmax(44px, .75fr) max-content;
+  width: min(calc(100% - 24px), 440px);
+  max-width: 440px;
+  margin: 6px auto 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 7px;
-  margin-top: 6px;
 }
 
 .ghost-training-card .ghost-train-actions .vm-btn,
@@ -482,7 +484,9 @@ body {
 
   .ghost-training-card .ghost-train-actions {
     flex: 0 0 auto;
-    margin-top: 0;
+    width: min(70vmin, 520px);
+    max-width: 520px;
+    margin: 0 auto;
   }
 
   .ghost-validation-message {
