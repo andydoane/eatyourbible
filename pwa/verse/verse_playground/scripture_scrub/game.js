@@ -971,8 +971,7 @@
   function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
-      <p>Scrub, wipe, rake, peel, mow, and dig!</p>
-      <p>The verse is hiding behind each cover. Clear enough of the screen to move on.</p>
+      <p>Scrub, wipe, rake, peel, mow, and dig to clean up the verse!</p>
     `;
   }
 
