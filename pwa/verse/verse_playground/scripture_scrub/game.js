@@ -393,6 +393,7 @@
   let roundIntroSoundPlayedFor = null;
   let lastProgressToneStep = 0;
   let lastProgressToneAt = -Infinity;
+  let progressToneReadyAt = 0;
   let audioDebugInfo = {};
   let mowerSoundAudio = null;
   let mowerSoundFrame = null;
@@ -651,10 +652,15 @@
     const stepPercent = SOUND_TUNING.progressStepPercent || 5;
     const pct = clamp(ratio * 100, 0, 100);
     const step = Math.floor(pct / stepPercent);
-
-    if (step <= lastProgressToneStep || step >= Math.floor(100 / stepPercent)) return;
-
+    const maxStep = Math.floor(100 / stepPercent);
     const now = performance.now();
+
+    // On some iPads, the first Mud round needs a tiny Web Audio warmup window.
+    // Do not mark progress steps as used during this window.
+    if (now < progressToneReadyAt) return;
+
+    if (step <= lastProgressToneStep || step >= maxStep) return;
+
     if (now - lastProgressToneAt < 90) return;
 
     lastProgressToneStep = step;
@@ -662,144 +668,108 @@
     playProgressToneStep(step);
   }
 
-  function playProgressToneForRatio(round, ratio) {
-    const roundId = round?.id || "?";
-    const stepPercent = SOUND_TUNING.progressStepPercent || 5;
-    const pct = clamp(ratio * 100, 0, 100);
-    const step = Math.floor(pct / stepPercent);
-    const maxStep = Math.floor(100 / stepPercent);
-    const now = performance.now();
-    const toneAgeMs = Number.isFinite(lastProgressToneAt)
-      ? Math.round(now - lastProgressToneAt)
-      : "first";
-
-    if (!isProgressToneRound(round)) {
-      setAudioDebugInfo({
-        roundId,
-        ratio: ratio.toFixed(3),
-        pct: pct.toFixed(1),
-        step,
-        lastStep: lastProgressToneStep,
-        toneAgeMs,
-        decision: "skip: not progress-tone round"
-      });
-      return;
-    }
-
-    if (muted) {
-      setAudioDebugInfo({
-        roundId,
-        ratio: ratio.toFixed(3),
-        pct: pct.toFixed(1),
-        step,
-        lastStep: lastProgressToneStep,
-        toneAgeMs,
-        decision: "skip: muted"
-      });
-      return;
-    }
-
-    if (step <= lastProgressToneStep) {
-      setAudioDebugInfo({
-        roundId,
-        ratio: ratio.toFixed(3),
-        pct: pct.toFixed(1),
-        step,
-        lastStep: lastProgressToneStep,
-        toneAgeMs,
-        decision: "skip: same/old step"
-      });
-      return;
-    }
-
-    if (step >= maxStep) {
-      setAudioDebugInfo({
-        roundId,
-        ratio: ratio.toFixed(3),
-        pct: pct.toFixed(1),
-        step,
-        lastStep: lastProgressToneStep,
-        toneAgeMs,
-        decision: "skip: near complete"
-      });
-      return;
-    }
-
-    if (now - lastProgressToneAt < 90) {
-      setAudioDebugInfo({
-        roundId,
-        ratio: ratio.toFixed(3),
-        pct: pct.toFixed(1),
-        step,
-        lastStep: lastProgressToneStep,
-        toneAgeMs,
-        decision: "skip: throttle"
-      });
-      return;
-    }
-
-    lastProgressToneStep = step;
-    lastProgressToneAt = now;
-
-    setAudioDebugInfo({
-      roundId,
-      ratio: ratio.toFixed(3),
-      pct: pct.toFixed(1),
-      step,
-      lastStep: lastProgressToneStep,
-      toneAgeMs,
-      decision: "play: progress tone"
-    });
-
-    playProgressToneStep(step);
-  }
-
   function playProgressToneStep(step) {
-    // New melody array based on your note sequence
+    // New melody array based on your casing rules
     const scale = [
-      261.63, // C4
-      261.63, // C4
-      293.66, // D4
-      293.66, // D4
-      329.63, // E4
-      392.00, // G4
-      329.63, // E4
-      261.63, // C4
+      220.00, // a4
+      246.94, // b4
+      523.25, // C5
+      261.63, // a4
+      329.63, // E5
+      329.63, // E5
+      349.23, // F5
+      329.63, // E5
 
-      196.00, // G3 (G↓)
-      261.63, // C4
-      261.63, // C4
-      293.66, // D4
-      349.23, // F4
-      329.63, // E4
-      261.63, // C4
+      220.00, // a4
+      246.94, // b4
+      523.25, // C5
+      261.63, // a4
+      293.66, // D5
+      293.66, // D5
+      523.25, // C5
 
-      196.00, // G3 (G↓)
-      261.63, // C4
-      261.63, // C4
-      293.66, // D4
-      329.63, // E4
-      392.00, // G4
-      329.63, // E4
-      261.63, // C4
+      220.00, // a4
+      246.94, // b4
+      523.25, // C5
+      261.63, // a4
+      523.25, // C5
+      293.66, // D5
+      246.94, // b4
+      220.00, // a4
+      196.00, // g4
+      196.00, // g4
+      293.66, // D5
+      523.25, // C5
 
-      440.00, // A4
-      293.66, // D4
-      349.23, // F4
-      329.63, // E4
-      261.63  // C4
+      220.00, // a4
+      246.94, // b4
+      523.25, // C5
+      261.63, // a4
+      329.63, // E5
+      329.63, // E5
+      349.23, // F5
+
+      220.00, // a4
+      246.94, // b4
+      523.25, // C5
+      261.63, // a4
+      392.00, // G5
+      493.88, // B5
+      523.25, // C5
+      246.94, // b4
+      220.00, // a4
+
+      220.00, // a4
+      246.94, // b4
+      523.25, // C5
+      261.63, // a4
+      293.66, // D5
+      246.94, // b4
+      220.00, // a4
+      196.00, // g4
+      196.00, // g4
+      293.66, // D5
+      523.25  // C5
     ];
 
     const frequency = scale[(step - 1) % scale.length];
     const volume = soundVolume("progressTone");
 
-    setAudioDebugInfo({
-      frequency: frequency.toFixed(2),
-      volume: volume.toFixed(2),
-      decision: "calling playToneFrequency"
-    });
-
     playToneFrequency(frequency, 0.075, volume);
+  }
+
+  function warmUpGeneratedToneAudio() {
+    const ctx = getAudioContext();
+    if (!ctx || muted) return;
+
+    const startWarmup = () => {
+      try {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const now = ctx.currentTime;
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(261.63, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start(now);
+        oscillator.stop(now + 0.05);
+      } catch (err) {
+        console.warn("Scripture Scrub: generated tone warmup failed", err);
+      }
+    };
+
+    if (ctx.state === "suspended") {
+      ctx.resume().then(startWarmup).catch(() => { });
+      return;
+    }
+
+    startWarmup();
   }
 
   function playCompletionArpeggio() {
@@ -840,17 +810,8 @@
 
           oscillator.start(now);
           oscillator.stop(now + duration + 0.025);
-
-          setAudioDebugInfo({
-            frequency: frequency.toFixed(2),
-            volume: volume.toFixed(2),
-            decision: "tone started"
-          });
         } catch (err) {
           console.warn("Scripture Scrub: progress tone failed", err);
-          setAudioDebugInfo({
-            decision: `tone error: ${err?.message || err}`
-          });
         }
       };
 
@@ -862,9 +823,6 @@
       startTone();
     } catch (err) {
       console.warn("Scripture Scrub: tone setup failed", err);
-      setAudioDebugInfo({
-        decision: `tone setup error: ${err?.message || err}`
-      });
     }
   }
 
@@ -1114,7 +1072,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.51",
+      debugBadge: "SS 5.52",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1321,15 +1279,14 @@
 
     setupRoundVisuals(round);
 
-    setAudioDebugInfo({
-      roundId: round.id,
-      ratio: "0.000",
-      pct: "0.0",
-      step: 0,
-      lastStep: lastProgressToneStep,
-      toneAgeMs: "first",
-      decision: "round rendered"
-    });
+    const needsFirstMudToneWarmup = round.id === "mud" && currentRoundIndex === 0;
+    progressToneReadyAt = needsFirstMudToneWarmup ? performance.now() + 180 : 0;
+
+    if (needsFirstMudToneWarmup) {
+      setTimeout(() => {
+        warmUpGeneratedToneAudio();
+      }, 90);
+    }
   }
 
   function getReferenceDisplay() {
