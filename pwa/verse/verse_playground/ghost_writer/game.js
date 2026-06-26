@@ -783,7 +783,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.8",
+      debugBadge: "GW 1.9",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1382,7 +1382,11 @@
 
         <div class="ghost-training-draw-pad">
           <div class="ghost-draw-wrap" id="ghostDrawWrap">
-            <div class="ghost-draw-instruction ${showIntroMessage ? "" : "is-hidden"}" id="ghostDrawInstruction">Draw each letter nice and big</div>
+            <div class="ghost-draw-instruction ${showIntroMessage ? "" : "is-hidden"}" id="ghostDrawInstruction">
+              <span>Draw each</span>
+              <span>letter nice</span>
+              <span>and big!</span>
+            </div>
             <div class="ghost-guide-text ${isSymbolChar(char) ? "is-symbol" : ""} ${showIntroMessage || !state.guideVisible ? "is-faded" : ""}" id="ghostGuideText">${escapeHtml(char)}</div>
             <canvas id="ghostDrawCanvas" aria-label="Draw ${escapeHtml(charLabel(char))}"></canvas>
           </div>
@@ -1484,6 +1488,7 @@
         drawTrainingPoint(c, stroke[0], rect.width, rect.height);
       }
       state.currentStroke = null;
+      updateSaveButton();
     };
 
     canvas.onpointerup = endStroke;
@@ -1685,7 +1690,7 @@
     if (undoBtn) undoBtn.disabled = !hasStrokes;
 
     if (message) {
-      message.textContent = result.message || "";
+      message.textContent = state.currentStroke ? "" : (result.message || "");
     }
   }
 
