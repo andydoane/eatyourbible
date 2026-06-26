@@ -21,7 +21,6 @@
   const DEBUG_SKIP_ROUND_ID = "chalkboard";
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
   const VERSE_FIT_DEBUG = false;
-  const AUDIO_DEBUG = false;
 
   const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
 
@@ -393,9 +392,7 @@
   let roundIntroSoundPlayedFor = null;
   let lastProgressToneStep = 0;
   let lastProgressToneAt = -Infinity;
-  let progressToneReadyAt = 0;
   let generatedTonePrimed = false;
-  let audioDebugInfo = {};
   let mowerSoundAudio = null;
   let mowerSoundFrame = null;
 
@@ -656,10 +653,6 @@
     const maxStep = Math.floor(100 / stepPercent);
     const now = performance.now();
 
-    // On some iPads, the first Mud round needs a tiny Web Audio warmup window.
-    // Do not mark progress steps as used during this window.
-    if (now < progressToneReadyAt) return;
-
     if (step <= lastProgressToneStep || step >= maxStep) return;
 
     if (now - lastProgressToneAt < 90) return;
@@ -863,66 +856,6 @@
     }
   }
 
-  function setAudioDebugInfo(info = {}) {
-    if (!AUDIO_DEBUG) return;
-
-    audioDebugInfo = {
-      ...audioDebugInfo,
-      ...info,
-      audioState: audioCtx?.state || "none",
-      muted,
-      unlocked: audioUnlocked,
-      at: Math.round(performance.now())
-    };
-
-    renderAudioDebugOverlay();
-  }
-
-  function renderAudioDebugOverlay() {
-    if (!AUDIO_DEBUG) return;
-
-    let panel = document.getElementById("scrubAudioDebug");
-    if (!panel) {
-      panel = document.createElement("pre");
-      panel.id = "scrubAudioDebug";
-      panel.style.position = "fixed";
-      panel.style.left = "8px";
-      panel.style.right = "8px";
-      panel.style.bottom = "8px";
-      panel.style.zIndex = "9999";
-      panel.style.maxHeight = "42vh";
-      panel.style.overflow = "auto";
-      panel.style.margin = "0";
-      panel.style.padding = "10px 12px";
-      panel.style.borderRadius = "12px";
-      panel.style.background = "rgba(0, 0, 0, .82)";
-      panel.style.color = "#ffffff";
-      panel.style.font = "12px/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-      panel.style.whiteSpace = "pre-wrap";
-      panel.style.pointerEvents = "none";
-      document.body.appendChild(panel);
-    }
-
-    const rows = [
-      "AUDIO DEBUG SS 5.51",
-      `round: ${audioDebugInfo.roundId ?? "?"}`,
-      `ratio: ${audioDebugInfo.ratio ?? "?"}`,
-      `pct: ${audioDebugInfo.pct ?? "?"}`,
-      `step: ${audioDebugInfo.step ?? "?"}`,
-      `lastStep: ${audioDebugInfo.lastStep ?? "?"}`,
-      `decision: ${audioDebugInfo.decision ?? "?"}`,
-      `toneHz: ${audioDebugInfo.frequency ?? "?"}`,
-      `toneVol: ${audioDebugInfo.volume ?? "?"}`,
-      `toneAgeMs: ${audioDebugInfo.toneAgeMs ?? "?"}`,
-      `audioState: ${audioDebugInfo.audioState ?? "?"}`,
-      `unlocked: ${audioDebugInfo.unlocked ?? "?"}`,
-      `muted: ${audioDebugInfo.muted ?? "?"}`,
-      `time: ${audioDebugInfo.at ?? "?"}`
-    ];
-
-    panel.textContent = rows.join("\n");
-  }
-
 
   function dismissInstructionChip() {
     const root = document.getElementById("scrubGame");
@@ -1038,7 +971,7 @@
   function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
-      <p>Scrub, wipe, rake, peel, mow, and dig!.</p>
+      <p>Scrub, wipe, rake, peel, mow, and dig!</p>
       <p>The verse is hiding behind each cover. Clear enough of the screen to move on.</p>
     `;
   }
@@ -1047,7 +980,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "SS 5.52",
+      debugBadge: "",
       icon: GAME_ICON,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1253,8 +1186,6 @@
     window.addEventListener("resize", resizeHandler);
 
     setupRoundVisuals(round);
-
-    progressToneReadyAt = 0;
   }
 
   function getReferenceDisplay() {
