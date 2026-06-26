@@ -784,7 +784,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 2.2",
+      debugBadge: "GW 2.3",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
