@@ -603,7 +603,7 @@ body {
   align-items: stretch;
   justify-content: center;
   padding:
-    calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));
+    calc(14px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));
 }
 
 .ghost-writer-root.is-remix-screen .ghost-writer-stage {
@@ -613,13 +613,25 @@ body {
   display: flex;
 }
 
+.ghost-remix-header {
+  flex: 0 0 auto;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 68px;
+  padding-right: 68px;
+}
+
 .ghost-remix-card {
-  height: 100%;
+  flex: 1 1 auto;
+  height: auto;
   max-height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 10px;
 }
 
 .ghost-remix-preview {
@@ -645,6 +657,45 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+.ghost-remix-mode-toggle {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .22);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10);
+}
+
+.ghost-remix-mode-btn {
+  min-height: 42px;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: clamp(15px, 4vw, 19px);
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.ghost-remix-mode-btn.is-active {
+  background: rgba(255, 255, 255, .96);
+  color: #20212b;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, .24);
+}
+
+.ghost-remix-mode-btn.is-inactive {
+  background: transparent;
+  color: rgba(255, 255, 255, .56);
+}
+
+.ghost-remix-mode-btn:active {
+  transform: translateY(2px);
+}
+
 .ghost-remix-preview.is-chalkboard {
   background: #15352d;
 }
@@ -662,10 +713,13 @@ body {
 }
 
 .ghost-remix-title {
+  color: #ffffff;
   text-align: center;
   font-size: clamp(25px, 6vw, 38px);
   font-weight: 900;
   line-height: 1;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .22);
+  white-space: nowrap;
 }
 
 .ghost-remix-section {
@@ -703,10 +757,10 @@ body {
 .ghost-option {
   display: grid;
   gap: 5px;
-  padding: 10px;
-  border-radius: 18px;
-  background: rgba(0, 0, 0, .22);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
+  padding: 2px 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .ghost-option label {
@@ -888,6 +942,15 @@ body {
 }
 
 @media (max-width:420px) {
+  .ghost-remix-header {
+    padding-left: 64px;
+    padding-right: 6px;
+  }
+
+  .ghost-remix-title {
+    font-size: clamp(23px, 6.6vw, 30px);
+  }
+
   .ghost-options {
     grid-template-columns: 1fr;
   }

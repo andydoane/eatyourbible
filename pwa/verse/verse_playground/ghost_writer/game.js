@@ -670,6 +670,7 @@
     guideVisible: true,
     trainingIntroShown: false,
     trainingIntroActive: false,
+    remixMode: "simple",
     remix: makeDefaultRemixOptions()
   };
 
@@ -783,7 +784,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 1.9",
+      debugBadge: "GW 2.0",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1958,6 +1959,7 @@
 
     remixBtn?.addEventListener("click", () => {
       if (returnTo === "remix") {
+        state.remixMode = "simple";
         renderRemix();
       }
     });
@@ -1983,19 +1985,66 @@
     stopPlayback();
     clearGuideTimer();
     state.screen = "remix";
+    state.remixMode = state.remixMode === "more" ? "more" : "simple";
     sanitizeRemixOptions(state.remix);
 
+    if (state.remixMode === "simple") {
+      state.remix.referenceTextColor = state.remix.textColor;
+      state.remix.referenceDecorationColor = state.remix.textColor;
+      state.remix.borderColor = state.remix.textColor;
+      sanitizeRemixOptions(state.remix);
+    }
+
     const background = getBackgroundConfig(state.remix);
+    const isSimple = state.remixMode !== "more";
 
-    app.innerHTML = rootHtml(`
-      <div class="ghost-card ghost-remix-card">
-        <div class="ghost-remix-title">Remix Your Ghost Verse</div>
+    const settingsHtml = isSimple ? `
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Background</div>
+            <div class="ghost-options">
+              ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
+            </div>
+          </div>
 
-        <div class="ghost-remix-preview ${escapeHtml(background.cardClass || "")}" id="ghostRemixPreview">
-          <canvas id="ghostRemixCanvas" aria-label="Ghost Writer preview"></canvas>
-        </div>
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Writing</div>
+            <div class="ghost-options">
+              ${selectTextColorHtml("ghostTextColorSelect", "Writing Color", state.remix.textColor, state.remix.background)}
+              ${selectOptionHtml("ghostThicknessSelect", "Line Size", state.remix.thickness, THICKNESS)}
+            </div>
+          </div>
 
-        <div class="ghost-remix-scroll">
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Verse Tag</div>
+            <div class="ghost-options">
+              ${selectOptionHtml("ghostReferenceDesignSelect", "Verse Design", state.referenceDecorationStyle || "box", REFERENCE_DECORATION_OPTIONS)}
+            </div>
+          </div>
+
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Ghost Magic</div>
+            <div class="ghost-options">
+              ${selectOptionHtml("ghostVaporSelect", "Ghost Trail", state.remix.vapor || "normal", VAPOR_LEVELS)}
+              ${selectOptionHtml("ghostSpeedSelect", "Ghost Speed", state.remix.speed, SPEEDS)}
+            </div>
+          </div>
+
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Border</div>
+            <div class="ghost-options">
+              ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
+            </div>
+          </div>
+
+          <div class="ghost-remix-section ghost-remix-section-actions">
+            <div class="ghost-section-title">Actions</div>
+            <div class="ghost-remix-actions">
+              <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
+              <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Start Over</button>
+              <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
+            </div>
+          </div>
+    ` : `
           <div class="ghost-remix-section">
             <div class="ghost-section-title">Background</div>
             <div class="ghost-options">
@@ -2044,13 +2093,42 @@
             <div class="ghost-section-title">Actions &amp; Download</div>
             <div class="ghost-remix-actions">
               <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
-              <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
+              <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Start Over</button>
               ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
               <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
               
               <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
             </div>
           </div>
+    `;
+
+    app.innerHTML = rootHtml(`
+      <div class="ghost-remix-header">
+        <div class="ghost-remix-title">Remix Your Verse</div>
+      </div>
+
+      <div class="ghost-card ghost-remix-card">
+        <div class="ghost-remix-preview ${escapeHtml(background.cardClass || "")}" id="ghostRemixPreview">
+          <canvas id="ghostRemixCanvas" aria-label="Ghost Writer preview"></canvas>
+        </div>
+
+        <div class="ghost-remix-mode-toggle" role="group" aria-label="Remix settings mode">
+          <button
+            class="ghost-remix-mode-btn ${isSimple ? "is-active" : "is-inactive"}"
+            type="button"
+            data-remix-mode="simple"
+            aria-pressed="${isSimple ? "true" : "false"}"
+          >Simple</button>
+          <button
+            class="ghost-remix-mode-btn ${!isSimple ? "is-active" : "is-inactive"}"
+            type="button"
+            data-remix-mode="more"
+            aria-pressed="${!isSimple ? "true" : "false"}"
+          >More Options</button>
+        </div>
+
+        <div class="ghost-remix-scroll">
+          ${settingsHtml}
         </div>
       </div>
     `, { menu: true, wide: true, rootClass: "is-remix-screen" });
@@ -2136,6 +2214,7 @@
     const borderStyle = document.getElementById("ghostBorderStyleSelect");
     const borderThickness = document.getElementById("ghostBorderThicknessSelect");
     const borderColor = document.getElementById("ghostBorderColorSelect");
+    const remixModeButtons = Array.from(document.querySelectorAll("[data-remix-mode]"));
 
     const update = () => {
       state.remix.background = background?.value || state.remix.background;
@@ -2161,6 +2240,13 @@
       state.remix.borderColor = borderColor?.value || state.remix.borderColor;
 
       sanitizeRemixOptions(state.remix);
+
+      if (state.remixMode === "simple") {
+        state.remix.referenceTextColor = state.remix.textColor;
+        state.remix.referenceDecorationColor = state.remix.textColor;
+        state.remix.borderColor = state.remix.textColor;
+        sanitizeRemixOptions(state.remix);
+      }
 
       if (textColor && textColor.value !== state.remix.textColor) {
         textColor.value = state.remix.textColor;
@@ -2188,6 +2274,16 @@
 
     [background, textColor, speed, thickness, jitter, wobble, tool, vapor, referenceDesign, referenceTextColor, referenceDecorationColor, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
       if (el) el.onchange = update;
+    });
+
+    remixModeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const nextMode = btn.dataset.remixMode === "more" ? "more" : "simple";
+        if (state.remixMode === nextMode) return;
+
+        state.remixMode = nextMode;
+        renderRemix();
+      });
     });
 
     document.getElementById("ghostReplayBtn")?.addEventListener("click", () => {
