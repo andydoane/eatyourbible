@@ -21,6 +21,11 @@
     { id: "advanced", label: "🌙 Advanced" }
   ];
 
+  const MODES = [
+    { id: "beginner", label: "👻 Beginner" },
+    { id: "advanced", label: "🌙 Advanced" }
+  ];
+
   const COLOR_PALETTE = {
     red: { label: "Red", value: "#ff5a51" },
     orange: { label: "Orange", value: "#ffa351" },
@@ -548,7 +553,7 @@
   };
 
   const CLOUD_SVG_PATH = `M 57.806218,0.29969428 A 6.4331029,6.4259246 0 0 0 52.259651,3.4978984 6.4331029,6.4259246 0 0 0 47.664355,1.5671433 6.4331029,6.4259246 0 0 0 41.750129,5.4909076 6.4331029,6.4259246 0 0 0 35.882001,1.6938834 6.4331029,6.4259246 0 0 0 30.94335,4.0142793 6.4331029,6.4259246 0 0 0 27.231677,2.8345825 6.4331029,6.4259246 0 0 0 21.674078,6.052962 6.4331029,6.4259246 0 0 0 16.337529,3.2148222 6.4331029,6.4259246 0 0 0 9.9043757,9.6406787 a 6.4331029,6.4259246 0 0 0 0.037132,0.5191163 6.4331029,6.4259246 0 0 0 -0.9054294,-0.06479 6.4331029,6.4259246 0 0 0 -6.4330358,6.425994 6.4331029,6.4259246 0 0 0 0.9753071,3.390299 6.4331029,6.4259246 0 0 0 -2.87637701,5.347037 6.4331029,6.4259246 0 0 0 6.43303601,6.425994 6.4331029,6.4259246 0 0 0 1.9264593,-0.302748 6.4331029,6.4259246 0 0 0 -0.045327,0.633098 6.4331029,6.4259246 0 0 0 6.4331651,6.425867 6.4331029,6.4259246 0 0 0 5.891187,-3.862004 6.4331029,6.4259246 0 0 0 5.891167,3.862004 6.4331029,6.4259246 0 0 0 3.643521,-1.143801 6.4331029,6.4259246 0 0 0 5.006813,2.411249 6.4331029,6.4259246 0 0 0 6.165018,-4.595119 6.4331029,6.4259246 0 0 0 5.617326,3.327671 6.4331029,6.4259246 0 0 0 4.171635,-1.538755 6.4331029,6.4259246 0 0 0 5.970228,4.073651 6.4331029,6.4259246 0 0 0 6.164901,-4.595236 6.4331029,6.4259246 0 0 0 5.617453,3.327788 6.4331029,6.4259246 0 0 0 5.0068,-2.411249 6.4331029,6.4259246 0 0 0 3.643514,1.143801 6.4331029,6.4259246 0 0 0 5.256744,-2.74482 6.4331029,6.4259246 0 0 0 5.256747,2.74482 6.4331029,6.4259246 0 0 0 6.389673,-5.818999 6.4331029,6.4259246 0 0 0 3.556285,1.078563 6.4331029,6.4259246 0 0 0 6.433042,-6.425867 6.4331029,6.4259246 0 0 0 -3.71218,-5.822077 6.4331029,6.4259246 0 0 0 2.20702,-4.843177 6.4331029,6.4259246 0 0 0 -6.43304,-6.425977 6.4331029,6.4259246 0 0 0 -0.745953,0.05334 A 6.4331029,6.4259246 0 0 0 90.021227,4.1021007 6.4331029,6.4259246 0 0 0 84.604008,7.0635241 6.4331029,6.4259246 0 0 0 78.238866,1.5672025 6.4331029,6.4259246 0 0 0 73.238008,3.9705315 6.4331029,6.4259246 0 0 0 69.588552,2.8346416 6.4331029,6.4259246 0 0 0 64.17134,5.7963219 6.4331029,6.4259246 0 0 0 57.806198,0.29975343 Z`;
-  
+
   const GLYPH_RENDER_PROFILES = {
     ".": {
       widthScale: .34,
@@ -639,6 +644,12 @@
   const borderDoodleImageCache = new Map();
   const tintedBorderDoodleCache = new Map();
 
+  const punctuationRecorder = {
+    charIndex: 0,
+    variationIndex: 0,
+    glyphs: {}
+  };
+
   const state = {
     screen: "intro",
     fullText: "",
@@ -727,7 +738,7 @@
     state.fullText = state.displayLines.join("\n");
     state.requiredChars = extractRequiredChars(state.fullText);
   }
-  
+
 
   function extractRequiredChars(text) {
     const out = [];
@@ -751,10 +762,8 @@
   function helpHtml() {
     return `
       <ul class="ghost-help-list">
-        <li>Write each uppercase character one time in the big square.</li>
-        <li>Beginner keeps a light guide on the page. Advanced flashes the guide, then hides it.</li>
-        <li>When every character is ready, tap <strong>Ghost Write!</strong> and watch the verse write itself.</li>
-        <li>After the first ghost writing, remix it with fun backgrounds, colors, borders, and writing tools.</li>
+        <li>Write each letter using your finger.</li>
+        <li>When finished, watch the ghost write the verse in your own handwriting.</li>
       </ul>
     `;
   }
@@ -768,6 +777,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
+      debugBadge: "GW 1.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -777,6 +787,8 @@
       onBack: () => bridge().exitGame?.(),
       onStart: () => renderModeSelect()
     });
+
+    wirePunctuationRecorderTitleHotspot();
   }
 
   function renderModeSelect() {
@@ -860,6 +872,10 @@
   }
 
   function currentChar() {
+    if (state.screen === "punctuationRecorder") {
+      return punctuationRecorderCurrentChar();
+    }
+
     return state.requiredChars[state.currentCharIndex] || "";
   }
 
@@ -891,6 +907,264 @@
     if (char === "?") return "question mark";
     if (char === "-") return "dash";
     return char;
+  }
+
+  function wirePunctuationRecorderTitleHotspot() {
+    if (!ENABLE_PUNCTUATION_RECORDER || state.screen !== "intro") return;
+
+    const hotspot = document.createElement("button");
+    hotspot.className = "ghost-recorder-hotspot";
+    hotspot.type = "button";
+    hotspot.setAttribute("aria-label", "Open punctuation recorder");
+    hotspot.textContent = GAME_ICON;
+    app.appendChild(hotspot);
+
+    let timer = null;
+    let startX = 0;
+    let startY = 0;
+    let opened = false;
+
+    const cancel = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    hotspot.addEventListener("pointerdown", (event) => {
+      if (!ENABLE_PUNCTUATION_RECORDER) return;
+      opened = false;
+      startX = event.clientX || 0;
+      startY = event.clientY || 0;
+      cancel();
+
+      timer = setTimeout(() => {
+        opened = true;
+        timer = null;
+        renderPunctuationRecorder();
+      }, PUNCTUATION_RECORDER_LONG_PRESS_MS);
+    });
+
+    hotspot.addEventListener("pointermove", (event) => {
+      const dx = Math.abs((event.clientX || 0) - startX);
+      const dy = Math.abs((event.clientY || 0) - startY);
+      if (dx > 18 || dy > 18) cancel();
+    });
+
+    hotspot.addEventListener("pointerup", (event) => {
+      if (opened) event.preventDefault();
+      cancel();
+    });
+
+    hotspot.addEventListener("pointercancel", cancel);
+    hotspot.addEventListener("click", (event) => {
+      if (opened) event.preventDefault();
+    });
+  }
+
+  function resetPunctuationRecorder() {
+    punctuationRecorder.charIndex = 0;
+    punctuationRecorder.variationIndex = 0;
+    punctuationRecorder.glyphs = {};
+
+    for (const char of PUNCTUATION_RECORDER_CHARS) {
+      punctuationRecorder.glyphs[char] = [];
+    }
+  }
+
+  function punctuationRecorderCurrentChar() {
+    return PUNCTUATION_RECORDER_CHARS[punctuationRecorder.charIndex] || PUNCTUATION_RECORDER_CHARS[0] || ".";
+  }
+
+  function punctuationRecorderIsComplete() {
+    return PUNCTUATION_RECORDER_CHARS.every((char) => {
+      return (punctuationRecorder.glyphs[char] || []).length >= PUNCTUATION_RECORDER_VARIATIONS;
+    });
+  }
+
+  function punctuationRecorderSavedCount() {
+    return PUNCTUATION_RECORDER_CHARS.reduce((total, char) => {
+      return total + Math.min(PUNCTUATION_RECORDER_VARIATIONS, (punctuationRecorder.glyphs[char] || []).length);
+    }, 0);
+  }
+
+  function punctuationRecorderTotalCount() {
+    return PUNCTUATION_RECORDER_CHARS.length * PUNCTUATION_RECORDER_VARIATIONS;
+  }
+
+  function punctuationRecorderExportData() {
+    const out = {};
+
+    for (const char of PUNCTUATION_RECORDER_CHARS) {
+      out[char] = (punctuationRecorder.glyphs[char] || [])
+        .slice(0, PUNCTUATION_RECORDER_VARIATIONS)
+        .map((glyph) => ({
+          char: glyph.char,
+          strokes: glyph.strokes,
+          bounds: glyph.bounds,
+          widthRatio: glyph.widthRatio,
+          heightRatio: glyph.heightRatio
+        }));
+    }
+
+    return out;
+  }
+
+  function punctuationRecorderJson() {
+    return JSON.stringify(punctuationRecorderExportData(), null, 2);
+  }
+
+  function renderPunctuationRecorder({ keepData = false } = {}) {
+    stopPlayback();
+    clearGuideTimer();
+    state.screen = "punctuationRecorder";
+
+    if (!keepData) resetPunctuationRecorder();
+
+    renderPunctuationRecorderStep();
+  }
+
+  function renderPunctuationRecorderStep() {
+    clearGuideTimer();
+    state.screen = "punctuationRecorder";
+    state.currentStrokes = [];
+    state.currentStroke = null;
+    state.hasDrawnCurrent = false;
+
+    const char = punctuationRecorderCurrentChar();
+    const saved = punctuationRecorderSavedCount();
+    const total = punctuationRecorderTotalCount();
+    const progress = total ? saved / total : 0;
+    const variationNumber = Math.min(
+      PUNCTUATION_RECORDER_VARIATIONS,
+      (punctuationRecorder.glyphs[char] || []).length + 1
+    );
+    const isComplete = punctuationRecorderIsComplete();
+
+    app.innerHTML = rootHtml(`
+      <div class="ghost-card ghost-recorder-card">
+        <div class="ghost-topline">
+          <span class="ghost-pill">Recorder</span>
+          <div class="ghost-progress-track" aria-hidden="true"><div class="ghost-progress-fill" style="width:${Math.round(progress * 100)}%"></div></div>
+          <span class="ghost-pill">${escapeHtml(String(saved))}/${escapeHtml(String(total))}</span>
+        </div>
+
+        <div class="ghost-prompt">
+          <div class="ghost-prompt-title">Record: ${escapeHtml(char)}</div>
+          <div class="ghost-prompt-sub">Draw ${escapeHtml(charLabel(char))} variation ${escapeHtml(String(variationNumber))} of ${escapeHtml(String(PUNCTUATION_RECORDER_VARIATIONS))}.</div>
+        </div>
+
+        <div class="ghost-draw-wrap" id="ghostDrawWrap">
+          <div class="ghost-guide-text ${isSymbolChar(char) ? "is-symbol" : ""}" id="ghostGuideText">${escapeHtml(char)}</div>
+          <canvas id="ghostDrawCanvas" aria-label="Record ${escapeHtml(charLabel(char))}"></canvas>
+        </div>
+
+        <div class="ghost-train-actions ghost-recorder-actions">
+          <button class="vm-btn vm-btn-secondary" id="ghostClearBtn" type="button">Clear</button>
+          <button class="vm-btn" id="ghostSaveBtn" type="button" disabled>Save Variation</button>
+          <button class="vm-btn vm-btn-secondary" id="ghostRecorderUndoBtn" type="button">Undo Last Save</button>
+          <button class="vm-btn vm-btn-secondary" id="ghostRecorderBackBtn" type="button">Back to Title</button>
+        </div>
+
+        <div class="ghost-recorder-export">
+          <div class="ghost-recorder-export-title">${isComplete ? "✅ All punctuation recorded!" : "Export will fill in as you save."}</div>
+          <div class="ghost-recorder-export-actions">
+            <button class="vm-btn" id="ghostRecorderCopyBtn" type="button">Copy JSON</button>
+            <button class="vm-btn vm-btn-secondary" id="ghostRecorderDownloadBtn" type="button">Download JSON</button>
+          </div>
+          <textarea id="ghostRecorderJsonBox" class="ghost-recorder-json" readonly spellcheck="false">${escapeHtml(punctuationRecorderJson())}</textarea>
+        </div>
+      </div>
+    `, { menu: false, rootClass: "is-recorder-screen" });
+
+    setupDrawingCanvas();
+    fitGuideCharacter();
+    updateSaveButton();
+
+    document.getElementById("ghostClearBtn")?.addEventListener("click", clearCurrentDrawing);
+    document.getElementById("ghostSaveBtn")?.addEventListener("click", savePunctuationRecorderVariation);
+    document.getElementById("ghostRecorderUndoBtn")?.addEventListener("click", undoPunctuationRecorderSave);
+    document.getElementById("ghostRecorderBackBtn")?.addEventListener("click", renderIntro);
+    document.getElementById("ghostRecorderCopyBtn")?.addEventListener("click", copyPunctuationRecorderJson);
+    document.getElementById("ghostRecorderDownloadBtn")?.addEventListener("click", downloadPunctuationRecorderJson);
+  }
+
+  function savePunctuationRecorderVariation() {
+    if (!state.hasDrawnCurrent) return;
+
+    const char = punctuationRecorderCurrentChar();
+    const glyph = makeGlyph(char, state.currentStrokes);
+    const list = punctuationRecorder.glyphs[char] || [];
+    list.push(glyph);
+    punctuationRecorder.glyphs[char] = list.slice(0, PUNCTUATION_RECORDER_VARIATIONS);
+
+    if (punctuationRecorder.glyphs[char].length >= PUNCTUATION_RECORDER_VARIATIONS) {
+      punctuationRecorder.charIndex = Math.min(
+        punctuationRecorder.charIndex + 1,
+        PUNCTUATION_RECORDER_CHARS.length - 1
+      );
+    }
+
+    renderPunctuationRecorderStep();
+  }
+
+  function undoPunctuationRecorderSave() {
+    let char = punctuationRecorderCurrentChar();
+    let list = punctuationRecorder.glyphs[char] || [];
+
+    if (!list.length && punctuationRecorder.charIndex > 0) {
+      punctuationRecorder.charIndex -= 1;
+      char = punctuationRecorderCurrentChar();
+      list = punctuationRecorder.glyphs[char] || [];
+    }
+
+    list.pop();
+    punctuationRecorder.glyphs[char] = list;
+    renderPunctuationRecorderStep();
+  }
+
+  async function copyPunctuationRecorderJson() {
+    const json = punctuationRecorderJson();
+    const box = document.getElementById("ghostRecorderJsonBox");
+
+    try {
+      await navigator.clipboard.writeText(json);
+      flashPunctuationRecorderExportTitle("Copied JSON!");
+    } catch (err) {
+      if (box) {
+        box.focus();
+        box.select();
+      }
+      flashPunctuationRecorderExportTitle("Clipboard blocked. Select and copy the box.");
+    }
+  }
+
+  function downloadPunctuationRecorderJson() {
+    const json = punctuationRecorderJson();
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ghost-writer-punctuation-glyphs.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function flashPunctuationRecorderExportTitle(message) {
+    const title = document.querySelector(".ghost-recorder-export-title");
+    if (!title) return;
+
+    title.textContent = message;
+    setTimeout(() => {
+      if (state.screen === "punctuationRecorder") {
+        title.textContent = punctuationRecorderIsComplete()
+          ? "✅ All punctuation recorded!"
+          : "Export will fill in as you save.";
+      }
+    }, 1400);
   }
 
   function renderTraining() {
@@ -2066,7 +2340,7 @@
       overflows: usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1
     };
   }
-  
+
 
   function drawGlyph(c, glyph, x, baselineY, cellW, fontSize, options = {}, partial = 1) {
     if (!glyph || !glyph.strokes || !glyph.strokes.length) return;
@@ -3954,7 +4228,7 @@
 
     return out;
   }
-  
+
 
   function getPauseAfterPlacement(allPlacements, index) {
     const current = allPlacements[index];
@@ -4512,7 +4786,7 @@
 
   window.addEventListener("resize", () => {
     if (state.screen === "remix") drawRemixPreview();
-    if (state.screen === "training") fitGuideCharacter();
+    if (state.screen === "training" || state.screen === "punctuationRecorder") fitGuideCharacter();
   });
 
   async function boot() {
