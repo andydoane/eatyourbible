@@ -885,7 +885,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.15",
+      debugBadge: "VT 1.16",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -2312,6 +2312,41 @@
     }, EXIT_DONE_MS, runToken);
   }
 
+  function fitReviewText(runToken = state.runToken) {
+    const card = document.getElementById("vtReviewCard");
+    const text = document.getElementById("vtReviewText");
+
+    if (!card || !text || !isLiveRun(runToken)) return;
+
+    text.style.fontSize = "";
+    text.style.maxWidth = "";
+
+    requestAnimationFrame(() => {
+      if (!card.isConnected || !text.isConnected || !isLiveRun(runToken)) return;
+
+      const cardStyle = window.getComputedStyle(card);
+      const textStyle = window.getComputedStyle(text);
+      const paddingX = parseFloat(cardStyle.paddingLeft) + parseFloat(cardStyle.paddingRight);
+      const paddingY = parseFloat(cardStyle.paddingTop) + parseFloat(cardStyle.paddingBottom);
+      const availableWidth = Math.max(0, card.clientWidth - paddingX);
+      const availableHeight = Math.max(0, card.clientHeight - paddingY);
+      const minSize = parseFloat(textStyle.getPropertyValue("--vt-review-min-font-size")) || 26;
+      let size = parseFloat(textStyle.fontSize) || 34;
+
+      text.style.maxWidth = `${availableWidth}px`;
+
+      const overflows = () => {
+        return text.scrollWidth > availableWidth + 1
+          || text.scrollHeight > availableHeight + 1;
+      };
+
+      while (size > minSize && overflows()) {
+        size = Math.max(minSize, size - 2);
+        text.style.fontSize = `${size}px`;
+      }
+    });
+  }
+
   async function startChunkReview(chunkIndex, runToken = state.runToken) {
     if (!isLiveRun(runToken)) return;
 
@@ -2331,11 +2366,13 @@
       main.innerHTML = `
         <div class="vt-review-scene">
 
-          <div class="vt-review-card">
-            <div class="vt-review-text">${escapeHtml(chunk.text)}</div>
+          <div class="vt-review-card" id="vtReviewCard">
+            <div class="vt-review-text" id="vtReviewText">${escapeHtml(chunk.text)}</div>
           </div>
         </div>
       `;
+
+      fitReviewText(runToken);
     }
 
     await sleep(260, runToken);

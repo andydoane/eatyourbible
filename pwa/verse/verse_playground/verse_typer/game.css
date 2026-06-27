@@ -1497,6 +1497,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   background: radial-gradient(circle at 10% 16%, rgba(255, 255, 255, .34), transparent 16%),
     radial-gradient(circle at 92% 18%, rgba(255, 255, 255, .20), transparent 18%),
     linear-gradient(180deg, #ff8d65, #ff5a51);
@@ -1507,9 +1508,13 @@ body {
 }
 
 .vt-review-text {
+  --vt-review-min-font-size: 28px;
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 0;
   font-family: "DD2 Titan One", "Baloo 2", system-ui, sans-serif;
   color: #fff9dc;
-  font-size: clamp(30px, 7.7vw, 74px);
+  font-size: clamp(34px, 9.2vw, 78px);
   line-height: 1.02;
   text-wrap: balance;
   letter-spacing: .01em;
@@ -1762,7 +1767,8 @@ body {
   }
 
   .vt-review-text {
-    font-size: clamp(24px, 6.6vw, 52px);
+    --vt-review-min-font-size: 26px;
+    font-size: clamp(30px, 8.4vw, 58px);
   }
 
   .vt-popup-card {
