@@ -577,6 +577,33 @@
     return pool[Math.floor(Math.random() * pool.length)].slice();
   }
 
+  function chooseMegaMelodyForLength(length) {
+    const targetLength = Math.max(20, Number(length) || 20);
+    const melody = [];
+    const patternLengths = [4, 6, 5, 8, 7, 10, 6, 9, 5, 10, 4, 7, 8, 6, 10, 9];
+
+    let patternIndex = 0;
+    let lastPatternKey = "";
+
+    while (melody.length < targetLength) {
+      let patternLength = patternLengths[patternIndex % patternLengths.length];
+      let pattern = chooseMelodyForLength(patternLength);
+      let patternKey = pattern.join(",");
+
+      if (patternKey === lastPatternKey) {
+        patternLength = patternLength === 10 ? 9 : patternLength + 1;
+        pattern = chooseMelodyForLength(patternLength);
+        patternKey = pattern.join(",");
+      }
+
+      melody.push(...pattern);
+      lastPatternKey = patternKey;
+      patternIndex += 1;
+    }
+
+    return melody.slice(0, targetLength);
+  }
+
   function playCorrectLetterSound() {
     const melody = state.currentMelody.length
       ? state.currentMelody
@@ -827,7 +854,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.9.1",
+      debugBadge: "VT 1.10",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1257,7 +1284,7 @@
 
     playPopupSound();
 
-    await waitForPopupDismiss(3000, runToken);
+    await waitForPopupDismiss(2500, runToken);
 
     if (!isLiveRun(runToken)) return;
   }
@@ -1664,7 +1691,10 @@
     state.currentItem = item;
     state.typedIndex = 0;
     state.wordOffsetX = 0;
-    state.currentMelody = chooseMelodyForLength((item.expected || "").length);
+    const expectedLength = (item.expected || "").length;
+    state.currentMelody = item.kind === "mega"
+      ? chooseMegaMelodyForLength(expectedLength)
+      : chooseMelodyForLength(expectedLength);
     state.revealed = false;
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
