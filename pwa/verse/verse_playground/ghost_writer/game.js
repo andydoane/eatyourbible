@@ -1153,7 +1153,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 3.1b",
+      debugBadge: "GW 3.1c",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -3118,9 +3118,9 @@
     let boxW = refWidth + padX * 2;
     let boxH = Math.min(zoneHeight * .94, Math.max(refFontSize * 1.35, zoneHeight * .74));
 
-    // Settings for Cloud Puff Verse Tag
+    // Tweak Settings for Cloud Puff Verse Tag
     if (style === "cloud") {
-      const cloudExtraWidth = 1.4;
+      const cloudExtraWidth = 1.8;
       const cloudHeight = 2.2;
 
       boxW = refWidth + refFontSize * cloudExtraWidth;
