@@ -791,6 +791,9 @@ body {
 
 .vt-cocoon-button.is-opening {
   pointer-events: none;
+}
+
+.vt-cocoon-button.is-opening .vt-cocoon-img {
   animation: vt-cocoon-open-shake 300ms ease-in-out both;
 }
 
@@ -1001,19 +1004,19 @@ body {
   }
 
   20% {
-    transform: translateX(-50%) rotate(-4deg);
+    transform: translateX(-50%) rotate(-3deg);
   }
 
   44% {
-    transform: translateX(-50%) rotate(3deg);
+    transform: translateX(-50%) rotate(2.25deg);
   }
 
   68% {
-    transform: translateX(-50%) rotate(-2deg);
+    transform: translateX(-50%) rotate(-1.5deg);
   }
 
   84% {
-    transform: translateX(-50%) rotate(1deg);
+    transform: translateX(-50%) rotate(.8deg);
   }
 }
 
@@ -1021,23 +1024,23 @@ body {
 
   0%,
   100% {
-    transform: rotate(0) scale(1);
+    transform: translateX(-50%) rotate(0) scale(1);
   }
 
   20% {
-    transform: rotate(-7deg) scale(1.02);
+    transform: translateX(-50%) rotate(-7deg) scale(1.02);
   }
 
   42% {
-    transform: rotate(7deg) scale(.98);
+    transform: translateX(-50%) rotate(7deg) scale(.98);
   }
 
   64% {
-    transform: rotate(-4deg) scale(1.03);
+    transform: translateX(-50%) rotate(-4deg) scale(1.03);
   }
 
   82% {
-    transform: rotate(3deg) scale(1);
+    transform: translateX(-50%) rotate(3deg) scale(1);
   }
 }
 
@@ -1582,7 +1585,6 @@ body {
 .vt-cocoon-hanger {
   position: absolute;
   transform-origin: top center;
-  animation: vt-cocoon-wiggle 1450ms ease-in-out 920ms infinite;
   left: 50%;
   top: 0;
   width: 100%;
@@ -1605,6 +1607,8 @@ body {
   max-height: none;
   object-fit: contain;
   transform: translateX(-50%);
+  transform-origin: 50% 5%;
+  animation: vt-cocoon-wiggle 1450ms ease-in-out 920ms infinite;
   filter: drop-shadow(0 clamp(6px, 1.7vw, 10px) 0 rgba(0, 0, 0, .14));
 }
 
@@ -1932,6 +1936,7 @@ body {
   .vt-segment,
   .vt-cocoon-button,
   .vt-cocoon-hanger,
+  .vt-cocoon-img,
   .vt-butterfly-stage,
   .vt-butterfly,
   .vt-flap-button,
@@ -1974,8 +1979,9 @@ body {
     filter: none !important;
   }
 
-  .vt-cocoon-hanger {
+  .vt-cocoon-img {
     animation: none !important;
+    transform: translateX(-50%) !important;
   }
 
   .vt-key:active,
