@@ -59,6 +59,9 @@
   let gameAssetPreloadPromise = null;
 
   const imagePreloadCache = new Map();
+  const uiPopBuffers = new Map();
+  const uiPopBufferPromises = new Map();
+  let uiPopFlip = false;
 
   const ENTER_INPUT_MS = 400;
   const ENTER_DONE_MS = 960;
@@ -68,6 +71,11 @@
 
   const AUDIO_DEBUG = false;
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
+  const UI_POP_SOUND_FILES = [
+    "../../ui_audio/ui_sound_pop_1.mp3",
+    "../../ui_audio/ui_sound_pop_2.mp3"
+  ];
+  const UI_POP_SOUND_VOLUME = 0.48;
   const COCOON_IMAGE_FILE = "./verse_typer_images/cocoon.png";
   const BUTTERFLY_IMAGE_FILE = "./verse_typer_images/butterfly.svg";
   const BUTTERFLY_FLAPS_TO_FINISH = 5;
@@ -436,6 +444,11 @@
         osc.stop(now + 0.03);
 
         audioUnlocked = audioCtx.state === "running";
+
+        if (audioUnlocked) {
+          preloadUiPopSounds();
+        }
+
         audioDebug("unlock done", { audioUnlocked, state: audioCtx.state });
         return audioUnlocked;
       } catch (err) {
@@ -449,6 +462,98 @@
 
     return audioUnlockPromise;
   }
+
+  function uiPopSoundKey(index) {
+    return `uiPop${index + 1}`;
+  }
+
+  async function loadUiPopBuffer(index) {
+    createAudio();
+
+    const src = UI_POP_SOUND_FILES[index];
+    const key = uiPopSoundKey(index);
+
+    if (!audioCtx || !src) return null;
+    if (uiPopBuffers.has(key)) return uiPopBuffers.get(key);
+    if (uiPopBufferPromises.has(key)) return uiPopBufferPromises.get(key);
+
+    const promise = fetch(src)
+      .then(response => {
+        if (!response.ok) throw new Error(`Unable to load UI sound: ${src}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        uiPopBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(err => {
+        console.warn("Verse Typer UI pop sound failed", err);
+        return null;
+      })
+      .finally(() => {
+        uiPopBufferPromises.delete(key);
+      });
+
+    uiPopBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadUiPopSounds() {
+    UI_POP_SOUND_FILES.forEach((_, index) => {
+      loadUiPopBuffer(index);
+    });
+  }
+
+  async function playUiPopSound() {
+    if (muted) return;
+
+    const index = uiPopFlip ? 1 : 0;
+    uiPopFlip = !uiPopFlip;
+
+    createAudio();
+    if (!audioCtx || !masterGain) return;
+
+    try {
+      if (audioCtx.state !== "running") {
+        await audioCtx.resume?.();
+      }
+
+      if (audioCtx.state !== "running") return;
+
+      const buffer = await loadUiPopBuffer(index);
+      if (!buffer || muted || !masterGain) return;
+
+      const source = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+
+      source.buffer = buffer;
+      gain.gain.value = UI_POP_SOUND_VOLUME;
+      source.connect(gain);
+      gain.connect(masterGain);
+      source.start(0);
+    } catch (err) {
+      // UI sound should never break gameplay.
+    }
+  }
+
+  function wireShellUiPopSounds(root = app) {
+    if (!root) return;
+
+    root.querySelectorAll("button").forEach(button => {
+      if (button.dataset.vtUiPopSound === "wired") return;
+      if (button.closest(".vt-root")) return;
+
+      button.dataset.vtUiPopSound = "wired";
+      button.addEventListener("pointerdown", () => {
+        createChunkAudioElement();
+        primeHtmlAudio();
+        unlockAudio();
+        playUiPopSound();
+      }, { passive: true });
+    });
+  }
+
 
   function midiToFreq(midi) {
     return 440 * Math.pow(2, (midi - 69) / 12);
@@ -885,7 +990,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.16",
+      debugBadge: "VT 1.17",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -901,6 +1006,8 @@
         setScreen("mode");
       }
     });
+
+    wireShellUiPopSounds();
   }
 
   function renderMode() {
@@ -926,6 +1033,8 @@
         await beginRun();
       }
     });
+
+    wireShellUiPopSounds();
   }
 
   async function beginRun() {
@@ -1008,9 +1117,12 @@
           masterGain.gain.setValueAtTime(muted ? 0 : WEB_AUDIO_MASTER_VOLUME, audioCtx.currentTime);
         }
         if (chunkAudio) chunkAudio.muted = muted;
+        if (!muted) playUiPopSound();
         return muted;
       },
       onHowToPlay: () => {
+        playUiPopSound();
+
         const menuOverlay = document.getElementById("verseTyperGameMenuOverlay");
         if (menuOverlay) {
           menuOverlay.classList.remove("is-open");
@@ -1021,17 +1133,28 @@
         state.paused = true;
       },
       onModeSelect: () => {
+        playUiPopSound();
         state.paused = false;
         stopAllAudio();
         setScreen("mode");
       },
       onExit: () => {
+        playUiPopSound();
         stopAllAudio();
         window.VerseGameBridge.exitGame();
       },
-      onOpen: () => { state.paused = true; },
-      onClose: () => { state.paused = false; },
-      onBackFromHelp: () => { state.paused = true; }
+      onOpen: () => {
+        playUiPopSound();
+        state.paused = true;
+      },
+      onClose: () => {
+        playUiPopSound();
+        state.paused = false;
+      },
+      onBackFromHelp: () => {
+        playUiPopSound();
+        state.paused = true;
+      }
     });
   }
 
@@ -2629,6 +2752,8 @@
       onMoreGames: () => window.VerseGameBridge.exitGame(),
       onChangeVerse: () => window.VerseGameBridge.returnToTitle()
     });
+
+    wireShellUiPopSounds();
   }
 
   function helpHtml() {
