@@ -1740,3 +1740,10 @@ body{
     height: clamp(170px, 58vh, 420px);
   }
 }
+
+/* VT 1.6.1: let the cocoon stick clip at the green play-card, not the inner cocoon box */
+.vt-cocoon-scene,
+.vt-cocoon-button,
+.vt-cocoon-hanger {
+  overflow: visible;
+}
