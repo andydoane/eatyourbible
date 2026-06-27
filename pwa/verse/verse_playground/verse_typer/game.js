@@ -111,7 +111,7 @@
           return;
         }
 
-        document.fonts.load('1em "TitanOneLocal"')
+        document.fonts.load('1em "DD2 Titan One"')
           .then(() => document.fonts.ready)
           .then(finish)
           .catch(finish);
@@ -827,7 +827,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.7",
+      debugBadge: "VT 1.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",

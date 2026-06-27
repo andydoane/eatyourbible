@@ -1,9 +1,17 @@
-@font-face{
-  font-family:"TitanOneLocal";
-  src:url("./fonts/TitanOne-Regular.ttf") format("truetype");
-  font-weight:400;
-  font-style:normal;
-  font-display:swap;
+@font-face {
+  font-family: "DD2 Titan One";
+  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
 }
 
 :root{
@@ -225,7 +233,7 @@ body{
   max-width: min(88%, 620px);
   border-radius: 34px;
   padding: clamp(18px, 5vw, 32px) clamp(22px, 6vw, 42px) clamp(20px, 5.4vw, 36px);
-  font-family: "TitanOneLocal", "Baloo 2", system-ui, sans-serif;
+  font-family: "DD2 Titan One", "Baloo 2", system-ui, sans-serif;
   color: #fff9dc;
   background:
     radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
@@ -705,7 +713,7 @@ body{
 }
 
 .vt-review-text{
-  font-family:"TitanOneLocal","Baloo 2",system-ui,sans-serif;
+  font-family:"DD2 Titan One","Baloo 2",system-ui,sans-serif;
   color:#fff9dc;
   font-size:clamp(30px,7.7vw,74px);
   line-height:1.02;
@@ -789,7 +797,7 @@ body{
   min-height: clamp(72px, 14vh, 122px);
   border: 0;
   border-radius: 32px;
-  font-family: "TitanOneLocal", "Baloo 2", system-ui, sans-serif;
+  font-family: "DD2 Titan One", "Baloo 2", system-ui, sans-serif;
   font-size: clamp(38px, 11vw, 86px);
   line-height: 1;
   color: #fff9dc;
@@ -1455,7 +1463,7 @@ body{
   border: 0;
   border-radius: 30px;
   padding: 0 16px;
-  font-family: "TitanOneLocal", "Baloo 2", system-ui, sans-serif;
+  font-family: "DD2 Titan One", "Baloo 2", system-ui, sans-serif;
   font-size: clamp(26px, 7.4vw, 54px);
   line-height: 1;
   color: #fff9dc;
@@ -1486,7 +1494,7 @@ body{
   max-width: min(86%, 520px);
   padding: clamp(10px, 2.6vw, 16px) clamp(16px, 4vw, 28px);
   border-radius: 999px;
-  font-family: "TitanOneLocal", "Baloo 2", system-ui, sans-serif;
+  font-family: "DD2 Titan One", "Baloo 2", system-ui, sans-serif;
   font-size: clamp(24px, 6.4vw, 52px);
   line-height: 1;
   color: #fff9dc;
