@@ -1884,3 +1884,9 @@ body{
     font-size: clamp(1.1rem, 5.3vw, 2.2rem);
   }
 }
+
+/* VT 1.11: let the Advanced inline hint prompt be tappable too */
+.vt-play-area-prompt-hint {
+  pointer-events: auto;
+  cursor: pointer;
+}

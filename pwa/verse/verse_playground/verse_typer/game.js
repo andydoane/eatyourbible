@@ -189,6 +189,9 @@
     wordOffsetX: 0,
     currentMelody: [],
     revealed: false,
+    advancedHintLevel: 0,
+    advancedHintWordsSeen: 0,
+    advancedFullHintUsed: false,
     verseIntroShown: false,
     bookIntroShown: false,
     referenceIntroShown: false,
@@ -818,6 +821,9 @@
     state.wordOffsetX = 0;
     state.currentMelody = [];
     state.revealed = false;
+    state.advancedHintLevel = 0;
+    state.advancedHintWordsSeen = 0;
+    state.advancedFullHintUsed = false;
     state.verseIntroShown = false;
     state.bookIntroShown = false;
     state.referenceIntroShown = false;
@@ -854,7 +860,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.10",
+      debugBadge: "VT 1.11",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1090,6 +1096,64 @@
     renderHud();
   }
 
+  function canUseAdvancedHint(item = state.currentItem) {
+    return selectedMode === "advanced"
+      && !!item
+      && item.kind !== "reference"
+      && item.kind !== "mega";
+  }
+
+  function shouldShowAdvancedHintPrompt(item = state.currentItem) {
+    return canUseAdvancedHint(item)
+      && item.kind === "word"
+      && !state.advancedFullHintUsed
+      && state.advancedHintWordsSeen <= 4;
+  }
+
+  function renderAdvancedHintPrompt(item = state.currentItem, runToken = state.runToken) {
+    if (!shouldShowAdvancedHintPrompt(item)) return;
+
+    showPlayAreaPrompt({
+      title: state.advancedHintLevel >= 1 ? "Tap for More Hints" : "Tap for a Hint",
+      variant: "hint",
+      runToken,
+      ms: null,
+      playSound: false
+    });
+
+    const prompt = document.getElementById("vtPlayAreaPrompt");
+    if (prompt) {
+      prompt.removeAttribute("aria-hidden");
+      prompt.setAttribute("role", "button");
+      prompt.setAttribute("aria-label", prompt.textContent || "Tap for a hint");
+      prompt.onclick = (event) => {
+        event.preventDefault();
+        handleAdvancedHintTap(item);
+      };
+    }
+  }
+
+  function handleAdvancedHintTap(item = state.currentItem) {
+    if (!canUseAdvancedHint(item)) return false;
+
+    if (state.advancedHintLevel <= 0) {
+      state.advancedHintLevel = 1;
+      state.revealed = false;
+      renderCurrentItem();
+      return true;
+    }
+
+    if (state.advancedHintLevel === 1) {
+      state.advancedHintLevel = 2;
+      state.revealed = true;
+      state.advancedFullHintUsed = true;
+      renderCurrentItem();
+      return true;
+    }
+
+    return true;
+  }
+
   async function startVersePhase(runToken = state.runToken) {
     if (!isLiveRun(runToken)) return;
 
@@ -1104,14 +1168,7 @@
       });
       if (!isLiveRun(runToken)) return;
 
-      if (selectedMode === "advanced") {
-        await showTyperPopup({
-          title: "Letters are Hidden",
-          subtitle: "Tap for a Hint",
-          variant: "hint"
-        });
-        if (!isLiveRun(runToken)) return;
-      }
+
     }
 
     startChunkWord(0, 0, runToken);
@@ -1320,7 +1377,7 @@
     });
   }
 
-  function showPlayAreaPrompt({ title, variant = "book", runToken = state.runToken, ms = 1700 } = {}) {
+  function showPlayAreaPrompt({ title, variant = "book", runToken = state.runToken, ms = 1700, playSound = true } = {}) {
     if (!isLiveRun(runToken)) return;
 
     const scene = document.querySelector(".vt-word-scene");
@@ -1336,7 +1393,9 @@
     prompt.setAttribute("aria-hidden", "true");
     scene.appendChild(prompt);
 
-    playPopupSound();
+    if (playSound) playPopupSound();
+
+    if (ms === null) return;
 
     trackedTimeout(() => {
       if (!isLiveRun(runToken) || !prompt.isConnected) return;
@@ -1696,6 +1755,12 @@
       ? chooseMegaMelodyForLength(expectedLength)
       : chooseMelodyForLength(expectedLength);
     state.revealed = false;
+    state.advancedHintLevel = 0;
+
+    if (selectedMode === "advanced" && item.kind === "word") {
+      state.advancedHintWordsSeen += 1;
+    }
+
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
     state.acceptingInput = false;
@@ -1750,14 +1815,12 @@
     const wordObject = document.getElementById("vtWordObject");
     if (wordObject) {
       wordObject.onclick = () => {
-        if (selectedMode === "advanced" && item.kind !== "reference") {
-          state.revealed = true;
-          renderCurrentItem();
-        }
+        handleAdvancedHintTap(item);
       };
     }
 
     renderSparklesOnly();
+    renderAdvancedHintPrompt(item);
 
     if (animationState === "enter" || animationState === "exit") {
       prepareTravelAnimation(animationState, item);
@@ -1832,7 +1895,11 @@
     }
 
     const letters = item.expected.split("");
-    const hideUntyped = selectedMode === "advanced" && !state.revealed;
+    const advancedHidden = selectedMode === "advanced";
+    const fullReveal = !advancedHidden || state.revealed || state.advancedHintLevel >= 2;
+    const hintedIndex = advancedHidden && state.advancedHintLevel >= 1 && letters.length
+      ? Math.min(state.typedIndex, letters.length - 1)
+      : -1;
 
     return `
       <span class="vt-head ${state.headShakeUntil > performance.now() ? "is-no" : ""}">${faceHtml()}</span>
@@ -1840,7 +1907,7 @@
         ${letters.map((letter, index) => {
       const typed = index < state.typedIndex;
       const just = index === state.justTypedIndex;
-      const visible = !hideUntyped || typed;
+      const visible = fullReveal || typed || index === hintedIndex;
       return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${index}">${visible ? escapeHtml(letter) : ""}</span>`;
     }).join("")}
       </span>
