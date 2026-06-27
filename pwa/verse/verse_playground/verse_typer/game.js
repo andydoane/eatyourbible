@@ -827,7 +827,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.8.1",
+      debugBadge: "VT 1.9",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -990,10 +990,32 @@
     };
   }
 
+  function streakHudTier(value) {
+    const streak = Number(value) || 0;
+
+    if (streak >= 20) return "rainbow";
+    if (streak >= 10) return "teal";
+    if (streak >= 5) return "green";
+    return "yellow";
+  }
+
   function renderHud() {
     const streak = document.getElementById("vtStreakPill");
     const phase = document.getElementById("vtPhasePill");
-    if (streak) streak.textContent = `🔥 ${state.streak}`;
+
+    if (streak) {
+      const tier = streakHudTier(state.streak);
+
+      streak.textContent = `🔥 ${state.streak}`;
+      streak.classList.remove(
+        "is-streak-yellow",
+        "is-streak-green",
+        "is-streak-teal",
+        "is-streak-rainbow"
+      );
+      streak.classList.add(`is-streak-${tier}`);
+    }
+
     if (phase) phase.textContent = state.phaseLabel || "Verse";
   }
 

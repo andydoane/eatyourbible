@@ -1787,3 +1787,80 @@ body{
 .vt-segment {
   font-family: "Baloo 2", system-ui, sans-serif;
 }
+
+/* VT 1.9: responsive streak HUD color tiers */
+.vt-streak-pill {
+  min-width: min(24vw, 6.9em);
+  padding: .46em .74em .42em;
+  border-radius: 999em;
+  font-family: "DD2 Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(1.05rem, 4.2vw, 1.55rem);
+  line-height: 1;
+  letter-spacing: .01em;
+  color: #2f302f;
+  text-align: center;
+  box-shadow:
+    0 .32em 0 rgba(0, 0, 0, .18),
+    0 .5em .85em rgba(0, 0, 0, .13),
+    inset 0 0 0 .13em rgba(255, 255, 255, .34);
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.vt-streak-pill.is-streak-yellow {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .55), transparent 24%),
+    linear-gradient(180deg, #fff8b5, #ffe15c);
+  color: #2f302f;
+}
+
+.vt-streak-pill.is-streak-green {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .44), transparent 24%),
+    linear-gradient(180deg, #9ee85f, #4f963a);
+  color: #ffffff;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .18);
+}
+
+.vt-streak-pill.is-streak-teal {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .42), transparent 24%),
+    linear-gradient(180deg, #64ddea, #2f8fa0);
+  color: #ffffff;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .20);
+}
+
+.vt-streak-pill.is-streak-rainbow {
+  background:
+    linear-gradient(90deg, #ff5a51, #ff9e3d, #ffe15c, #7ed957, #40b9c5, #8b6cff, #ff5a51);
+  background-size: 260% 100%;
+  color: #ffffff;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .22);
+  box-shadow:
+    0 .34em 0 rgba(0, 0, 0, .20),
+    0 .55em 1em rgba(0, 0, 0, .16),
+    0 0 .9em rgba(255, 255, 255, .50),
+    inset 0 0 0 .13em rgba(255, 255, 255, .38);
+  animation: vt-streak-hud-rainbow 1200ms linear infinite;
+}
+
+@keyframes vt-streak-hud-rainbow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 260% 50%;
+  }
+}
+
+@media (max-height:680px) {
+  .vt-streak-pill {
+    min-width: min(24vw, 6.4em);
+    padding: .4em .66em .36em;
+    font-size: clamp(1rem, 3.9vw, 1.35rem);
+  }
+}
