@@ -969,7 +969,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.18",
+      debugBadge: "VT 1.18.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -2336,6 +2336,8 @@
 
     trackedTimeout(() => {
       if (!isLiveRun(runToken) || state.currentItem !== item) return;
+
+      if (!state.acceptingInput && state.transitionLocked) return;
 
       state.keyFlash = "";
       state.justTypedIndex = -1;
