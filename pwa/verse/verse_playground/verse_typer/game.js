@@ -580,31 +580,56 @@
     return pool[Math.floor(Math.random() * pool.length)].slice();
   }
 
-  function chooseMegaMelodyForLength(length) {
-    const targetLength = Math.max(20, Number(length) || 20);
-    const melody = [];
-    const patternLengths = [4, 6, 5, 8, 7, 10, 6, 9, 5, 10, 4, 7, 8, 6, 10, 9];
+  const MEGA_TUNES = [
+    {
+      id: "odeToJoy",
+      melody: [
+        64, 64, 65, 67,
+        67, 65, 64, 62,
+        60, 60, 62, 64,
+        64, 62, 62, 62,
 
-    let patternIndex = 0;
-    let lastPatternKey = "";
+        64, 64, 65, 67,
+        67, 65, 64, 62,
+        60, 60, 62, 64,
+        62, 60, 60, 60,
 
-    while (melody.length < targetLength) {
-      let patternLength = patternLengths[patternIndex % patternLengths.length];
-      let pattern = chooseMelodyForLength(patternLength);
-      let patternKey = pattern.join(",");
+        62, 62, 64, 60,
+        62, 64, 65, 60,
+        62, 64, 64, 62,
+        60, 62, 55, 55,
 
-      if (patternKey === lastPatternKey) {
-        patternLength = patternLength === 10 ? 9 : patternLength + 1;
-        pattern = chooseMelodyForLength(patternLength);
-        patternKey = pattern.join(",");
-      }
-
-      melody.push(...pattern);
-      lastPatternKey = patternKey;
-      patternIndex += 1;
+        64, 64, 65, 67,
+        67, 65, 64, 62,
+        60, 60, 62, 64,
+        62, 60, 60, 60
+      ]
     }
 
-    return melody.slice(0, targetLength);
+    /*
+    To add another Mega-pillar tune later, add a comma after the Ode to Joy block above,
+    then add another object like this:
+
+    {
+      id: "myNewTune",
+      melody: [
+        60, 62, 64, 65,
+        67, 65, 64, 62
+      ]
+    }
+    */
+  ];
+
+  function chooseMegaMelodyForLength(length) {
+    const tunes = MEGA_TUNES
+      .map(tune => Array.isArray(tune.melody) ? tune.melody.filter(Number.isFinite) : [])
+      .filter(melody => melody.length);
+
+    if (!tunes.length) {
+      return chooseMelodyForLength(length);
+    }
+
+    return tunes[Math.floor(Math.random() * tunes.length)].slice();
   }
 
   function playCorrectLetterSound() {
@@ -860,7 +885,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.11.1",
+      debugBadge: "VT 1.12",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1121,7 +1146,7 @@
     const playCard = document.getElementById("vtPlayCard");
     if (!playCard || !isLiveRun(runToken)) return;
 
-    const title = state.advancedHintLevel >= 1 ? "Tap for More Hints" : "Tap for a Hint";
+    const title = state.advancedHintLevel >= 1 ? "More Hints" : "Tap for a Hint";
     const prompt = existing || document.createElement("div");
 
     if (!existing) {
