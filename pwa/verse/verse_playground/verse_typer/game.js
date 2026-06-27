@@ -227,7 +227,8 @@
     butterflyColors: null,
     butterflyFlaps: 0,
     sleepIds: [],
-    runToken: 0
+    runToken: 0,
+    wordDebugNextId: 0
   };
 
   function clearTrackedTimeout(id) {
@@ -267,6 +268,106 @@
 
   function isLiveRun(runToken = state.runToken) {
     return state.screen === "game" && state.runToken === runToken;
+  }
+
+  const WORD_EXIT_DEBUG = true;
+  const WORD_EXIT_DEBUG_MAX_EVENTS = 300;
+
+  function wordExitDebugShouldLog(item = state.currentItem) {
+    return WORD_EXIT_DEBUG
+      && !!item
+      && item.kind === "word"
+      && String(item.expected || "").length <= 4;
+  }
+
+  function wordExitDebugRect(el) {
+    if (!el) return null;
+
+    const rect = el.getBoundingClientRect();
+
+    return {
+      left: Math.round(rect.left),
+      right: Math.round(rect.right),
+      top: Math.round(rect.top),
+      bottom: Math.round(rect.bottom),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height)
+    };
+  }
+
+  function wordExitDebugSnapshot(item = state.currentItem, extra = {}) {
+    const travelLayer = document.getElementById("vtTravelLayer");
+    const wordObject = document.getElementById("vtWordObject");
+    const wordWindow = document.getElementById("vtWordWindow");
+    const wordTrack = document.getElementById("vtWordTrack");
+    const travelStyle = travelLayer ? window.getComputedStyle(travelLayer) : null;
+
+    return {
+      atMs: Math.round(performance.now()),
+      runToken: state.runToken,
+      itemId: item?.debugId ?? null,
+      kind: item?.kind ?? "",
+      display: item?.display ?? "",
+      expected: item?.expected ?? "",
+      expectedLength: String(item?.expected || "").length,
+      chunkIndex: state.currentChunkIndex,
+      wordIndex: state.currentWordIndex,
+      typedIndex: state.typedIndex,
+      acceptingInput: state.acceptingInput,
+      transitionLocked: state.transitionLocked,
+      entranceDone: state.entranceDone,
+      pendingCompleteAfterEntrance: state.pendingCompleteAfterEntrance,
+      wordOffsetX: state.wordOffsetX,
+      currentItemMatches: state.currentItem === item,
+      travelClass: travelLayer?.className || null,
+      travelAnimationName: travelStyle?.animationName || null,
+      travelAnimationDuration: travelStyle?.animationDuration || null,
+      travelTransform: travelStyle?.transform || null,
+      enterX: travelLayer?.style.getPropertyValue("--vt-enter-x") || "",
+      exitX: travelLayer?.style.getPropertyValue("--vt-exit-x") || "",
+      travelRect: wordExitDebugRect(travelLayer),
+      wordObjectRect: wordExitDebugRect(wordObject),
+      wordWindowRect: wordExitDebugRect(wordWindow),
+      wordTrackRect: wordExitDebugRect(wordTrack),
+      ...extra
+    };
+  }
+
+  function wordExitDebug(eventName, item = state.currentItem, extra = {}) {
+    if (!wordExitDebugShouldLog(item)) return;
+
+    const snapshot = wordExitDebugSnapshot(item, {
+      eventName,
+      ...extra
+    });
+
+    if (!Array.isArray(window.VT_EXIT_DEBUG_EVENTS)) {
+      window.VT_EXIT_DEBUG_EVENTS = [];
+    }
+
+    window.VT_EXIT_DEBUG_EVENTS.push(snapshot);
+
+    if (window.VT_EXIT_DEBUG_EVENTS.length > WORD_EXIT_DEBUG_MAX_EVENTS) {
+      window.VT_EXIT_DEBUG_EVENTS.splice(0, window.VT_EXIT_DEBUG_EVENTS.length - WORD_EXIT_DEBUG_MAX_EVENTS);
+    }
+
+    console.log(`[VT ExitDebug] ${eventName}`, snapshot);
+  }
+
+  function wordExitDebugWatchTravelLayer(animationState, item, travelLayer) {
+    if (!wordExitDebugShouldLog(item) || !travelLayer) return;
+
+    ["animationstart", "animationend", "animationcancel"].forEach(type => {
+      travelLayer.addEventListener(type, event => {
+        if (event.target !== travelLayer) return;
+
+        wordExitDebug(`travelLayer:${type}`, item, {
+          animationState,
+          animationName: event.animationName,
+          elapsedTime: event.elapsedTime
+        });
+      }, { once: true });
+    });
   }
 
   function escapeHtml(value) {
@@ -969,7 +1070,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.18.1",
+      debugBadge: "VT 1.18.2d",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1884,6 +1985,9 @@
   }
 
   function setCurrentItem(item) {
+    state.wordDebugNextId += 1;
+    item.debugId = state.wordDebugNextId;
+
     state.currentItem = item;
     state.typedIndex = 0;
     state.wordOffsetX = 0;
@@ -1904,6 +2008,8 @@
     state.transitionLocked = true;
     state.entranceDone = false;
     state.pendingCompleteAfterEntrance = false;
+
+    wordExitDebug("setCurrentItem", item);
   }
 
   function finishEntranceVisual(item) {
@@ -1959,6 +2065,8 @@
     renderSparklesOnly();
     renderAdvancedHintPrompt(item);
 
+    wordExitDebug("renderCurrentItem:domReady", item, { animationState });
+
     if (animationState === "enter" || animationState === "exit") {
       prepareTravelAnimation(animationState, item);
     } else {
@@ -1983,6 +2091,7 @@
         state.transitionLocked = false;
 
         if (state.pendingCompleteAfterEntrance) {
+          wordExitDebug("entranceDone:pendingCompleteNow", item);
           state.pendingCompleteAfterEntrance = false;
           completeCurrentItem();
           return;
@@ -2061,14 +2170,26 @@
   function prepareTravelAnimation(animationState, item) {
     if (animationState !== "enter" && animationState !== "exit") return;
 
+    const runToken = state.runToken;
+
+    wordExitDebug("prepareTravelAnimation:scheduled", item, { animationState });
+
     requestAnimationFrame(() => {
-      if (state.screen !== "game" || state.currentItem !== item) return;
+      if (state.screen !== "game" || state.currentItem !== item) {
+        wordExitDebug("prepareTravelAnimation:rafAborted", item, { animationState });
+        return;
+      }
 
       updateCaterpillarPosition({ instant: true });
       updateTravelDistances();
 
       const travelLayer = document.getElementById("vtTravelLayer");
-      if (!travelLayer) return;
+      if (!travelLayer) {
+        wordExitDebug("prepareTravelAnimation:noTravelLayer", item, { animationState });
+        return;
+      }
+
+      wordExitDebugWatchTravelLayer(animationState, item, travelLayer);
 
       void travelLayer.offsetWidth;
 
@@ -2076,6 +2197,17 @@
         animationState === "enter" ? "is-entering" : "is-exiting",
         "is-crawling"
       );
+
+      wordExitDebug("prepareTravelAnimation:classAdded", item, {
+        animationState,
+        className: travelLayer.className
+      });
+
+      trackedTimeout(() => {
+        if (!isLiveRun(runToken) || state.currentItem !== item) return;
+
+        wordExitDebug("prepareTravelAnimation:after80ms", item, { animationState });
+      }, 80, runToken);
 
       if (animationState === "enter") {
         trackedTimeout(() => stopCrawlVisual(item), ENTER_CRAWL_STOP_MS);
@@ -2322,6 +2454,12 @@
 
     state.typedIndex += 1;
 
+    wordExitDebug("handleCorrectKey:typed", item, {
+      key,
+      typedTypeIndex,
+      typedIndexAfter: state.typedIndex
+    });
+
     if (shouldShowStreakBadge(state.streak)) {
       addStreakBadge(state.streak);
     }
@@ -2337,12 +2475,16 @@
     trackedTimeout(() => {
       if (!isLiveRun(runToken) || state.currentItem !== item) return;
 
-      if (!state.acceptingInput && state.transitionLocked) return;
+      if (!state.acceptingInput && state.transitionLocked) {
+        wordExitDebug("keyFlashCleanup:skippedAfterComplete", item);
+        return;
+      }
 
       state.keyFlash = "";
       state.justTypedIndex = -1;
       state.justTypedSegmentIndex = -1;
       renderKeyboard(item.kind === "reference" ? "numbers" : "letters");
+      wordExitDebug("keyFlashCleanup:rerender", item);
       renderCurrentItem();
     }, 260, runToken);
 
@@ -2351,10 +2493,20 @@
       state.transitionLocked = true;
       playWordDoneSound();
 
+      wordExitDebug("finalLetter:locked", item, {
+        key,
+        entranceDone: state.entranceDone
+      });
+
       if (!state.entranceDone) {
         state.pendingCompleteAfterEntrance = true;
+        wordExitDebug("finalLetter:pendingUntilEntranceDone", item, { key });
         return;
       }
+
+      wordExitDebug("finalLetter:scheduleComplete", item, {
+        delayMs: 420
+      });
 
       trackedTimeout(() => completeCurrentItem(), 420, runToken);
     }
@@ -2390,10 +2542,14 @@
     const item = state.currentItem;
     if (!isLiveRun(runToken) || !item) return;
 
+    wordExitDebug("completeCurrentItem:start", item);
     renderCurrentItem("exit");
+    wordExitDebug("completeCurrentItem:afterRenderExit", item);
 
     trackedTimeout(() => {
       if (!isLiveRun(runToken) || state.currentItem !== item) return;
+
+      wordExitDebug("completeCurrentItem:advanceAfterExit", item);
 
       if (item.kind === "word") {
         startChunkWord(state.currentChunkIndex, state.currentWordIndex + 1, runToken);
