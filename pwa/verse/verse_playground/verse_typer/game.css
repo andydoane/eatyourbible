@@ -1781,3 +1781,9 @@ body{
     min-width: 82%;
   }
 }
+
+/* VT 1.8.1: make caterpillar segment letters use the same local Baloo 2 font as the keyboard */
+.vt-word-object,
+.vt-segment {
+  font-family: "Baloo 2", system-ui, sans-serif;
+}
