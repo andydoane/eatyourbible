@@ -1,4 +1,4 @@
-(async function(){
+(async function () {
   const app = document.getElementById("app");
   if (app) app.classList.add("vm-shell");
 
@@ -215,23 +215,61 @@
     butterflySvg: "",
     butterflyColors: null,
     butterflyFlaps: 0,
-    sleepIds: []
+    sleepIds: [],
+    runToken: 0
   };
 
-  const sleep = (ms) => new Promise(resolve => {
+  function clearTrackedTimeout(id) {
+    if (!id) return;
+    clearTimeout(id);
+    state.sleepIds = state.sleepIds.filter(item => item !== id);
+  }
+
+  function trackedTimeout(callback, ms, runToken = state.runToken) {
     const id = setTimeout(() => {
       state.sleepIds = state.sleepIds.filter(item => item !== id);
-      resolve();
+      if (runToken !== null && state.runToken !== runToken) return;
+      callback();
     }, ms);
     state.sleepIds.push(id);
+    return id;
+  }
+
+  const sleep = (ms, runToken = state.runToken) => new Promise(resolve => {
+    trackedTimeout(() => resolve(true), ms, runToken);
   });
 
-  function clearSleeps(){
+  function clearSleeps() {
     state.sleepIds.forEach(id => clearTimeout(id));
     state.sleepIds = [];
   }
 
-  function escapeHtml(value){
+  function invalidateRun() {
+    state.runToken += 1;
+    clearSleeps();
+  }
+
+  async function beginRun() {
+    const runToken = beginRunToken();
+
+    await initRunData();
+    if (state.runToken !== runToken) return;
+
+    resetStats();
+    preloadGameAssets();
+    await waitForGameFont(900);
+    if (state.runToken !== runToken) return;
+
+    state.screen = "game";
+    renderGameShell();
+    startVersePhase(runToken);
+  }
+
+  function isLiveRun(runToken = state.runToken) {
+    return state.screen === "game" && state.runToken === runToken;
+  }
+
+  function escapeHtml(value) {
     return String(value ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -240,7 +278,7 @@
       .replace(/'/g, "&#39;");
   }
 
-  function audioContextConstructor(){
+  function audioContextConstructor() {
     return window.AudioContext || window.webkitAudioContext;
   }
 
@@ -352,8 +390,8 @@
     return htmlAudioPrimePromise;
   }
 
-  function createAudio(){
-    if (audioCtx){
+  function createAudio() {
+    if (audioCtx) {
       if (masterGain) masterGain.gain.value = muted ? 0 : WEB_AUDIO_MASTER_VOLUME;
       return;
     }
@@ -367,7 +405,7 @@
     masterGain.connect(audioCtx.destination);
   }
 
-  async function unlockAudio(){
+  async function unlockAudio() {
     createAudio();
     if (!audioCtx || !masterGain) return false;
 
@@ -379,10 +417,10 @@
       try {
         audioDebug("unlock start", audioCtx.state);
 
-        if (audioCtx.state !== "running"){
+        if (audioCtx.state !== "running") {
           try {
             await audioCtx.resume?.();
-          } catch(err){
+          } catch (err) {
             audioDebug("resume rejected", err);
           }
         }
@@ -407,7 +445,7 @@
         audioUnlocked = audioCtx.state === "running";
         audioDebug("unlock done", { audioUnlocked, state: audioCtx.state });
         return audioUnlocked;
-      } catch(err){
+      } catch (err) {
         console.warn("Verse Typer audio unlock failed", err);
         audioUnlocked = false;
         return false;
@@ -419,17 +457,17 @@
     return audioUnlockPromise;
   }
 
-  function midiToFreq(midi){
+  function midiToFreq(midi) {
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
-  function playTone({ midi = 60, duration = 0.16, volume = 0.16, type = "triangle" } = {}){
+  function playTone({ midi = 60, duration = 0.16, volume = 0.16, type = "triangle" } = {}) {
     if (muted) return;
 
     createAudio();
     if (!audioCtx || !masterGain) return;
 
-    if (audioCtx.state !== "running"){
+    if (audioCtx.state !== "running") {
       unlockAudio().then((ok) => {
         if (ok) playTone({ midi, duration, volume, type });
       });
@@ -452,7 +490,7 @@
     osc.stop(now + duration + 0.04);
   }
 
-  function melodyPoolsForLength(length){
+  function melodyPoolsForLength(length) {
     const pools = {
       1: [
         [67],
@@ -538,18 +576,18 @@
     return pools[length] || [];
   }
 
-  function chooseMelodyForLength(length){
+  function chooseMelodyForLength(length) {
     const cappedLength = clampNumber(Math.max(1, length || 1), 1, 10);
     const pool = melodyPoolsForLength(cappedLength);
 
-    if (!pool.length){
+    if (!pool.length) {
       return [60, 62, 64, 67, 69, 72, 69, 67, 64, 60];
     }
 
     return pool[Math.floor(Math.random() * pool.length)].slice();
   }
 
-  function playCorrectLetterSound(){
+  function playCorrectLetterSound() {
     const melody = state.currentMelody.length
       ? state.currentMelody
       : chooseMelodyForLength(state.currentItem?.expected?.length || 1);
@@ -558,17 +596,19 @@
     playTone({ midi, duration: 0.13, volume: CORRECT_LETTER_VOLUME, type: "triangle" });
   }
 
-  function playWrongSound(){
+  function playWrongSound() {
+    const runToken = state.runToken;
     playTone({ midi: 43, duration: 0.13, volume: WRONG_TONE_VOLUME_1, type: "sine" });
-    setTimeout(() => playTone({ midi: 38, duration: 0.11, volume: WRONG_TONE_VOLUME_2, type: "sine" }), 55);
+    trackedTimeout(() => playTone({ midi: 38, duration: 0.11, volume: WRONG_TONE_VOLUME_2, type: "sine" }), 55, runToken);
   }
 
-  function playWordDoneSound(){
+  function playWordDoneSound() {
+    const runToken = state.runToken;
     playTone({ midi: 72, duration: 0.14, volume: WORD_DONE_VOLUME_1, type: "triangle" });
-    setTimeout(() => playTone({ midi: 76, duration: 0.18, volume: WORD_DONE_VOLUME_2, type: "triangle" }), 70);
+    trackedTimeout(() => playTone({ midi: 76, duration: 0.18, volume: WORD_DONE_VOLUME_2, type: "triangle" }), 70, runToken);
   }
 
-  function normalizeLetters(value){
+  function normalizeLetters(value) {
     return String(value || "")
       .normalize("NFKD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -576,8 +616,8 @@
       .replace(/[^A-Z]/g, "");
   }
 
-  function tokenizeWords(value){
-    if (window.VerseGameShell?.tokenizeVerseWords){
+  function tokenizeWords(value) {
+    if (window.VerseGameShell?.tokenizeVerseWords) {
       return window.VerseGameShell.tokenizeVerseWords(String(value || ""))
         .map(word => normalizeLetters(word))
         .filter(Boolean);
@@ -587,23 +627,23 @@
       .match(/[A-Za-z]+(?:[’'][A-Za-z]+)?|[0-9]+/g)?.map(normalizeLetters).filter(Boolean) || [];
   }
 
-  function titleCase(value){
+  function titleCase(value) {
     return String(value || "")
       .toLowerCase()
       .replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  function prettyWord(value){
+  function prettyWord(value) {
     const clean = normalizeLetters(value);
     return clean || String(value || "").trim();
   }
 
-  function echoPartFileByIndex(index){
+  function echoPartFileByIndex(index) {
     const suffix = String.fromCharCode("a".charCodeAt(0) + index);
     return `../../verse_audio/${ctx.verseId}${suffix}.mp3`;
   }
 
-  async function loadVerseJson(){
+  async function loadVerseJson() {
     if (state.verseJson) return state.verseJson;
 
     const params = window.VerseGameBridge.getLaunchParams?.() || {};
@@ -615,16 +655,16 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       state.verseJson = await res.json();
       return state.verseJson;
-    } catch (err){
+    } catch (err) {
       console.warn("Verse Typer could not load full verse JSON", err);
       return null;
     }
   }
 
-  function splitFallbackChunks(verseText){
+  function splitFallbackChunks(verseText) {
     const words = tokenizeWords(verseText);
     const chunks = [];
-    for (let i = 0; i < words.length; i += 6){
+    for (let i = 0; i < words.length; i += 6) {
       const partWords = words.slice(i, i + 6);
       chunks.push({
         text: partWords.map(titleCase).join(" "),
@@ -635,12 +675,12 @@
     return chunks;
   }
 
-  function makeChunks(verseJson){
+  function makeChunks(verseJson) {
     const echoParts = Array.isArray(verseJson?.echoParts)
       ? verseJson.echoParts.filter(part => String(part || "").trim())
       : [];
 
-    if (!echoParts.length){
+    if (!echoParts.length) {
       return splitFallbackChunks(ctx.verseText || verseJson?.verseText || "");
     }
 
@@ -651,7 +691,7 @@
     })).filter(chunk => chunk.words.length);
   }
 
-  function makeBookWords(book){
+  function makeBookWords(book) {
     const raw = String(book || "").trim();
     if (!raw) return [];
 
@@ -668,13 +708,13 @@
     return out.filter(Boolean);
   }
 
-  function makeReferenceData(reference){
+  function makeReferenceData(reference) {
     const chars = String(reference || "").replace(/[–—−]/g, "-").split("");
     const expected = [];
     const positions = [];
 
     chars.forEach((char, index) => {
-      if (/\d/.test(char)){
+      if (/\d/.test(char)) {
         expected.push(char);
         positions.push(index);
       }
@@ -733,7 +773,7 @@
     };
   }
 
-  async function initRunData(){
+  async function initRunData() {
     const verseJson = await loadVerseJson();
     const parsed = window.VerseGameShell.parseReferenceParts(
       ctx.verseRef,
@@ -753,7 +793,7 @@
     state.referenceDigitPositions = referenceData.positions;
   }
 
-  function resetStats(){
+  function resetStats() {
     state.currentChunkIndex = 0;
     state.currentWordIndex = 0;
     state.currentItem = null;
@@ -789,7 +829,7 @@
     gameAssetPreloadPromise = null;
   }
 
-  function renderIntro(){
+  function renderIntro() {
     stopAllAudio();
     clearSleeps();
 
@@ -797,6 +837,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
+      debugBadge: "VT 1.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -814,7 +855,7 @@
     });
   }
 
-  function renderMode(){
+  function renderMode() {
     stopAllAudio();
     clearSleeps();
 
@@ -839,7 +880,7 @@
     });
   }
 
-  async function beginRun(){
+  async function beginRun() {
     await initRunData();
     resetStats();
     preloadGameAssets();
@@ -849,7 +890,7 @@
     startVersePhase();
   }
 
-  function renderGameShell(){
+  function renderGameShell() {
     app.innerHTML = `
       <div class="vt-root ${skin.wordClass}">
         <div class="vt-stage">
@@ -883,7 +924,7 @@
     renderKeyboard("letters");
   }
 
-  function renderHelpOverlay(){
+  function renderHelpOverlay() {
     return window.VerseGameShell.helpOverlayHtml({
       id: HELP_OVERLAY_ID,
       title: "How to Play",
@@ -891,7 +932,7 @@
     });
   }
 
-  function renderGameMenuOverlay(){
+  function renderGameMenuOverlay() {
     return window.VerseGameShell.gameMenuHtml({
       id: "verseTyperGameMenuOverlay",
       title: "Verse Typer Menu",
@@ -901,7 +942,7 @@
     });
   }
 
-  function wireGameMenu(){
+  function wireGameMenu() {
     window.VerseGameShell.wireGameMenu({
       id: "verseTyperGameMenuOverlay",
       menuButtonId: "vtMenuPill",
@@ -909,7 +950,7 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
-        if (masterGain && audioCtx){
+        if (masterGain && audioCtx) {
           masterGain.gain.setValueAtTime(muted ? 0 : WEB_AUDIO_MASTER_VOLUME, audioCtx.currentTime);
         }
         if (chunkAudio) chunkAudio.muted = muted;
@@ -917,7 +958,7 @@
       },
       onHowToPlay: () => {
         const menuOverlay = document.getElementById("verseTyperGameMenuOverlay");
-        if (menuOverlay){
+        if (menuOverlay) {
           menuOverlay.classList.remove("is-open");
           menuOverlay.setAttribute("aria-hidden", "true");
         }
@@ -940,27 +981,27 @@
     });
   }
 
-  function wirePhysicalKeyboard(){
+  function wirePhysicalKeyboard() {
     window.onkeydown = (event) => {
       if (state.screen !== "game") return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       const key = String(event.key || "").toUpperCase();
-      if (/^[A-Z]$/.test(key) || /^\d$/.test(key)){
+      if (/^[A-Z]$/.test(key) || /^\d$/.test(key)) {
         event.preventDefault();
         handleKey(key);
       }
     };
   }
 
-  function renderHud(){
+  function renderHud() {
     const streak = document.getElementById("vtStreakPill");
     const phase = document.getElementById("vtPhasePill");
     if (streak) streak.textContent = `🔥 ${state.streak}`;
     if (phase) phase.textContent = state.phaseLabel || "Verse";
   }
 
-  function renderKeyboard(type){
+  function renderKeyboard(type) {
     const wrap = document.getElementById("vtKeyboardWrap");
     if (!wrap) return;
 
@@ -980,53 +1021,69 @@
     `;
 
     wrap.querySelectorAll("[data-vt-key]").forEach(btn => {
-      btn.onclick = () => {
+      const pressKey = (event) => {
+        event.preventDefault();
         createChunkAudioElement();
         primeHtmlAudio();
         unlockAudio();
         handleKey(btn.dataset.vtKey);
       };
+
+      if (window.PointerEvent) {
+        btn.addEventListener("pointerdown", pressKey);
+      } else {
+        btn.addEventListener("touchstart", pressKey, { passive: false });
+        btn.addEventListener("mousedown", pressKey);
+      }
+
+      btn.addEventListener("click", event => event.preventDefault());
     });
   }
 
-  function setPhaseLabel(label){
+  function setPhaseLabel(label) {
     state.phaseLabel = label;
     renderHud();
   }
 
-  async function startVersePhase(){
+  async function startVersePhase(runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
     renderKeyboard("letters");
 
-    if (!state.verseIntroShown){
+    if (!state.verseIntroShown) {
       state.verseIntroShown = true;
 
       await showTyperPopup({
         title: "Type the Word!",
         variant: "word"
       });
+      if (!isLiveRun(runToken)) return;
 
-      if (selectedMode === "advanced"){
+      if (selectedMode === "advanced") {
         await showTyperPopup({
           title: "Letters are Hidden",
           subtitle: "Tap for a Hint",
           variant: "hint"
         });
+        if (!isLiveRun(runToken)) return;
       }
     }
 
-    startChunkWord(0, 0);
+    startChunkWord(0, 0, runToken);
   }
 
-  function startChunkWord(chunkIndex, wordIndex){
+  function startChunkWord(chunkIndex, wordIndex, runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
     const chunk = state.chunks[chunkIndex];
-    if (!chunk){
-      startBookPhase();
+    if (!chunk) {
+      startBookPhase(runToken);
       return;
     }
 
     const word = chunk.words[wordIndex];
-    if (!word){
-      startChunkReview(chunkIndex);
+    if (!word) {
+      startChunkReview(chunkIndex, runToken);
       return;
     }
 
@@ -1045,31 +1102,36 @@
     renderCurrentItem("enter");
   }
 
-  async function startBookPhase(){
-    if (!state.bookWords.length){
-      startReferencePhase();
+  async function startBookPhase(runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
+    if (!state.bookWords.length) {
+      startReferencePhase(runToken);
       return;
     }
 
     renderKeyboard("letters");
 
-    if (!state.bookIntroShown){
+    if (!state.bookIntroShown) {
       state.bookIntroShown = true;
 
       await showTyperPopup({
         title: "Type the Book!",
         variant: "book"
       });
+      if (!isLiveRun(runToken)) return;
     }
 
     state.currentWordIndex = 0;
-    startBookWord(0);
+    startBookWord(0, runToken);
   }
 
-  function startBookWord(index){
+  function startBookWord(index, runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
     const word = state.bookWords[index];
-    if (!word){
-      startReferencePhase();
+    if (!word) {
+      startReferencePhase(runToken);
       return;
     }
 
@@ -1085,21 +1147,24 @@
     renderCurrentItem("enter");
   }
 
-  async function startReferencePhase(){
-    if (!state.referenceExpectedDigits.length){
-      startMegaPillarPhase();
+  async function startReferencePhase(runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
+    if (!state.referenceExpectedDigits.length) {
+      startMegaPillarPhase(runToken);
       return;
     }
 
     renderKeyboard("numbers");
 
-    if (!state.referenceIntroShown){
+    if (!state.referenceIntroShown) {
       state.referenceIntroShown = true;
 
       await showTyperPopup({
         title: "Type the Numbers!",
         variant: "numbers"
       });
+      if (!isLiveRun(runToken)) return;
     }
 
     setCurrentItem({
@@ -1115,22 +1180,25 @@
     renderCurrentItem("enter");
   }
 
-  async function startMegaPillarPhase(){
+  async function startMegaPillarPhase(runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
     renderKeyboard("letters");
 
-    if (!state.megaIntroShown){
+    if (!state.megaIntroShown) {
       state.megaIntroShown = true;
 
       await showTyperPopup({
         title: "Mega-pillar<br>Time!",
         variant: "mega"
       });
+      if (!isLiveRun(runToken)) return;
     }
 
     const mega = makeMegaParts(megaVerseText());
 
-    if (!mega.expected){
-      finishRun();
+    if (!mega.expected) {
+      finishRun(runToken);
       return;
     }
 
@@ -1148,8 +1216,9 @@
   }
 
   async function showTyperPopup({ title, subtitle = "", variant = "word" } = {}) {
+    const runToken = state.runToken;
     const main = document.getElementById("vtMain");
-    if (!main) return;
+    if (!main || !isLiveRun(runToken)) return;
 
     state.acceptingInput = false;
     state.transitionLocked = true;
@@ -1168,66 +1237,71 @@
 
     playPopupSound();
 
-    await waitForPopupDismiss(3000);
+    await waitForPopupDismiss(3000, runToken);
 
-    if (state.screen !== "game") return;
+    if (!isLiveRun(runToken)) return;
   }
 
-  function waitForPopupDismiss(ms = 3000){
+  function waitForPopupDismiss(ms = 3000, runToken = state.runToken) {
     return new Promise(resolve => {
       let done = false;
       let timeoutId = null;
 
       const finish = () => {
+        if (!isLiveRun(runToken)) return;
         primeHtmlAudio();
         unlockAudio();
         if (done) return;
         done = true;
-        if (timeoutId) clearTimeout(timeoutId);
+        clearTrackedTimeout(timeoutId);
 
         const popup = document.getElementById("vtPopupScene");
-        if (popup){
+        if (popup) {
           popup.removeEventListener("click", finish);
           popup.classList.add("is-leaving");
         }
 
-        setTimeout(resolve, 180);
+        trackedTimeout(resolve, 180, runToken);
       };
 
       const popup = document.getElementById("vtPopupScene");
-      if (popup){
+      if (popup) {
         popup.addEventListener("click", finish);
       }
 
-      timeoutId = setTimeout(finish, ms);
+      timeoutId = trackedTimeout(finish, ms, runToken);
     });
   }
 
   function playPopupSound() {
+    const runToken = state.runToken;
     playTone({ midi: 67, duration: 0.10, volume: POPUP_TONE_VOLUME_1, type: "triangle" });
-    setTimeout(() => {
+    trackedTimeout(() => {
       playTone({ midi: 72, duration: 0.13, volume: POPUP_TONE_VOLUME_2, type: "triangle" });
-    }, 58);
+    }, 58, runToken);
   }
 
   function playCocoonOpenSound() {
+    const runToken = state.runToken;
     playTone({ midi: 60, duration: 0.10, volume: 0.32, type: "triangle" });
-    setTimeout(() => playTone({ midi: 64, duration: 0.11, volume: 0.34, type: "triangle" }), 82);
-    setTimeout(() => playTone({ midi: 67, duration: 0.12, volume: 0.36, type: "triangle" }), 164);
-    setTimeout(() => playTone({ midi: 72, duration: 0.18, volume: 0.40, type: "triangle" }), 248);
+    trackedTimeout(() => playTone({ midi: 64, duration: 0.11, volume: 0.34, type: "triangle" }), 82, runToken);
+    trackedTimeout(() => playTone({ midi: 67, duration: 0.12, volume: 0.36, type: "triangle" }), 164, runToken);
+    trackedTimeout(() => playTone({ midi: 72, duration: 0.18, volume: 0.40, type: "triangle" }), 248, runToken);
   }
 
   function playFlapSound() {
+    const runToken = state.runToken;
     const base = 76 + (state.butterflyFlaps % 3) * 2;
     playTone({ midi: base, duration: 0.09, volume: 0.28, type: "triangle" });
-    setTimeout(() => playTone({ midi: base + 7, duration: 0.11, volume: 0.24, type: "triangle" }), 52);
+    trackedTimeout(() => playTone({ midi: base + 7, duration: 0.11, volume: 0.24, type: "triangle" }), 52, runToken);
   }
 
   function playButterflyFlyAwaySound() {
+    const runToken = state.runToken;
     playTone({ midi: 72, duration: 0.08, volume: 0.28, type: "triangle" });
-    setTimeout(() => playTone({ midi: 76, duration: 0.08, volume: 0.30, type: "triangle" }), 70);
-    setTimeout(() => playTone({ midi: 79, duration: 0.10, volume: 0.32, type: "triangle" }), 140);
-    setTimeout(() => playTone({ midi: 84, duration: 0.18, volume: 0.34, type: "triangle" }), 220);
+    trackedTimeout(() => playTone({ midi: 76, duration: 0.08, volume: 0.30, type: "triangle" }), 70, runToken);
+    trackedTimeout(() => playTone({ midi: 79, duration: 0.10, volume: 0.32, type: "triangle" }), 140, runToken);
+    trackedTimeout(() => playTone({ midi: 84, duration: 0.18, volume: 0.34, type: "triangle" }), 220, runToken);
   }
 
   function clearKeyboardForFinale() {
@@ -1378,7 +1452,9 @@
     }
   }
 
-  async function startCocoonPhase() {
+  async function startCocoonPhase(runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
     state.currentItem = null;
     state.acceptingInput = false;
     state.transitionLocked = true;
@@ -1392,14 +1468,17 @@
       title: "Tap the<br>Cocoon!",
       variant: "book"
     });
+    if (!isLiveRun(runToken)) return;
 
     await preloadImage(COCOON_IMAGE_FILE);
-    renderCocoonScene();
+    if (!isLiveRun(runToken)) return;
+
+    renderCocoonScene(runToken);
   }
 
-  function renderCocoonScene() {
+  function renderCocoonScene(runToken = state.runToken) {
     const main = document.getElementById("vtMain");
-    if (!main) return;
+    if (!main || !isLiveRun(runToken)) return;
 
     main.innerHTML = `
       <div class="vt-cocoon-scene">
@@ -1417,29 +1496,31 @@
 
     const cocoonButton = document.getElementById("vtCocoonButton");
     if (cocoonButton) {
-      cocoonButton.onclick = openCocoon;
+      cocoonButton.onclick = () => openCocoon(runToken);
     }
   }
 
-  function openCocoon() {
+  function openCocoon(runToken = state.runToken) {
     const cocoonButton = document.getElementById("vtCocoonButton");
     const poof = document.getElementById("vtPoof");
 
-    if (!cocoonButton || cocoonButton.classList.contains("is-opening")) return;
+    if (!isLiveRun(runToken) || !cocoonButton || cocoonButton.classList.contains("is-opening")) return;
 
     cocoonButton.classList.add("is-opening");
     playCocoonOpenSound();
 
-    setTimeout(() => {
+    trackedTimeout(() => {
       if (poof) poof.classList.add("is-active");
-    }, 150);
+    }, 150, runToken);
 
-    setTimeout(() => {
-      renderButterflyScene();
-    }, 760);
+    trackedTimeout(() => {
+      renderButterflyScene(runToken);
+    }, 760, runToken);
   }
 
-  async function renderButterflyScene() {
+  async function renderButterflyScene(runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
     state.currentItem = null;
     state.acceptingInput = false;
     state.transitionLocked = true;
@@ -1451,6 +1532,7 @@
     if (!main) return;
 
     const svg = await loadButterflySvg();
+    if (!isLiveRun(runToken)) return;
 
     main.innerHTML = `
       <div class="vt-butterfly-scene" id="vtButterflyScene">
@@ -1464,11 +1546,12 @@
   }
 
   function flapButterfly() {
+    const runToken = state.runToken;
     const scene = document.getElementById("vtButterflyScene");
     const butterfly = document.querySelector(".vt-butterfly-svg");
     const btn = document.getElementById("vtFlapButton");
 
-    if (!scene || !butterfly || scene.classList.contains("is-flying-away")) return;
+    if (!isLiveRun(runToken) || !scene || !butterfly || scene.classList.contains("is-flying-away")) return;
 
     state.butterflyFlaps += 1;
     playFlapSound();
@@ -1483,16 +1566,16 @@
     }
 
     if (state.butterflyFlaps >= BUTTERFLY_FLAPS_TO_FINISH) {
-      setTimeout(() => flyButterflyAway(), 260);
+      trackedTimeout(() => flyButterflyAway(runToken), 260, runToken);
     }
   }
 
-  function flyButterflyAway() {
+  function flyButterflyAway(runToken = state.runToken) {
     const scene = document.getElementById("vtButterflyScene");
     const butterfly = document.querySelector(".vt-butterfly-svg");
     const btn = document.getElementById("vtFlapButton");
 
-    if (!scene || !butterfly || scene.classList.contains("is-flying-away")) return;
+    if (!isLiveRun(runToken) || !scene || !butterfly || scene.classList.contains("is-flying-away")) return;
 
     scene.classList.add("is-flying-away");
     butterfly.classList.remove("is-flapping");
@@ -1505,12 +1588,12 @@
 
     playButterflyFlyAwaySound();
 
-    setTimeout(() => {
-      finishRun();
-    }, 1180);
+    trackedTimeout(() => {
+      finishRun(runToken);
+    }, 1180, runToken);
   }
 
-  function setCurrentItem(item){
+  function setCurrentItem(item) {
     state.currentItem = item;
     state.typedIndex = 0;
     state.wordOffsetX = 0;
@@ -1545,7 +1628,7 @@
   }
 
 
-  function renderCurrentItem(animationState = ""){
+  function renderCurrentItem(animationState = "") {
     const main = document.getElementById("vtMain");
     if (!main || !state.currentItem) return;
 
@@ -1568,9 +1651,9 @@
     `;
 
     const wordObject = document.getElementById("vtWordObject");
-    if (wordObject){
+    if (wordObject) {
       wordObject.onclick = () => {
-        if (selectedMode === "advanced" && item.kind !== "reference"){
+        if (selectedMode === "advanced" && item.kind !== "reference") {
           state.revealed = true;
           renderCurrentItem();
         }
@@ -1579,72 +1662,73 @@
 
     renderSparklesOnly();
 
-    if (animationState === "enter" || animationState === "exit"){
+    if (animationState === "enter" || animationState === "exit") {
       prepareTravelAnimation(animationState, item);
     } else {
       scheduleCaterpillarPositionUpdate();
     }
 
-    if (animationState === "enter"){
-      setTimeout(() => {
-        if (state.screen !== "game" || state.currentItem !== item) return;
+    if (animationState === "enter") {
+      const runToken = state.runToken;
+
+      trackedTimeout(() => {
+        if (!isLiveRun(runToken) || state.currentItem !== item) return;
 
         state.acceptingInput = true;
         state.transitionLocked = false;
-      }, ENTER_INPUT_MS);
+      }, ENTER_INPUT_MS, runToken);
 
-      setTimeout(() => {
-        if (state.screen !== "game" || state.currentItem !== item) return;
+      trackedTimeout(() => {
+        if (!isLiveRun(runToken) || state.currentItem !== item) return;
 
         state.entranceDone = true;
         state.acceptingInput = true;
         state.transitionLocked = false;
 
-        if (state.pendingCompleteAfterEntrance){
+        if (state.pendingCompleteAfterEntrance) {
           state.pendingCompleteAfterEntrance = false;
           completeCurrentItem();
           return;
         }
 
         finishEntranceVisual(item);
-      }, ENTER_DONE_MS);
+      }, ENTER_DONE_MS, runToken);
     }
   }
 
-
-  function renderItemSegments(item){
-    if (item.kind === "reference"){
+  function renderItemSegments(item) {
+    if (item.kind === "reference") {
       const typedPositions = new Set(item.digitPositions.slice(0, state.typedIndex));
       return `
         <span class="vt-head ${state.headShakeUntil > performance.now() ? "is-no" : ""}">${faceHtml()}</span>
         <span class="vt-body vt-reference-body">
           ${item.chars.map((char, index) => {
-            const isDigit = /\d/.test(char);
-            const typed = typedPositions.has(index);
-            const just = index === state.justTypedSegmentIndex;
-            const typeIndex = isDigit ? item.digitPositions.indexOf(index) : -1;
-            const dataAttr = typeIndex >= 0 ? ` data-vt-type-index="${typeIndex}"` : "";
-            return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}"${dataAttr}>${escapeHtml(char)}</span>`;
-          }).join("")}
+        const isDigit = /\d/.test(char);
+        const typed = typedPositions.has(index);
+        const just = index === state.justTypedSegmentIndex;
+        const typeIndex = isDigit ? item.digitPositions.indexOf(index) : -1;
+        const dataAttr = typeIndex >= 0 ? ` data-vt-type-index="${typeIndex}"` : "";
+        return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}"${dataAttr}>${escapeHtml(char)}</span>`;
+      }).join("")}
         </span>
         <span class="vt-tail ${tailStageClass()}"></span>
       `;
     }
 
-    if (item.kind === "mega"){
+    if (item.kind === "mega") {
       return `
         <span class="vt-head ${state.headShakeUntil > performance.now() ? "is-no" : ""}">${faceHtml()}</span>
         <span class="vt-body vt-mega-body">
           ${(item.parts || []).map(part => {
-            if (part.kind === "space"){
-              return `<span class="vt-space-segment" aria-hidden="true"></span>`;
-            }
+        if (part.kind === "space") {
+          return `<span class="vt-space-segment" aria-hidden="true"></span>`;
+        }
 
-            const typed = part.typeIndex < state.typedIndex;
-            const just = part.typeIndex === state.justTypedIndex;
+        const typed = part.typeIndex < state.typedIndex;
+        const just = part.typeIndex === state.justTypedIndex;
 
-            return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${part.typeIndex}">${escapeHtml(part.char)}</span>`;
-          }).join("")}
+        return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${part.typeIndex}">${escapeHtml(part.char)}</span>`;
+      }).join("")}
         </span>
         <span class="vt-tail ${tailStageClass()}"></span>
       `;
@@ -1657,23 +1741,23 @@
       <span class="vt-head ${state.headShakeUntil > performance.now() ? "is-no" : ""}">${faceHtml()}</span>
       <span class="vt-body">
         ${letters.map((letter, index) => {
-          const typed = index < state.typedIndex;
-          const just = index === state.justTypedIndex;
-          const visible = !hideUntyped || typed;
-          return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${index}">${visible ? escapeHtml(letter) : ""}</span>`;
-        }).join("")}
+      const typed = index < state.typedIndex;
+      const just = index === state.justTypedIndex;
+      const visible = !hideUntyped || typed;
+      return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${index}">${visible ? escapeHtml(letter) : ""}</span>`;
+    }).join("")}
       </span>
       <span class="vt-tail ${tailStageClass()}"></span>
     `;
   }
 
-  function scheduleCaterpillarPositionUpdate(options = {}){
+  function scheduleCaterpillarPositionUpdate(options = {}) {
     requestAnimationFrame(() => {
       updateCaterpillarPosition(options);
     });
   }
 
-  function prepareTravelAnimation(animationState, item){
+  function prepareTravelAnimation(animationState, item) {
     if (animationState !== "enter" && animationState !== "exit") return;
 
     requestAnimationFrame(() => {
@@ -1692,15 +1776,15 @@
         "is-crawling"
       );
 
-      if (animationState === "enter"){
-        setTimeout(() => stopCrawlVisual(item), ENTER_CRAWL_STOP_MS);
+      if (animationState === "enter") {
+        trackedTimeout(() => stopCrawlVisual(item), ENTER_CRAWL_STOP_MS);
       }
 
       startRippleDelayLoop(animationState === "enter" ? ENTER_CRAWL_STOP_MS : EXIT_DONE_MS, item);
     });
   }
 
-  function updateTravelDistances(){
+  function updateTravelDistances() {
     const windowEl = document.getElementById("vtWordWindow");
     const travelLayer = document.getElementById("vtTravelLayer");
 
@@ -1717,17 +1801,17 @@
     travelLayer.style.setProperty("--vt-exit-x", `${exitX}px`);
   }
 
-  function stopCrawlVisual(item){
+  function stopCrawlVisual(item) {
     if (state.screen !== "game" || state.currentItem !== item) return;
 
     const travelLayer = document.getElementById("vtTravelLayer");
     const wordObject = document.getElementById("vtWordObject");
 
-    if (travelLayer){
+    if (travelLayer) {
       travelLayer.classList.remove("is-crawling");
     }
 
-    if (wordObject){
+    if (wordObject) {
       wordObject.querySelectorAll(".vt-head, .vt-segment, .vt-tail").forEach(part => {
         part.style.removeProperty("--vt-wave-delay");
         delete part.dataset.vtWaveDelay;
@@ -1735,7 +1819,7 @@
     }
   }
 
-  function startRippleDelayLoop(durationMs, item){
+  function startRippleDelayLoop(durationMs, item) {
     const startedAt = performance.now();
 
     const tick = () => {
@@ -1743,7 +1827,7 @@
 
       updateRippleDelays();
 
-      if (performance.now() - startedAt < durationMs - 40){
+      if (performance.now() - startedAt < durationMs - 40) {
         requestAnimationFrame(tick);
       }
     };
@@ -1751,7 +1835,7 @@
     requestAnimationFrame(tick);
   }
 
-  function updateRippleDelays(){
+  function updateRippleDelays() {
     const windowEl = document.getElementById("vtWordWindow");
     const wordEl = document.getElementById("vtWordObject");
 
@@ -1771,15 +1855,15 @@
     visibleParts.forEach(({ part }, visibleIndex) => {
       const nextDelay = `${visibleIndex * RIPPLE_DELAY_MS}ms`;
 
-      if (part.dataset.vtWaveDelay !== nextDelay){
+      if (part.dataset.vtWaveDelay !== nextDelay) {
         part.dataset.vtWaveDelay = nextDelay;
         part.style.setProperty("--vt-wave-delay", nextDelay);
       }
     });
 
     parts.forEach(part => {
-      if (!visibleParts.some(item => item.part === part)){
-        if (part.dataset.vtWaveDelay !== "0ms"){
+      if (!visibleParts.some(item => item.part === part)) {
+        if (part.dataset.vtWaveDelay !== "0ms") {
           part.dataset.vtWaveDelay = "0ms";
           part.style.setProperty("--vt-wave-delay", "0ms");
         }
@@ -1805,7 +1889,7 @@
   }
 
 
-  function updateCaterpillarPosition(options = {}){
+  function updateCaterpillarPosition(options = {}) {
     if (state.screen !== "game" || !state.currentItem) return;
 
     const instant = !!options.instant;
@@ -1828,7 +1912,7 @@
 
     windowEl.classList.toggle("is-overflowing", overflowing);
 
-    if (!overflowing){
+    if (!overflowing) {
       state.wordOffsetX = 0;
       setTrackTransform(trackEl, "translateX(0px)", { instant });
       updateRippleDelays();
@@ -1852,9 +1936,9 @@
 
     let desiredVisibleLeft = visibleLeft;
 
-    if (segmentRight > visibleLeft + rightSafe){
+    if (segmentRight > visibleLeft + rightSafe) {
       desiredVisibleLeft = segmentRight - rightSafe;
-    } else if (segmentLeft < visibleLeft + leftSafe){
+    } else if (segmentLeft < visibleLeft + leftSafe) {
       desiredVisibleLeft = segmentLeft - leftSafe;
     }
 
@@ -1868,11 +1952,11 @@
     updateRippleDelays();
   }
 
-  function clampNumber(value, min, max){
+  function clampNumber(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
 
-  function streakStage(){
+  function streakStage() {
     return clampNumber(Math.floor(state.streak / 10), 0, 4);
   }
 
@@ -1899,7 +1983,7 @@
     `;
   }
 
-  function handleKey(rawKey){
+  function handleKey(rawKey) {
     if (state.paused || state.transitionLocked || !state.acceptingInput || !state.currentItem) return;
     if (state.currentItem.kind === "reference" && !/^\d$/.test(rawKey)) return;
     if (state.currentItem.kind !== "reference" && !/^[A-Z]$/.test(rawKey)) return;
@@ -1907,14 +1991,15 @@
     const expected = state.currentItem.expected[state.typedIndex];
     if (!expected) return;
 
-    if (rawKey === expected){
+    if (rawKey === expected) {
       handleCorrectKey(rawKey);
     } else {
       handleWrongKey(rawKey);
     }
   }
 
-  function handleCorrectKey(key){
+  function handleCorrectKey(key) {
+    const runToken = state.runToken;
     playCorrectLetterSound();
 
     const item = state.currentItem;
@@ -1926,7 +2011,7 @@
     state.keyFlash = key;
     state.keyFlashBad = false;
 
-    if (item.kind === "reference"){
+    if (item.kind === "reference") {
       state.justTypedSegmentIndex = item.digitPositions[state.typedIndex];
       state.justTypedIndex = -1;
     } else {
@@ -1936,11 +2021,11 @@
 
     state.typedIndex += 1;
 
-    if (state.streak > 0 && state.streak % 5 === 0){
+    if (state.streak > 0 && state.streak % 5 === 0) {
       addStreakBadge(state.streak);
     }
 
-    if (state.streak >= 10){
+    if (state.streak >= 10) {
       addSparkleBurstFromTypedSegment(typedTypeIndex);
     }
 
@@ -1948,29 +2033,34 @@
     renderKeyboard(item.kind === "reference" ? "numbers" : "letters");
     renderCurrentItem();
 
-    setTimeout(() => {
+    trackedTimeout(() => {
+      if (!isLiveRun(runToken) || state.currentItem !== item) return;
+
       state.keyFlash = "";
       state.justTypedIndex = -1;
       state.justTypedSegmentIndex = -1;
       renderKeyboard(item.kind === "reference" ? "numbers" : "letters");
       renderCurrentItem();
-    }, 260);
+    }, 260, runToken);
 
-    if (state.typedIndex >= item.expected.length){
+    if (state.typedIndex >= item.expected.length) {
       state.acceptingInput = false;
       state.transitionLocked = true;
       playWordDoneSound();
 
-      if (!state.entranceDone){
+      if (!state.entranceDone) {
         state.pendingCompleteAfterEntrance = true;
         return;
       }
 
-      setTimeout(() => completeCurrentItem(), 420);
+      trackedTimeout(() => completeCurrentItem(), 420, runToken);
     }
   }
 
-  function handleWrongKey(key){
+  function handleWrongKey(key) {
+    const runToken = state.runToken;
+    const item = state.currentItem;
+
     state.typos += 1;
     state.streak = 0;
     state.keyFlash = key;
@@ -1982,46 +2072,53 @@
     renderKeyboard(state.currentItem.kind === "reference" ? "numbers" : "letters");
     renderCurrentItem();
 
-    setTimeout(() => {
+    trackedTimeout(() => {
+      if (!isLiveRun(runToken) || state.currentItem !== item) return;
+
       state.keyFlash = "";
       state.headShakeUntil = 0;
       renderKeyboard(state.currentItem?.kind === "reference" ? "numbers" : "letters");
       renderCurrentItem();
-    }, 430);
+    }, 430, runToken);
   }
 
-  function completeCurrentItem(){
+  function completeCurrentItem() {
+    const runToken = state.runToken;
+    const item = state.currentItem;
+    if (!isLiveRun(runToken) || !item) return;
+
     renderCurrentItem("exit");
 
-    setTimeout(() => {
-      const item = state.currentItem;
-      if (!item) return;
+    trackedTimeout(() => {
+      if (!isLiveRun(runToken) || state.currentItem !== item) return;
 
-      if (item.kind === "word"){
-        startChunkWord(state.currentChunkIndex, state.currentWordIndex + 1);
+      if (item.kind === "word") {
+        startChunkWord(state.currentChunkIndex, state.currentWordIndex + 1, runToken);
         return;
       }
 
-      if (item.kind === "book"){
-        startBookWord(state.currentWordIndex + 1);
+      if (item.kind === "book") {
+        startBookWord(state.currentWordIndex + 1, runToken);
         return;
       }
 
-      if (item.kind === "reference"){
-        startMegaPillarPhase();
+      if (item.kind === "reference") {
+        startMegaPillarPhase(runToken);
         return;
       }
 
-      if (item.kind === "mega"){
-        startCocoonPhase();
+      if (item.kind === "mega") {
+        startCocoonPhase(runToken);
       }
-    }, EXIT_DONE_MS);
+    }, EXIT_DONE_MS, runToken);
   }
 
-  async function startChunkReview(chunkIndex){
+  async function startChunkReview(chunkIndex, runToken = state.runToken) {
+    if (!isLiveRun(runToken)) return;
+
     const chunk = state.chunks[chunkIndex];
-    if (!chunk){
-      startBookPhase();
+    if (!chunk) {
+      startBookPhase(runToken);
       return;
     }
 
@@ -2031,7 +2128,7 @@
     renderKeyboard("letters");
 
     const main = document.getElementById("vtMain");
-    if (main){
+    if (main) {
       main.innerHTML = `
         <div class="vt-review-scene">
           <div class="vt-review-label">Great typing!</div>
@@ -2042,32 +2139,37 @@
       `;
     }
 
-    await sleep(260);
-    await playChunkAudio(chunk.audioFile);
-    await sleep(420);
+    await sleep(260, runToken);
+    if (!isLiveRun(runToken)) return;
 
-    startChunkWord(chunkIndex + 1, 0);
+    await playChunkAudio(chunk.audioFile, runToken);
+    if (!isLiveRun(runToken)) return;
+
+    await sleep(420, runToken);
+    if (!isLiveRun(runToken)) return;
+
+    startChunkWord(chunkIndex + 1, 0, runToken);
   }
 
-  function stopAllAudio(){
+  function stopAllAudio() {
     clearSleeps();
 
     const audio = chunkAudioEl || chunkAudio;
-    if (audio){
+    if (audio) {
       try {
         audio.pause();
         audio.removeAttribute("src");
         audio.load();
         htmlAudioPrimed = false;
         htmlAudioPrimePromise = null;
-      } catch(err){}
+      } catch (err) { }
     }
 
     chunkAudio = chunkAudioEl;
   }
 
-  function playChunkAudio(file){
-    if (!file) return sleep(900);
+  function playChunkAudio(file, runToken = state.runToken) {
+    if (!file) return sleep(900, runToken);
 
     return new Promise(resolve => {
       const audio = createChunkAudioElement();
@@ -2079,7 +2181,7 @@
         audio.onerror = null;
         audio.oncanplay = null;
         audio.oncanplaythrough = null;
-        if (fallbackId) clearTimeout(fallbackId);
+        clearTrackedTimeout(fallbackId);
       };
 
       const finish = (reason = "ended") => {
@@ -2117,7 +2219,7 @@
 
           const playPromise = audio.play();
 
-          if (playPromise?.then){
+          if (playPromise?.then) {
             playPromise
               .then(() => {
                 audioDebug("chunk play resolved", file);
@@ -2129,40 +2231,41 @@
           }
         };
 
-        if (audio.readyState >= 3){
+        if (audio.readyState >= 3) {
           tryPlay();
         } else {
           audio.oncanplay = tryPlay;
           audio.oncanplaythrough = tryPlay;
         }
 
-        fallbackId = setTimeout(() => {
-          if (!done){
+        fallbackId = trackedTimeout(() => {
+          if (!done) {
             console.warn("Verse Typer chunk audio timed out", file, {
               readyState: audio.readyState,
               networkState: audio.networkState
             });
             finish("timeout");
           }
-        }, 9000);
-      } catch(err){
+        }, 9000, runToken);
+      } catch (err) {
         console.warn("Verse Typer chunk audio failed", file, err);
         finish("exception");
       }
     });
   }
 
-  function addStreakBadge(streak){
+  function addStreakBadge(streak) {
+    const runToken = state.runToken;
     const id = `badge-${Date.now()}-${Math.random()}`;
     state.badges.push({ id, text: `${streak} streak!` });
     renderBadgesOnly();
-    setTimeout(() => {
+    trackedTimeout(() => {
       state.badges = state.badges.filter(item => item.id !== id);
       renderBadgesOnly();
-    }, 1150);
+    }, 1150, runToken);
   }
 
-  function addSparkleBurstFromTypedSegment(typeIndex){
+  function addSparkleBurstFromTypedSegment(typeIndex) {
     const sparkleLayer = document.getElementById("vtSparkleLayer");
     const segment = document.querySelector(`[data-vt-type-index="${typeIndex}"]`);
 
@@ -2179,7 +2282,7 @@
     const baseDistance = stage >= 2 ? 74 : 52;
     const sparkleChars = ["✦", "✧", "★"];
 
-    for (let i = 0; i < count; i += 1){
+    for (let i = 0; i < count; i += 1) {
       const angle = (-Math.PI / 2) + ((Math.PI * 2) * i / count) + (Math.random() * 0.34 - 0.17);
       const distance = baseDistance * (0.72 + Math.random() * 0.46);
       const delay = Math.random() * 45;
@@ -2197,18 +2300,18 @@
 
       sparkleLayer.appendChild(spark);
 
-      setTimeout(() => {
+      trackedTimeout(() => {
         spark.remove();
       }, 820);
     }
   }
 
-  function renderBadgesAndSparkles(){
+  function renderBadgesAndSparkles() {
     renderBadgesOnly();
     renderSparklesOnly();
   }
 
-  function renderBadgesOnly(){
+  function renderBadgesOnly() {
     const badgeLayer = document.getElementById("vtBadgeLayer");
     if (!badgeLayer) return;
 
@@ -2217,31 +2320,33 @@
       `).join("");
   }
 
-  function renderSparklesOnly(){
+  function renderSparklesOnly() {
     // Sparkles are appended as live DOM nodes so their CSS animation
     // does not restart when the caterpillar re-renders.
   }
 
-  function correctPercentage(){
+  function correctPercentage() {
     const total = state.correctLetters + state.typos;
     if (!total) return 100;
     return Math.round((state.correctLetters / total) * 100);
   }
 
-  async function finishRun(){
-    if (state.completed) return;
+  async function finishRun(runToken = state.runToken) {
+    if (!isLiveRun(runToken) || state.completed) return;
     state.completed = true;
     stopAllAudio();
 
     try {
       window.VerseGameBridge.markVersePracticed?.({ verseId: ctx.verseId });
-    } catch(err){}
+    } catch (err) { }
 
-    await sleep(260);
+    await sleep(260, runToken);
+    if (state.runToken !== runToken) return;
+
     renderEnd();
   }
 
-  function renderEnd(){
+  function renderEnd() {
     state.screen = "end";
     clearSleeps();
     const pct = correctPercentage();
@@ -2266,7 +2371,7 @@
     });
   }
 
-  function helpHtml(){
+  function helpHtml() {
     return `
       Type each caterpillar word with the letter keyboard.<br><br>
       Beginner shows the letters. Advanced hides the letters, but you can tap the caterpillar for a hint.<br><br>
@@ -2275,15 +2380,19 @@
     `;
   }
 
-  function setScreen(screen){
+  function setScreen(screen) {
+    if (screen !== "game") {
+      invalidateRun();
+    }
+
     state.screen = screen;
-    if (screen !== "game"){
+    if (screen !== "game") {
       stopAllAudio();
-      clearSleeps();
     }
     if (screen === "intro") renderIntro();
     if (screen === "mode") renderMode();
   }
+
 
   document.addEventListener("pointerdown", () => {
     createChunkAudioElement();
