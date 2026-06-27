@@ -827,7 +827,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.4",
+      debugBadge: "VT 1.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1108,21 +1108,14 @@
 
     renderKeyboard("letters");
 
-    if (!state.bookIntroShown) {
-      state.bookIntroShown = true;
-
-      await showTyperPopup({
-        title: "Type the Book!",
-        variant: "book"
-      });
-      if (!isLiveRun(runToken)) return;
-    }
+    const showPrompt = !state.bookIntroShown;
+    state.bookIntroShown = true;
 
     state.currentWordIndex = 0;
-    startBookWord(0, runToken);
+    startBookWord(0, runToken, showPrompt);
   }
 
-  function startBookWord(index, runToken = state.runToken) {
+  function startBookWord(index, runToken = state.runToken, showPrompt = false) {
     if (!isLiveRun(runToken)) return;
 
     const word = state.bookWords[index];
@@ -1141,6 +1134,10 @@
     setPhaseLabel("Book");
     renderKeyboard("letters");
     renderCurrentItem("enter");
+
+    if (showPrompt) {
+      showPlayAreaPrompt({ title: "Type the Book!", variant: "book", runToken });
+    }
   }
 
   async function startReferencePhase(runToken = state.runToken) {
@@ -1151,17 +1148,8 @@
       return;
     }
 
-    renderKeyboard("numbers");
-
-    if (!state.referenceIntroShown) {
-      state.referenceIntroShown = true;
-
-      await showTyperPopup({
-        title: "Type the Numbers!",
-        variant: "numbers"
-      });
-      if (!isLiveRun(runToken)) return;
-    }
+    const showPrompt = !state.referenceIntroShown;
+    state.referenceIntroShown = true;
 
     setCurrentItem({
       kind: "reference",
@@ -1174,6 +1162,10 @@
     setPhaseLabel("Chapter & Verse");
     renderKeyboard("numbers");
     renderCurrentItem("enter");
+
+    if (showPrompt) {
+      showPlayAreaPrompt({ title: "Type the Numbers!", variant: "numbers", runToken });
+    }
   }
 
   function startAfterReferencePhase(runToken = state.runToken) {
@@ -1277,6 +1269,56 @@
 
       timeoutId = trackedTimeout(finish, ms, runToken);
     });
+  }
+
+  function showPlayAreaPrompt({ title, variant = "book", runToken = state.runToken, ms = 1700 } = {}) {
+    if (!isLiveRun(runToken)) return;
+
+    const scene = document.querySelector(".vt-word-scene");
+    if (!scene) return;
+
+    const existing = document.getElementById("vtPlayAreaPrompt");
+    if (existing) existing.remove();
+
+    const prompt = document.createElement("div");
+    prompt.className = `vt-play-area-prompt vt-play-area-prompt-${variant}`;
+    prompt.id = "vtPlayAreaPrompt";
+    prompt.textContent = title;
+    prompt.setAttribute("aria-hidden", "true");
+    scene.appendChild(prompt);
+
+    playPopupSound();
+
+    trackedTimeout(() => {
+      if (!isLiveRun(runToken) || !prompt.isConnected) return;
+      prompt.classList.add("is-leaving");
+      trackedTimeout(() => {
+        if (prompt.isConnected) prompt.remove();
+      }, 220, runToken);
+    }, ms, runToken);
+  }
+
+  function renderCocoonPrompt(runToken = state.runToken) {
+    const wrap = document.getElementById("vtKeyboardWrap");
+    if (!wrap || !isLiveRun(runToken)) return;
+
+    wrap.innerHTML = `
+      <div class="vt-cocoon-prompt-wrap">
+        <button class="vt-cocoon-prompt no-zoom" id="vtCocoonPrompt" type="button">
+          Tap the Cocoon!
+        </button>
+      </div>
+    `;
+
+    const prompt = document.getElementById("vtCocoonPrompt");
+    if (prompt) {
+      prompt.onclick = () => {
+        createChunkAudioElement();
+        primeHtmlAudio();
+        unlockAudio();
+        openCocoon(runToken);
+      };
+    }
   }
 
   function playPopupSound() {
@@ -1470,16 +1512,12 @@
     renderHud();
     clearKeyboardForFinale();
 
-    await showTyperPopup({
-      title: "Tap the<br>Cocoon!",
-      variant: "book"
-    });
-    if (!isLiveRun(runToken)) return;
-
     await preloadImage(COCOON_IMAGE_FILE);
     if (!isLiveRun(runToken)) return;
 
     renderCocoonScene(runToken);
+    renderCocoonPrompt(runToken);
+    playPopupSound();
   }
 
   function renderCocoonScene(runToken = state.runToken) {
@@ -1513,6 +1551,7 @@
     if (!isLiveRun(runToken) || !cocoonButton || cocoonButton.classList.contains("is-opening")) return;
 
     cocoonButton.classList.add("is-opening");
+    clearKeyboardForFinale();
     playCocoonOpenSound();
 
     trackedTimeout(() => {
