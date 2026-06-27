@@ -1890,3 +1890,69 @@ body{
   pointer-events: auto;
   cursor: pointer;
 }
+
+/* VT 1.13: reduced-motion accessibility support */
+@media (prefers-reduced-motion: reduce) {
+
+  .vt-popup-card,
+  .vt-review-card,
+  .vt-streak-badge,
+  .vt-play-area-prompt,
+  .vt-travel-layer,
+  .vt-word-object.is-mega-pillar,
+  .vt-head,
+  .vt-tail,
+  .vt-segment,
+  .vt-cocoon-button,
+  .vt-cocoon-hanger,
+  .vt-butterfly-stage,
+  .vt-butterfly,
+  .vt-flap-button,
+  .vt-key {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .vt-travel-layer.is-entering,
+  .vt-travel-layer.is-exiting {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .vt-travel-layer.is-entering.is-crawling .vt-head,
+  .vt-travel-layer.is-entering.is-crawling .vt-segment,
+  .vt-travel-layer.is-entering.is-crawling .vt-tail,
+  .vt-travel-layer.is-exiting.is-crawling .vt-head,
+  .vt-travel-layer.is-exiting.is-crawling .vt-segment,
+  .vt-travel-layer.is-exiting.is-crawling .vt-tail {
+    animation: none !important;
+  }
+
+  .vt-tail.is-tail-stage-1,
+  .vt-tail.is-tail-stage-2,
+  .vt-tail.is-tail-stage-3,
+  .vt-tail.is-tail-stage-4,
+  .vt-streak-pill.is-streak-rainbow {
+    animation: none !important;
+  }
+
+  .vt-sparkle {
+    display: none !important;
+  }
+
+  .vt-sky span {
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .vt-cocoon-hanger {
+    animation: none !important;
+  }
+
+  .vt-key:active,
+  .vt-flap-button:active {
+    transform: none !important;
+  }
+}
