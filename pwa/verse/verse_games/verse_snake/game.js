@@ -2399,7 +2399,7 @@
     completeGameAfterBonus();
   }
 
-  function completeGameAfterBonus(){
+  async function completeGameAfterBonus(){
     if (completed) return;
     completed = true;
     state.bonusActive = false;
@@ -2409,20 +2409,25 @@
     // frame from slipping in before renderDone().
     completionResult = null;
 
-    if (window.VerseGameBridge.completeGameRun){
-      completionResult = window.VerseGameBridge.completeGameRun({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode,
-        stats: {
-          fruitCount: state.fruitCount,
-          bonusScore: state.bonusScore,
-          progressIndex: state.progressIndex
-        }
-      });
-    }
-
     stopLoop();
+
+    if (window.VerseGameBridge.completeGameRun){
+      try {
+        completionResult = await window.VerseGameBridge.completeGameRun({
+          verseId: ctx.verseId,
+          gameId: GAME_ID,
+          mode: selectedMode,
+          stats: {
+            fruitCount: state.fruitCount,
+            bonusScore: state.bonusScore,
+            progressIndex: state.progressIndex
+          }
+        });
+      } catch (err) {
+        console.warn("Verse Snake completion save failed:", err);
+        completionResult = null;
+      }
+    }
 
     setTimeout(() => {
       state.bonusEnding = false;
