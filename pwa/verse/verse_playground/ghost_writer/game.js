@@ -59,6 +59,11 @@
       max: 1150
     }
   };
+
+  const SPOOKY_SOUND_OPTIONS = {
+    on: { label: "On" },
+    off: { label: "Off" }
+  };
   
 
   const COLOR_PALETTE = {
@@ -746,6 +751,7 @@
       borderColor: "lightGray",
       tool: "pencil",
       vapor: "normal",
+      spookySounds: "on",
       exportSize: "square",
       style: "ghost",
       speed: "normal",
@@ -1153,7 +1159,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 3.1c",
+      debugBadge: "GW 3.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -2496,6 +2502,7 @@
             <div class="ghost-options">
               ${selectOptionHtml("ghostToolSelect", "Writing Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
               ${selectOptionHtml("ghostVaporSelect", "Ghost Trail", state.remix.vapor || "normal", VAPOR_LEVELS)}
+              ${selectOptionHtml("ghostSpookySoundsSelect", "Spooky Sounds", state.remix.spookySounds || "on", SPOOKY_SOUND_OPTIONS)}
               ${selectOptionHtml("ghostSpeedSelect", "Ghost Speed", state.remix.speed, SPEEDS)}
             </div>
           </div>
@@ -2627,6 +2634,7 @@
     const wobble = document.getElementById("ghostWobbleSelect");
     const tool = document.getElementById("ghostToolSelect");
     const vapor = document.getElementById("ghostVaporSelect");
+    const spookySounds = document.getElementById("ghostSpookySoundsSelect");
     const referenceDesign = document.getElementById("ghostReferenceDesignSelect");
     const referenceTextColor = document.getElementById("ghostReferenceTextColorSelect");
     const referenceDecorationColor = document.getElementById("ghostReferenceDecorationColorSelect");
@@ -2646,6 +2654,7 @@
       state.remix.wobble = wobble?.value || state.remix.wobble;
       state.remix.tool = tool?.value || state.remix.tool;
       state.remix.vapor = vapor?.value || state.remix.vapor;
+      state.remix.spookySounds = spookySounds?.value || state.remix.spookySounds || "on";
 
       if (referenceDesign?.value && REFERENCE_DECORATION_STYLES.includes(referenceDesign.value)) {
         state.referenceDecorationStyle = referenceDesign.value;
@@ -2692,7 +2701,7 @@
       drawRemixPreview();
     };
 
-    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, referenceDesign, referenceTextColor, referenceDecorationColor, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, spookySounds, referenceDesign, referenceTextColor, referenceDecorationColor, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
       if (el) el.onchange = update;
     });
 
@@ -3991,6 +4000,7 @@
     options.referenceTextColor = referenceTextColorKey;
     options.referenceDecorationColor = referenceDecorationColorKey;
     options.style = backgroundKey;
+    options.spookySounds = options.spookySounds === "off" ? "off" : "on";
 
     return options;
   }
@@ -5118,7 +5128,11 @@
 
     clearPlaybackCanvas(c, rect.width, rect.height, options);
     hidePlaybackTool(playbackState);
-    startGhostSpookySounds();
+
+    if (options.spookySounds !== "off") {
+      startGhostSpookySounds();
+    }
+
     playbackRaf = requestAnimationFrame(playbackFrame);
   }
 
