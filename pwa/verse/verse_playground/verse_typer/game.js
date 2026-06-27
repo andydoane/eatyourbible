@@ -827,7 +827,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.2",
+      debugBadge: "VT 1.3",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1236,7 +1236,7 @@
         <div class="vt-popup-card vt-popup-${escapeHtml(variant)}">
           <div class="vt-popup-title">${escapeHtml(title).replace(/&lt;br&gt;/g, "<br>")}</div>
           ${subtitle ? `<div class="vt-popup-subtitle">${escapeHtml(subtitle)}</div>` : ""}
-          <div class="vt-popup-tap">Tap to continue</div>
+
         </div>
       </button>
     `;
@@ -1568,7 +1568,7 @@
 
     if (btn) {
       const remaining = Math.max(0, BUTTERFLY_FLAPS_TO_FINISH - state.butterflyFlaps);
-      btn.textContent = remaining > 0 ? "Flap!" : "Fly!";
+      btn.textContent = "Flap!";
     }
 
     if (state.butterflyFlaps >= BUTTERFLY_FLAPS_TO_FINISH) {
@@ -2137,7 +2137,7 @@
     if (main) {
       main.innerHTML = `
         <div class="vt-review-scene">
-          <div class="vt-review-label">Great typing!</div>
+
           <div class="vt-review-card">
             <div class="vt-review-text">${escapeHtml(chunk.text)}</div>
           </div>
