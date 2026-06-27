@@ -2044,3 +2044,26 @@ body{
     animation: vt-badge-pop 1ms ease-out forwards !important;
   }
 }
+
+/* VT 1.14.1: make streak popup segment-sized and remove popup/HUD box shadows */
+.vt-streak-badge {
+  height: clamp(46px, 10.4vw, 84px);
+  min-height: clamp(46px, 10.4vw, 84px);
+  padding: 0 .72em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+}
+
+.vt-streak-badge.is-streak-pop-rainbow {
+  box-shadow: none !important;
+}
+
+.vt-streak-pill,
+.vt-streak-pill.is-streak-yellow,
+.vt-streak-pill.is-streak-green,
+.vt-streak-pill.is-streak-teal,
+.vt-streak-pill.is-streak-rainbow {
+  box-shadow: none !important;
+}
