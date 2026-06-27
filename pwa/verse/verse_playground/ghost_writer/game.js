@@ -972,12 +972,15 @@
     }
   }
 
-  function stopGhostSpookySounds() {
+  function stopGhostSpookySounds({ finishCurrent = false } = {}) {
     spookySoundActive = false;
     spookySoundToken += 1;
     spookySoundQueue = [];
     clearSpookyTimer();
-    stopCurrentSpookySource();
+
+    if (!finishCurrent) {
+      stopCurrentSpookySource();
+    }
   }
 
   function queueNextGhostSpookySound(token, delayMs = 0) {
@@ -1136,7 +1139,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 2.7",
+      debugBadge: "GW 2.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -5191,7 +5194,7 @@
     if (ps.index >= placements.length) {
       drawCompleteText(ps.c, ps.width, ps.height, ps.options);
       hidePlaybackTool(ps);
-      stopGhostSpookySounds();
+      stopGhostSpookySounds({ finishCurrent: true });
 
       const done = ps.onDone;
       playbackState = null;
