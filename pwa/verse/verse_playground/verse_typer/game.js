@@ -885,7 +885,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.13",
+      debugBadge: "VT 1.13.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",

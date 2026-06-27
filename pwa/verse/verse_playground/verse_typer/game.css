@@ -1956,3 +1956,14 @@ body{
     transform: none !important;
   }
 }
+
+/* VT 1.13.1: smooth Mega-pillar tracking in reduced-motion mode */
+@media (prefers-reduced-motion: reduce) {
+  .vt-word-track {
+    transition: transform 120ms ease-out !important;
+  }
+
+  .vt-word-track.is-positioning {
+    transition: none !important;
+  }
+}
