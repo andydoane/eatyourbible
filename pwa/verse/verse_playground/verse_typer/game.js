@@ -20,6 +20,7 @@
 
   const MODES = [
     { id: "beginner", label: "Beginner" },
+    { id: "medium", label: "Medium" },
     { id: "advanced", label: "Advanced" }
   ];
 
@@ -249,20 +250,9 @@
     clearSleeps();
   }
 
-  async function beginRun() {
-    const runToken = beginRunToken();
-
-    await initRunData();
-    if (state.runToken !== runToken) return;
-
-    resetStats();
-    preloadGameAssets();
-    await waitForGameFont(900);
-    if (state.runToken !== runToken) return;
-
-    state.screen = "game";
-    renderGameShell();
-    startVersePhase(runToken);
+  function beginRunToken() {
+    invalidateRun();
+    return state.runToken;
   }
 
   function isLiveRun(runToken = state.runToken) {
@@ -837,7 +827,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.1",
+      debugBadge: "VT 1.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -874,20 +864,26 @@
         primeHtmlAudio();
         unlockAudio();
         preloadGameAssets();
-        selectedMode = mode === "advanced" ? "advanced" : "beginner";
+        selectedMode = ["beginner", "medium", "advanced"].includes(mode) ? mode : "beginner";
         await beginRun();
       }
     });
   }
 
   async function beginRun() {
+    const runToken = beginRunToken();
+
     await initRunData();
+    if (state.runToken !== runToken) return;
+
     resetStats();
     preloadGameAssets();
     await waitForGameFont(900);
+    if (state.runToken !== runToken) return;
+
     state.screen = "game";
     renderGameShell();
-    startVersePhase();
+    startVersePhase(runToken);
   }
 
   function renderGameShell() {
@@ -1151,7 +1147,7 @@
     if (!isLiveRun(runToken)) return;
 
     if (!state.referenceExpectedDigits.length) {
-      startMegaPillarPhase(runToken);
+      startAfterReferencePhase(runToken);
       return;
     }
 
@@ -1179,6 +1175,16 @@
     renderKeyboard("numbers");
     renderCurrentItem("enter");
   }
+
+  function startAfterReferencePhase(runToken = state.runToken) {
+    if (selectedMode === "beginner") {
+      startCocoonPhase(runToken);
+      return;
+    }
+
+    startMegaPillarPhase(runToken);
+  }
+
 
   async function startMegaPillarPhase(runToken = state.runToken) {
     if (!isLiveRun(runToken)) return;
@@ -2103,7 +2109,7 @@
       }
 
       if (item.kind === "reference") {
-        startMegaPillarPhase(runToken);
+        startAfterReferencePhase(runToken);
         return;
       }
 
@@ -2374,7 +2380,9 @@
   function helpHtml() {
     return `
       Type each caterpillar word with the letter keyboard.<br><br>
-      Beginner shows the letters. Advanced hides the letters, but you can tap the caterpillar for a hint.<br><br>
+      Beginner is a shorter round: type the verse chunks, book, and numbers, then hatch the butterfly.<br><br>
+      Medium adds the Mega-pillar, where you type the whole verse as one long caterpillar.<br><br>
+      Advanced hides the letters, but you can tap the caterpillar for a hint. Advanced also includes the Mega-pillar.<br><br>
       After each verse chunk, the chunk appears on screen while its audio plays. Then the next caterpillar comes in.<br><br>
       Wrong letters make the caterpillar say “no,” but this is a playground — just keep typing!
     `;
