@@ -860,7 +860,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.11",
+      debugBadge: "VT 1.11.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -1111,26 +1111,36 @@
   }
 
   function renderAdvancedHintPrompt(item = state.currentItem, runToken = state.runToken) {
-    if (!shouldShowAdvancedHintPrompt(item)) return;
+    const existing = document.getElementById("vtAdvancedHintPrompt");
 
-    showPlayAreaPrompt({
-      title: state.advancedHintLevel >= 1 ? "Tap for More Hints" : "Tap for a Hint",
-      variant: "hint",
-      runToken,
-      ms: null,
-      playSound: false
-    });
+    if (!shouldShowAdvancedHintPrompt(item)) {
+      if (existing) existing.remove();
+      return;
+    }
 
-    const prompt = document.getElementById("vtPlayAreaPrompt");
-    if (prompt) {
+    const playCard = document.getElementById("vtPlayCard");
+    if (!playCard || !isLiveRun(runToken)) return;
+
+    const title = state.advancedHintLevel >= 1 ? "Tap for More Hints" : "Tap for a Hint";
+    const prompt = existing || document.createElement("div");
+
+    if (!existing) {
+      prompt.className = "vt-play-area-prompt vt-play-area-prompt-hint vt-advanced-hint-prompt";
+      prompt.id = "vtAdvancedHintPrompt";
       prompt.removeAttribute("aria-hidden");
       prompt.setAttribute("role", "button");
-      prompt.setAttribute("aria-label", prompt.textContent || "Tap for a hint");
-      prompt.onclick = (event) => {
-        event.preventDefault();
-        handleAdvancedHintTap(item);
-      };
+      playCard.appendChild(prompt);
     }
+
+    if (prompt.textContent !== title) {
+      prompt.textContent = title;
+    }
+
+    prompt.setAttribute("aria-label", title);
+    prompt.onclick = (event) => {
+      event.preventDefault();
+      handleAdvancedHintTap(item);
+    };
   }
 
   function handleAdvancedHintTap(item = state.currentItem) {
