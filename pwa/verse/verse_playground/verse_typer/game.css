@@ -1864,3 +1864,23 @@ body{
     font-size: clamp(1rem, 3.9vw, 1.35rem);
   }
 }
+
+/* VT 1.9.1: center the temporary streak popup between the HUD and caterpillar */
+.vt-streak-badge {
+  top: 30%;
+  width: max-content;
+  max-width: calc(100% - 2em);
+  padding: .38em .62em;
+  white-space: nowrap;
+  font-family: "DD2 Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(1.25rem, 6vw, 2.75rem);
+  line-height: 1;
+}
+
+@media (max-height:680px) {
+  .vt-streak-badge {
+    top: 31%;
+    padding: .34em .58em;
+    font-size: clamp(1.1rem, 5.3vw, 2.2rem);
+  }
+}
