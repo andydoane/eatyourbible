@@ -1747,3 +1747,29 @@ body{
 .vt-cocoon-hanger {
   overflow: visible;
 }
+
+/* VT 1.7: give inline book/number prompts more room to grow */
+.vt-play-area-prompt {
+  max-width: min(94%, 680px);
+  min-width: min(74%, 480px);
+  padding: clamp(12px, 3vw, 18px) clamp(24px, 6vw, 44px);
+  font-size: clamp(26px, 7.2vw, 56px);
+}
+
+.vt-play-area-prompt-numbers {
+  min-width: min(82%, 560px);
+}
+
+@media (max-height:680px) {
+  .vt-play-area-prompt {
+    bottom: clamp(8px, 3vh, 22px);
+    max-width: 94%;
+    min-width: 72%;
+    padding: 10px 24px 12px;
+    font-size: clamp(25px, 7vw, 44px);
+  }
+
+  .vt-play-area-prompt-numbers {
+    min-width: 82%;
+  }
+}
