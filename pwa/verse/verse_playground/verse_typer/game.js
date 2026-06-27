@@ -59,8 +59,7 @@
   let gameAssetPreloadPromise = null;
 
   const imagePreloadCache = new Map();
-  const uiPopBuffers = new Map();
-  const uiPopBufferPromises = new Map();
+  const uiPopAudioEls = [];
   let uiPopFlip = false;
 
   const ENTER_INPUT_MS = 400;
@@ -444,11 +443,6 @@
         osc.stop(now + 0.03);
 
         audioUnlocked = audioCtx.state === "running";
-
-        if (audioUnlocked) {
-          preloadUiPopSounds();
-        }
-
         audioDebug("unlock done", { audioUnlocked, state: audioCtx.state });
         return audioUnlocked;
       } catch (err) {
@@ -463,75 +457,53 @@
     return audioUnlockPromise;
   }
 
-  function uiPopSoundKey(index) {
-    return `uiPop${index + 1}`;
-  }
-
-  async function loadUiPopBuffer(index) {
-    createAudio();
-
+  function uiPopAudioForIndex(index) {
     const src = UI_POP_SOUND_FILES[index];
-    const key = uiPopSoundKey(index);
+    if (!src) return null;
 
-    if (!audioCtx || !src) return null;
-    if (uiPopBuffers.has(key)) return uiPopBuffers.get(key);
-    if (uiPopBufferPromises.has(key)) return uiPopBufferPromises.get(key);
+    if (uiPopAudioEls[index]) return uiPopAudioEls[index];
 
-    const promise = fetch(src)
-      .then(response => {
-        if (!response.ok) throw new Error(`Unable to load UI sound: ${src}`);
-        return response.arrayBuffer();
-      })
-      .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
-      .then(buffer => {
-        uiPopBuffers.set(key, buffer);
-        return buffer;
-      })
-      .catch(err => {
-        console.warn("Verse Typer UI pop sound failed", err);
-        return null;
-      })
-      .finally(() => {
-        uiPopBufferPromises.delete(key);
-      });
+    const audio = document.createElement("audio");
+    audio.preload = "auto";
+    audio.playsInline = true;
+    audio.setAttribute("playsinline", "");
+    audio.src = src;
+    audio.volume = UI_POP_SOUND_VOLUME;
+    audio.style.display = "none";
 
-    uiPopBufferPromises.set(key, promise);
-    return promise;
+    document.body.appendChild(audio);
+    uiPopAudioEls[index] = audio;
+
+    return audio;
   }
 
   function preloadUiPopSounds() {
     UI_POP_SOUND_FILES.forEach((_, index) => {
-      loadUiPopBuffer(index);
+      const audio = uiPopAudioForIndex(index);
+      try {
+        audio?.load();
+      } catch (err) { }
     });
   }
 
-  async function playUiPopSound() {
+  function playUiPopSound() {
     if (muted) return;
 
     const index = uiPopFlip ? 1 : 0;
     uiPopFlip = !uiPopFlip;
 
-    createAudio();
-    if (!audioCtx || !masterGain) return;
+    const audio = uiPopAudioForIndex(index);
+    if (!audio) return;
 
     try {
-      if (audioCtx.state !== "running") {
-        await audioCtx.resume?.();
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = UI_POP_SOUND_VOLUME;
+
+      const playPromise = audio.play();
+      if (playPromise?.catch) {
+        playPromise.catch(() => { });
       }
-
-      if (audioCtx.state !== "running") return;
-
-      const buffer = await loadUiPopBuffer(index);
-      if (!buffer || muted || !masterGain) return;
-
-      const source = audioCtx.createBufferSource();
-      const gain = audioCtx.createGain();
-
-      source.buffer = buffer;
-      gain.gain.value = UI_POP_SOUND_VOLUME;
-      source.connect(gain);
-      gain.connect(masterGain);
-      source.start(0);
     } catch (err) {
       // UI sound should never break gameplay.
     }
@@ -540,17 +512,24 @@
   function wireShellUiPopSounds(root = app) {
     if (!root) return;
 
+    preloadUiPopSounds();
+
     root.querySelectorAll("button").forEach(button => {
       if (button.dataset.vtUiPopSound === "wired") return;
       if (button.closest(".vt-root")) return;
 
       button.dataset.vtUiPopSound = "wired";
-      button.addEventListener("pointerdown", () => {
-        createChunkAudioElement();
-        primeHtmlAudio();
-        unlockAudio();
+
+      const play = () => {
         playUiPopSound();
-      }, { passive: true });
+      };
+
+      if (window.PointerEvent) {
+        button.addEventListener("pointerdown", play, { passive: true });
+      } else {
+        button.addEventListener("touchstart", play, { passive: true });
+        button.addEventListener("mousedown", play);
+      }
     });
   }
 
@@ -990,7 +969,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.17",
+      debugBadge: "VT 1.17.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
