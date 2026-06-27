@@ -3,7 +3,7 @@
   const launch = window.VerseGameBridge.getLaunchParams();
   const ctx = await window.VerseGameBridge.getVerseContext();
 
-  const GAME_ID = "versey_bird_2";
+  const GAME_ID = "versey_bird";
   const GAME_TITLE = "Versey Bird";
   const GAME_THEME = { bg: "#333333", accent: "#333333" };
   const BUILD_AREA = "compact";
