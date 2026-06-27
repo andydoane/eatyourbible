@@ -1967,3 +1967,80 @@ body{
     transition: none !important;
   }
 }
+
+/* VT 1.14: streak popup milestone color tiers */
+.vt-streak-badge {
+  letter-spacing: .015em;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .18);
+  box-shadow:
+    0 .28em 0 rgba(0, 0, 0, .20),
+    0 .46em .9em rgba(0, 0, 0, .18),
+    0 0 .75em rgba(255, 255, 255, .42),
+    inset 0 0 0 .12em rgba(255, 255, 255, .28);
+}
+
+.vt-streak-badge.is-streak-pop-red {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .30), transparent 24%),
+    linear-gradient(180deg, #ff6a60, #f24c43);
+  color: #fada7a;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .24);
+}
+
+.vt-streak-badge.is-streak-pop-green {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .38), transparent 24%),
+    linear-gradient(180deg, #9ee85f, #4f963a);
+  color: #ffffff;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .24);
+}
+
+.vt-streak-badge.is-streak-pop-blue {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .36), transparent 24%),
+    linear-gradient(180deg, #64ddea, #2f8fa0);
+  color: #ffffff;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .26);
+}
+
+.vt-streak-badge.is-streak-pop-purple {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, .34), transparent 24%),
+    linear-gradient(180deg, #a889ff, #7053d8);
+  color: #ffffff;
+  text-shadow: 0 .12em 0 rgba(0, 0, 0, .28);
+}
+
+.vt-streak-badge.is-streak-pop-rainbow {
+  background:
+    linear-gradient(90deg, #f24c43, #ff9e3d, #fada7a, #7ed957, #40b9c5, #8b6cff, #f24c43);
+  background-size: 260% 100%;
+  color: #ffffff;
+  text-shadow:
+    0 .12em 0 rgba(0, 0, 0, .32),
+    0 0 .3em rgba(0, 0, 0, .22);
+  box-shadow:
+    0 .3em 0 rgba(0, 0, 0, .22),
+    0 .52em 1em rgba(0, 0, 0, .20),
+    0 0 1em rgba(255, 255, 255, .62),
+    inset 0 0 0 .13em rgba(255, 255, 255, .40);
+  animation:
+    vt-badge-pop 1150ms ease-out forwards,
+    vt-streak-popup-rainbow 1200ms linear infinite;
+}
+
+@keyframes vt-streak-popup-rainbow {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 260% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vt-streak-badge.is-streak-pop-rainbow {
+    animation: vt-badge-pop 1ms ease-out forwards !important;
+  }
+}

@@ -885,7 +885,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "VT 1.13.1",
+      debugBadge: "VT 1.14",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -2220,7 +2220,7 @@
 
     state.typedIndex += 1;
 
-    if (state.streak > 0 && state.streak % 5 === 0) {
+    if (shouldShowStreakBadge(state.streak)) {
       addStreakBadge(state.streak);
     }
 
@@ -2453,11 +2453,35 @@
     });
   }
 
+  function shouldShowStreakBadge(streak) {
+    return streak === 5
+      || streak === 10
+      || streak === 15
+      || streak === 20
+      || (streak >= 30 && streak % 10 === 0);
+  }
+
+  function streakBadgeTier(streak) {
+    if (streak >= 30) return "rainbow";
+    if (streak >= 20) return "purple";
+    if (streak >= 15) return "blue";
+    if (streak >= 10) return "green";
+    return "red";
+  }
+
   function addStreakBadge(streak) {
     const runToken = state.runToken;
     const id = `badge-${Date.now()}-${Math.random()}`;
-    state.badges.push({ id, text: `${streak} streak!` });
+    const tier = streakBadgeTier(streak);
+
+    state.badges.push({
+      id,
+      text: `${streak} STREAK!`,
+      className: `is-streak-pop-${tier}`
+    });
+
     renderBadgesOnly();
+
     trackedTimeout(() => {
       state.badges = state.badges.filter(item => item.id !== id);
       renderBadgesOnly();
@@ -2515,7 +2539,7 @@
     if (!badgeLayer) return;
 
     badgeLayer.innerHTML = state.badges.map(badge => `
-        <div class="vt-streak-badge">${escapeHtml(badge.text)} ✨</div>
+        <div class="vt-streak-badge ${escapeHtml(badge.className || "")}">${escapeHtml(badge.text)}</div>
       `).join("");
   }
 
