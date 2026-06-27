@@ -1153,7 +1153,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
-      debugBadge: "GW 3.0",
+      debugBadge: "GW 3.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
@@ -3119,8 +3119,8 @@
     let boxH = Math.min(zoneHeight * .94, Math.max(refFontSize * 1.35, zoneHeight * .74));
 
     if (style === "cloud") {
-      boxW = Math.min(info.maxWidth * .92, Math.max(boxW, info.maxWidth * .62));
-      boxH = Math.min(zoneHeight * 1.08, Math.max(refFontSize * 1.65, zoneHeight * .90));
+      boxW = refWidth + refFontSize;
+      boxH = refFontSize * 2;
     }
 
     const boxX = refCenterX - boxW / 2;
