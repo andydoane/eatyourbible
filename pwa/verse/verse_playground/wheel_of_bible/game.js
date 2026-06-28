@@ -74,9 +74,10 @@
   const NORMAL_ROUND_UNIQUE_RATIO = 0.55;
   const FINAL_ROUND_HIDE_RATIO = 0.5;
 
-  // DEBUG: Set to true to enter the Final Round after one selected letter.
-  // Remember to set this back to false before sharing/publishing.
-  const DEBUG_ONE_SPIN_ROUND = false;
+  // DEBUG: Set to true to make the normal round only require 1 spin/letter.
+  // This lets you advance to the Final Round quickly while testing.
+  // IMPORTANT: Set this back to false before sharing/publishing.
+  const DEBUG_ONE_SPIN_ROUND = true;
 
   let muted = false;
   let audioCtx = null;
@@ -615,7 +616,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v1.8-intro-text", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v1.9-debug-spin", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
