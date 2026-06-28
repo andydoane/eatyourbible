@@ -83,6 +83,11 @@
   // IMPORTANT: Set this back to false before sharing/publishing.
   const DEBUG_ONE_SPIN_ROUND = false;
 
+  // DEBUG: Phase 1 of the smart verse layout.
+  // true = render explicit verse rows instead of relying on browser flex-wrap.
+  // false = use the old flex-wrap verse board.
+  const DEBUG_SMART_VERSE_ROWS = true;
+
   let muted = false;
   let audioCtx = null;
   let masterGain = null;
@@ -700,7 +705,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.3-desktop-fit", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.3-smart-rows-p1", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1842,38 +1847,95 @@
     else renderSpinScreen();
   }
 
-  function verseBoardHtml({ allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}) {
-    return `
-      <div class="wob-verse-card is-with-reference">
-        <div class="wob-verse-board ${finalMode ? "wob-final-board" : ""}" id="wobVerseBoard">
-          ${state.tokens.map(token => {
+  function verseWordHtml(word, { allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}) {
+    const isChallenge = challenge?.type === "word" && challenge.wordIndex === word.index;
+    const finalMissingCount = finalMode ? finalMissingItemsForWord(word).length : 0;
+    const solved = finalMode ? state.finalSolvedWordIndices.has(word.index) : false;
+    const tag = isChallenge || (finalMode && finalMissingCount > 0) ? "button" : "span";
+    const attrs = tag === "button" ? `type="button" data-word-index="${word.index}"` : `data-word-index="${word.index}"`;
+
+    return `<${tag} class="wob-word ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
+      ${word.letters.map(item => {
+      if (!item.isLetter) return "";
+      const tileKey = tileKeyFor(word.index, item.index);
+      const hidden = finalMode
+        ? (state.finalHiddenTileKeys.has(tileKey) && !state.finalFilledTileKeys.has(tileKey))
+        : (!allVisible && !state.revealedLetters.has(item.normalized));
+      const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
+      const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
+      const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
+      const tileText = isChallenge ? "?" : (hidden ? "" : item.normalized);
+      return `<span class="wob-tile ${hidden && !isChallenge ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile} ${isChallenge ? "is-question-tile" : ""}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${escapeHtml(tileText)}</span>`;
+    }).join("")}
+    </${tag}>`;
+  }
+
+  function simpleSmartVerseRowPattern(wordCount) {
+    const count = Math.max(0, Math.round(Number(wordCount) || 0));
+    if (!count) return [];
+
+    const rowCount = Math.max(
+      1,
+      Math.min(
+        count,
+        Math.round(clamp(Math.sqrt(count * 2.1), 2, 9))
+      )
+    );
+
+    const rows = [];
+    let left = count;
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+      const rowsLeft = rowCount - rowIndex;
+      const size = Math.max(1, Math.ceil(left / rowsLeft));
+      rows.push(size);
+      left -= size;
+    }
+
+    return rows;
+  }
+
+  function smartVerseRowsHtml(options = {}) {
+    const words = state.words.filter(Boolean);
+    const rowSizes = simpleSmartVerseRowPattern(words.length);
+    let offset = 0;
+
+    return rowSizes.map((rowSize, rowIndex) => {
+      const rowWords = words.slice(offset, offset + rowSize);
+      offset += rowSize;
+
+      return `<div class="wob-verse-row" data-row-index="${rowIndex}">
+        ${rowWords.map(word => verseWordHtml(word, options)).join("")}
+      </div>`;
+    }).join("");
+  }
+
+  function oldFlexVerseHtml(options = {}) {
+    return state.tokens.map(token => {
       if (token.kind === "space") return `<span class="wob-space"> </span>`;
       if (token.kind === "punct") return "";
-      const word = state.words[token.wordIndex]; if (!word) return "";
-      const isChallenge = challenge?.type === "word" && challenge.wordIndex === word.index;
-      const finalMissingCount = finalMode ? finalMissingItemsForWord(word).length : 0;
-      const solved = finalMode ? state.finalSolvedWordIndices.has(word.index) : false;
-      const tag = isChallenge || (finalMode && finalMissingCount > 0) ? "button" : "span";
-      const attrs = tag === "button" ? `type="button" data-word-index="${word.index}"` : `data-word-index="${word.index}"`;
-      return `<${tag} class="wob-word ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
-              ${word.letters.map(item => {
-        if (!item.isLetter) return "";
-        const tileKey = tileKeyFor(word.index, item.index);
-        const hidden = finalMode
-          ? (state.finalHiddenTileKeys.has(tileKey) && !state.finalFilledTileKeys.has(tileKey))
-          : (!allVisible && !state.revealedLetters.has(item.normalized));
-        const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
-        const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
-        const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
-        const tileText = isChallenge ? "?" : (hidden ? "" : item.normalized);
-        return `<span class="wob-tile ${hidden && !isChallenge ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile} ${isChallenge ? "is-question-tile" : ""}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${escapeHtml(tileText)}</span>`;
-      }).join("")}
-            </${tag}>`;
-    }).join("")}
+      const word = state.words[token.wordIndex];
+      if (!word) return "";
+      return verseWordHtml(word, options);
+    }).join("");
+  }
+
+  function verseBoardHtml({ allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}) {
+    const options = { allVisible, revealingLetter, animatingLetter, challenge, finalMode };
+    const boardClass = [
+      finalMode ? "wob-final-board" : "",
+      DEBUG_SMART_VERSE_ROWS ? "is-smart-rows" : ""
+    ].filter(Boolean).join(" ");
+
+    return `
+      <div class="wob-verse-card is-with-reference">
+        <div class="wob-verse-board ${boardClass}" id="wobVerseBoard">
+          ${DEBUG_SMART_VERSE_ROWS ? smartVerseRowsHtml(options) : oldFlexVerseHtml(options)}
           ${referenceTilesHtml(challenge)}
         </div>
       </div>`;
   }
+
 
   function referenceTilesHtml(challenge) {
     const meta = state.referenceMeta || {};
@@ -1905,59 +1967,24 @@
     const board = document.getElementById("wobVerseBoard");
     const card = board?.closest(".wob-verse-card");
     if (!board || !card) return;
-
     const box = card.getBoundingClientRect();
-    const fitWidth = Math.max(80, box.width);
     const fitHeight = Math.max(80, box.height);
-    const boardRatio = fitWidth / Math.max(1, fitHeight);
-    const isWideBoard = fitWidth >= 900 && boardRatio >= 1.05;
-
     const letterCount = state.words.reduce((sum, word) => sum + word.letters.length, 0);
-    const maxTileSize = isWideBoard ? 88 : 56;
-    const minTileSize = isWideBoard ? 22 : 18;
-    const fitBoost = isWideBoard ? 1.62 : 1.38;
-
-    let size = clamp(
-      Math.sqrt((fitWidth * fitHeight) / Math.max(24, letterCount)) * fitBoost,
-      minTileSize,
-      maxTileSize
-    );
-
+    let size = clamp(Math.sqrt((box.width * fitHeight) / Math.max(24, letterCount)) * 1.38, 18, 56);
     const apply = (tileSize, lineGap) => {
       board.style.setProperty("--wob-tile-size", `${tileSize}px`);
       board.style.setProperty("--wob-tile-gap", `${Math.max(2, tileSize * .12)}px`);
       board.style.setProperty("--wob-line-gap", `${lineGap}px`);
     };
-
-    let lineGap = Math.max(6, size * (isWideBoard ? .28 : .32));
-
-    for (let i = 0; i < 36; i += 1) {
+    let lineGap = Math.max(6, size * .32);
+    for (let i = 0; i < 28; i += 1) {
       apply(size, lineGap);
-
-      const over =
-        board.scrollHeight > fitHeight - 2 ||
-        board.scrollWidth > fitWidth - 2;
-
+      const over = board.scrollHeight > fitHeight - 2 || board.scrollWidth > box.width - 2;
       if (!over) break;
-
-      size -= isWideBoard ? 2 : 1.5;
-      lineGap = Math.max(4, size * .25);
-
-      if (size <= 13) break;
+      size -= 1.5; lineGap = Math.max(4, size * .25); if (size <= 13) break;
     }
-
-    const extra = Math.max(
-      0,
-      (fitHeight - board.scrollHeight) / Math.max(1, Math.ceil(state.words.length / 4))
-    );
-
-    if (extra > 8) {
-      const extraSize = isWideBoard ? Math.min(extra * .10, 6) : 0;
-      apply(
-        Math.min(maxTileSize, size + extraSize),
-        Math.min(size * .72, lineGap + extra * .38)
-      );
-    }
+    const extra = Math.max(0, (fitHeight - board.scrollHeight) / Math.max(1, Math.ceil(state.words.length / 4)));
+    if (extra > 8) apply(size, Math.min(size * .72, lineGap + extra * .38));
   }
   window.addEventListener("resize", fitVerseBoardSoon);
   window.addEventListener("orientationchange", () => setTimeout(fitVerseBoardSoon, 250));
