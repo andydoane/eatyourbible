@@ -86,9 +86,13 @@
   // Set to false only if you need to compare against the old flex-wrap board.
   const USE_SMART_VERSE_ROWS = true;
 
-  // Phase 1 visual hyphen support.
-  // This proves split-word rendering/challenge behavior before the row planner uses it.
+  // Visual hyphen support.
+  // The renderer can safely show long words as split visual pieces.
   const USE_VISUAL_HYPHENATION_RENDER = true;
+
+  // Smart hyphenation planner.
+  // The row planner compares whole-word layout against split-piece layout.
+  const USE_SMART_HYPHENATION_PLANNER = true;
   const SMART_HYPHENATE_MIN_LETTERS = 12;
 
   let muted = false;
@@ -708,7 +712,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.9-hyphen-render-p1", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.0-hyphen-planner-p2", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1852,10 +1856,10 @@
     else renderSpinScreen();
   }
 
-  function visualWordPiecesForWord(word) {
+  function visualWordPiecesForWord(word, { allowSplit = USE_VISUAL_HYPHENATION_RENDER } = {}) {
     const letterItems = (word?.letters || []).filter(item => item.isLetter);
     const shouldSplit =
-      USE_VISUAL_HYPHENATION_RENDER &&
+      allowSplit &&
       letterItems.length >= SMART_HYPHENATE_MIN_LETTERS &&
       letterItems.length >= 10;
 
@@ -1927,13 +1931,33 @@
       .join("");
   }
 
+
+  function smartLayoutPiecesForWords(words, { allowHyphenation = false } = {}) {
+    const allowSplit = USE_VISUAL_HYPHENATION_RENDER && allowHyphenation;
+
+    return words.filter(Boolean).flatMap(word => {
+      return visualWordPiecesForWord(word, { allowSplit })
+        .map(piece => ({ word, piece }));
+    });
+  }
+
+  function smartVerseItemHtml(item, options = {}) {
+    if (item?.word && item?.piece) {
+      return verseWordPieceHtml(item.word, item.piece, options);
+    }
+
+    return verseWordHtml(item, options);
+  }
+
   function smartWordLetterCount(word) {
+    if (word?.piece?.items) return word.piece.items.filter(item => item.isLetter).length;
     return (word?.letters || []).filter(item => item.isLetter).length;
   }
 
   function smartWordUnits(word) {
     const letters = smartWordLetterCount(word);
-    return Math.max(1.25, letters + Math.max(0, letters - 1) * .12 + .72);
+    const hyphenUnits = word?.piece?.trailingHyphen ? 1.12 : 0;
+    return Math.max(1.25, letters + Math.max(0, letters - 1) * .12 + .72 + hyphenUnits);
   }
 
   function smartRowWidthFromUnits(units, start, end) {
@@ -2102,52 +2126,73 @@
     if (!cleanWords.length) return [];
 
     const box = smartAvailableBoxEstimate();
-    const units = cleanWords.map(smartWordUnits);
     const refUnits = smartReferenceUnits();
     const minLineUnits = smartMinimumLineUnits();
-    const totalUnits = units.reduce((sum, value) => sum + value, 0) + Math.max(0, units.length - 1) * .72;
+
+    const variants = [
+      {
+        items: smartLayoutPiecesForWords(cleanWords, { allowHyphenation: false }),
+        hyphenated: false
+      }
+    ];
+
+    if (USE_SMART_HYPHENATION_PLANNER) {
+      variants.push({
+        items: smartLayoutPiecesForWords(cleanWords, { allowHyphenation: true }),
+        hyphenated: true
+      });
+    }
 
     let best = null;
 
-    for (let rowCount = 1; rowCount <= cleanWords.length; rowCount += 1) {
-      const estimatedHeight =
-        rowCount +
-        Math.max(0, rowCount - 1) * .36 +
-        (refUnits > 0 ? 1.05 : 0) +
-        (refUnits > 0 ? .72 : 0);
+    for (const variant of variants) {
+      const cleanItems = variant.items.filter(Boolean);
+      if (!cleanItems.length) continue;
 
-      const aspectTargetWidth = Math.max(minLineUnits, box.ratio * estimatedHeight);
-      const averageTargetWidth = totalUnits / rowCount;
+      const units = cleanItems.map(smartWordUnits);
+      const totalUnits = units.reduce((sum, value) => sum + value, 0) + Math.max(0, units.length - 1) * .72;
+      const hyphenationPenalty = variant.hyphenated ? 18 : 0;
 
-      const targetWidths = [
-        aspectTargetWidth * .86,
-        aspectTargetWidth,
-        aspectTargetWidth * 1.14,
-        (aspectTargetWidth + averageTargetWidth) / 2,
-        averageTargetWidth
-      ].map(value => clamp(value, minLineUnits, totalUnits));
+      for (let rowCount = 1; rowCount <= cleanItems.length; rowCount += 1) {
+        const estimatedHeight =
+          rowCount +
+          Math.max(0, rowCount - 1) * .36 +
+          (refUnits > 0 ? 1.05 : 0) +
+          (refUnits > 0 ? .72 : 0);
 
-      for (const targetWidth of Array.from(new Set(targetWidths.map(value => Math.round(value * 10) / 10)))) {
-        const rows = buildSmartLinePlanForCount(cleanWords, units, rowCount, targetWidth);
-        if (!rows) continue;
+        const aspectTargetWidth = Math.max(minLineUnits, box.ratio * estimatedHeight);
+        const averageTargetWidth = totalUnits / rowCount;
 
-        const score = scoreSmartLinePlan(rows, box, refUnits);
+        const targetWidths = [
+          aspectTargetWidth * .86,
+          aspectTargetWidth,
+          aspectTargetWidth * 1.14,
+          (aspectTargetWidth + averageTargetWidth) / 2,
+          averageTargetWidth
+        ].map(value => clamp(value, minLineUnits, totalUnits));
 
-        if (!best || score < best.score) {
-          best = { rows, score };
+        for (const targetWidth of Array.from(new Set(targetWidths.map(value => Math.round(value * 10) / 10)))) {
+          const rows = buildSmartLinePlanForCount(cleanItems, units, rowCount, targetWidth);
+          if (!rows) continue;
+
+          const score = scoreSmartLinePlan(rows, box, refUnits) + hyphenationPenalty;
+
+          if (!best || score < best.score) {
+            best = { rows, score };
+          }
         }
       }
     }
 
-    return best?.rows || [cleanWords];
+    return best?.rows || [smartLayoutPiecesForWords(cleanWords, { allowHyphenation: false })];
   }
 
   function smartVerseRowsHtml(options = {}) {
     const rows = chooseSmartVerseRows(state.words);
 
-    return rows.map((rowWords, rowIndex) => {
+    return rows.map((rowItems, rowIndex) => {
       return `<div class="wob-verse-row" data-row-index="${rowIndex}">
-        ${rowWords.map(word => verseWordHtml(word, options)).join("")}
+        ${rowItems.map(item => smartVerseItemHtml(item, options)).join("")}
       </div>`;
     }).join("");
   }
