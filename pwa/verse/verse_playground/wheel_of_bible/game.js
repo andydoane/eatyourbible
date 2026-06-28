@@ -615,7 +615,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v1.6-money-align", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v1.7-spins", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -713,13 +713,17 @@
     clearTimers(); state.screen = "spin";
     if (normalRoundComplete()) { renderFinalIntro(); return; }
     state.selectedSpin = null;
+    const remainingSpins = Math.max(0, normalRoundTarget() - state.revealedLetters.size);
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-spin-layout">
         <button class="wob-wheel-shell wob-spin-wheel-button no-zoom" id="spinWheelBtn" type="button" aria-label="Spin the wheel">
           <div class="wob-wheel-pointer"></div>
           <div class="wob-wheel" id="gameWheel"><img class="wob-wheel-face" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false"></div>
         </button>
-        <div class="wob-subtitle wob-tap-wheel-hint">Tap the wheel to spin</div>
+        <div class="wob-spins-remaining" aria-label="${remainingSpins} spins remaining">
+          <span class="wob-spins-remaining-main">SPINS ${escapeHtml(remainingSpins)}</span>
+          <span class="wob-spins-remaining-sub">(Remaining Spins)</span>
+        </div>
       </div>
     `, { status: "Spin", rootClass: "is-spin-screen" });
     wireGameMenu(); document.getElementById("spinWheelBtn")?.addEventListener("click", spinWheel);
@@ -1778,7 +1782,7 @@
 
   function referenceTilesHtml(challenge) {
     const meta = state.referenceMeta || {};
-    const bookText = String(meta.book || "").trim();
+    const bookText = String(meta.book || "").trim().toUpperCase();
     const chapter = meta.chapter == null ? "" : String(meta.chapter);
     const verseText = meta.verse == null ? "" : (meta.verseEnd ? `${meta.verse}-${meta.verseEnd}` : String(meta.verse));
     if (!bookText && !chapter && !verseText) return "";

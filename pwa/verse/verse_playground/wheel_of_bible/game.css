@@ -609,9 +609,31 @@ body {
   opacity: 1;
 }
 
-.wob-tap-wheel-hint {
-  font-size: clamp(16px, 4vw, 24px);
-  padding: 7px 14px;
+.wob-spins-remaining {
+  color: #ffffff;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: clamp(24px, 6vw, 42px);
+  font-weight: 400;
+  line-height: .9;
+  text-align: center;
+  text-transform: uppercase;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.wob-spins-remaining-main,
+.wob-spins-remaining-sub {
+  display: block;
+}
+
+.wob-spins-remaining-sub {
+  font-size: .42em;
+  line-height: 1;
+  opacity: .92;
+  margin-top: .12em;
 }
 
 .wob-spin-result-card {
@@ -2131,6 +2153,7 @@ button.wob-ref-group {
 .wob-choice-tile,
 .wob-round-total-label,
 .wob-round-total-amount,
+.wob-spins-remaining,
 .wob-root.is-challenge-screen .wob-big-title,
 .wob-root.is-challenge-screen .wob-challenge-word .wob-tile,
 .wob-spin-pop-value,
@@ -2166,6 +2189,7 @@ button.wob-ref-group {
 .wob-choice-tile,
 .wob-round-total-label,
 .wob-round-total-amount,
+.wob-spins-remaining,
 .wob-root.is-challenge-screen .wob-big-title,
 .wob-spin-pop-value,
 .wob-spin-pop-title {
