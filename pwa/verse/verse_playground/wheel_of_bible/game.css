@@ -2089,6 +2089,46 @@ button.wob-ref-group {
   animation: wobPrizeOpenCard 500ms cubic-bezier(.18, 1.35, .3, 1) both;
 }
 
+.wob-spin-pop-card.is-image {
+  width: min(86vw, 430px);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+}
+
+.wob-spin-result-image,
+.wob-spin-result-image-button {
+  display: block;
+  width: 100%;
+}
+
+.wob-spin-result-image {
+  max-height: min(44vh, 360px);
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 12px 0 rgba(0, 0, 0, .20));
+}
+
+.wob-spin-result-image-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  animation: wobPrizeGiftWiggle 780ms ease-in-out infinite;
+}
+
+.wob-spin-result-image-button:disabled {
+  cursor: default;
+  animation: none;
+}
+
 .wob-challenge-bonus-pop {
   position: absolute;
   z-index: 54;

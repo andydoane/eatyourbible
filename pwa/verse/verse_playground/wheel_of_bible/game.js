@@ -22,6 +22,8 @@
   const DOLLAR_BILL_IMAGE = "./wheel_of_bible_images/dollar_bill.png";
   const CLOCK_IMAGE = "./wheel_of_bible_images/clock.png";
   const MARQUEE_IMAGE = "./wheel_of_bible_images/marquee.svg";
+  const BIBLE_BUX_SPIN_IMAGE_PREFIX = "./wheel_of_bible_images/wheel_of_bible_bible_bux_";
+  const PRIZE_SPIN_IMAGE = "./wheel_of_bible_images/wheel_of_bible_prize.svg";
   const WHEEL_ICON_HTML = `<img class="wob-shell-title-icon" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const WHEEL_BUTTON_HTML = `<img class="wob-wheel-button-img" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const HELP_OVERLAY_ID = "wheelOfBibleHelpOverlay";
@@ -166,6 +168,19 @@
 
   function formatMoney(value) {
     return `$${Math.max(0, Math.round(Number(value) || 0)).toLocaleString()}`;
+  }
+
+
+  function spinResultImageSrc(result) {
+    if (result?.kind === "prize") return PRIZE_SPIN_IMAGE;
+
+    const value = Math.max(0, Math.round(Number(result?.value) || 0));
+    return `${BIBLE_BUX_SPIN_IMAGE_PREFIX}${value}.png`;
+  }
+
+  function spinResultImageAlt(result) {
+    if (result?.kind === "prize") return "Prize!";
+    return `${formatMoney(result?.value)} Bible Bux`;
   }
 
   function totalCash() { return state.baseCash + state.prizeCash + state.finalCash; }
@@ -616,7 +631,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.0-final-dark", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.1-spin-images", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -722,7 +737,7 @@
           <div class="wob-wheel" id="gameWheel"><img class="wob-wheel-face" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false"></div>
         </button>
         <div class="wob-spins-remaining" aria-label="${remainingSpins} spins remaining">
-          <span class="wob-spins-remaining-main">SPINS X ${escapeHtml(remainingSpins)}</span>
+          <span class="wob-spins-remaining-main">SPINS x ${escapeHtml(remainingSpins)}</span>
         </div>
       </div>
     `, { status: "Spin", rootClass: "is-spin-screen" });
@@ -756,11 +771,14 @@
     overlay.className = "wob-spin-pop-overlay";
     card.appendChild(overlay);
 
+    const imageSrc = spinResultImageSrc(result);
+    const imageAlt = spinResultImageAlt(result);
+
     if (result.kind === "prize") {
       overlay.innerHTML = `
-        <div class="wob-spin-pop-card is-prize">
-          <button class="wob-prize-gift-button no-zoom" id="wobPrizeGiftButton" type="button" aria-label="Open prize">
-            🎁
+        <div class="wob-spin-pop-card is-image is-prize">
+          <button class="wob-spin-result-image-button no-zoom" id="wobPrizeGiftButton" type="button" aria-label="Open prize">
+            <img class="wob-spin-result-image" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(imageAlt)}" draggable="false">
           </button>
         </div>
       `;
@@ -775,7 +793,7 @@
 
           const popCard = overlay.querySelector(".wob-spin-pop-card");
           if (popCard) {
-            popCard.classList.add("is-opened");
+            popCard.className = "wob-spin-pop-card is-opened";
             popCard.innerHTML = `
               <div class="wob-open-prize-emoji">${escapeHtml(result.prize.emoji)}</div>
               <div class="wob-spin-pop-title">${escapeHtml(result.prize.name)}</div>
@@ -792,8 +810,8 @@
     }
 
     overlay.innerHTML = `
-      <div class="wob-spin-pop-card is-cash">
-        <div class="wob-spin-pop-value">${escapeHtml(formatMoney(result.value))}</div>
+      <div class="wob-spin-pop-card is-image is-cash">
+        <img class="wob-spin-result-image" src="${escapeHtml(imageSrc)}" alt="${escapeHtml(imageAlt)}" draggable="false">
       </div>
     `;
 
@@ -2008,7 +2026,7 @@
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-money-panel">
         <div class="wob-money-center">
-          <div class="wob-big-title">Money Total</div>
+          <div class="wob-big-title">Bible Bux</div>
           <div class="wob-money-total" id="moneyCount">$0</div>
           <div class="wob-prize-list" id="prizeList"></div>
         </div>
