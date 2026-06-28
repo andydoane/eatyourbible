@@ -2113,6 +2113,7 @@ button.wob-ref-group {
    Flat cleanup: selected shadows removed
    ========================= */
 .wob-tile,
+.wob-ref-tile,
 .wob-money-pill,
 .wob-letter-value-card,
 .wob-round-total-pop,
