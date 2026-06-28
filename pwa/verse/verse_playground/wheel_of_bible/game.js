@@ -722,7 +722,7 @@
           <div class="wob-wheel" id="gameWheel"><img class="wob-wheel-face" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false"></div>
         </button>
         <div class="wob-spins-remaining" aria-label="${remainingSpins} spins remaining">
-          <span class="wob-spins-remaining-main">SPINS ${escapeHtml(remainingSpins)}</span>
+          <span class="wob-spins-remaining-main">SPINS X ${escapeHtml(remainingSpins)}</span>
         </div>
       </div>
     `, { status: "Spin", rootClass: "is-spin-screen" });
