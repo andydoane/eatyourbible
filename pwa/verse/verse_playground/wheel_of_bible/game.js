@@ -615,7 +615,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v1.2-flat", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v1.3-bux", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -959,8 +959,8 @@
     const popup = document.createElement("div");
     popup.className = "wob-round-total-pop";
     popup.innerHTML = `
-      <div class="wob-round-total-label">Round Total</div>
-      <div class="wob-round-total-amount">${escapeHtml(formatMoney(total))}</div>
+      <div class="wob-round-total-label">Bible Bux</div>
+      <div class="wob-round-total-amount">+${escapeHtml(formatMoney(total))}</div>
     `;
     card.appendChild(popup);
 
