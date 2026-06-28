@@ -705,7 +705,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.5-smart-fit-p3", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.5-smart-fit-p3b", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2126,11 +2126,11 @@
 
     const overflows = () => {
       const rowOver = Array.from(board.querySelectorAll(".wob-verse-row, .wob-ref-board"))
-        .some(item => item.scrollWidth > fitWidth - 2);
+        .some(item => item.scrollWidth > item.clientWidth + 2);
 
       return rowOver ||
-        board.scrollWidth > fitWidth - 2 ||
-        board.scrollHeight > fitHeight - 2;
+        board.scrollWidth > fitWidth + 2 ||
+        board.scrollHeight > fitHeight + 2;
     };
 
     if (!isSmartRows) {
