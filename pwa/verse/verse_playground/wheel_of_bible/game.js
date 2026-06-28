@@ -78,15 +78,13 @@
   const NORMAL_ROUND_UNIQUE_RATIO = 0.55;
   const FINAL_ROUND_HIDE_RATIO = 0.5;
 
-  // DEBUG: Set to true to make the normal round only require 1 spin/letter.
-  // This lets you advance to the Final Round quickly while testing.
-  // IMPORTANT: Set this back to false before sharing/publishing.
-  const DEBUG_ONE_SPIN_ROUND = true;
+  // TESTING: Set to true only when you want the normal round to require 1 spin/letter.
+  // Keep false for normal gameplay.
+  const DEBUG_ONE_SPIN_ROUND = false;
 
-  // DEBUG: Smart verse layout.
-  // true = choose explicit verse rows by aspect ratio and scale them to fit the board.
-  // false = use the old flex-wrap verse board.
-  const DEBUG_SMART_VERSE_ROWS = true;
+  // Smart verse layout is the production/default board layout.
+  // Set to false only if you need to compare against the old flex-wrap board.
+  const USE_SMART_VERSE_ROWS = true;
 
   let muted = false;
   let audioCtx = null;
@@ -705,7 +703,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.7-width-first-rows", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.8-final-cleanup", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2110,13 +2108,13 @@
     const options = { allVisible, revealingLetter, animatingLetter, challenge, finalMode };
     const boardClass = [
       finalMode ? "wob-final-board" : "",
-      DEBUG_SMART_VERSE_ROWS ? "is-smart-rows" : ""
+      USE_SMART_VERSE_ROWS ? "is-smart-rows" : ""
     ].filter(Boolean).join(" ");
 
     return `
       <div class="wob-verse-card is-with-reference">
         <div class="wob-verse-board ${boardClass}" id="wobVerseBoard">
-          ${DEBUG_SMART_VERSE_ROWS ? smartVerseRowsHtml(options) : oldFlexVerseHtml(options)}
+          ${USE_SMART_VERSE_ROWS ? smartVerseRowsHtml(options) : oldFlexVerseHtml(options)}
           ${referenceTilesHtml(challenge)}
         </div>
       </div>`;
