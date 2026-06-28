@@ -1315,8 +1315,8 @@ button.wob-ref-group {
   max-height: 100%;
   overflow: hidden;
   border-radius: 34px;
-  background: #fff7db;
-  color: #332818;
+  background: #333333;
+  color: #ffffff;
   box-shadow: 0 16px 0 rgba(0, 0, 0, .25), 0 26px 48px rgba(0, 0, 0, .28);
   padding: clamp(10px, 2.5vw, 20px);
   display: flex;
@@ -1326,7 +1326,7 @@ button.wob-ref-group {
 }
 
 .wob-final-modal-panel .wob-big-title {
-  color: #332818;
+  color: #ffffff;
   text-shadow: none;
   font-size: clamp(28px, 7vw, 52px);
 }
