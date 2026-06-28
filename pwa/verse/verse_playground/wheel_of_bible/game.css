@@ -146,6 +146,23 @@ body {
   }
 }
 
+@media (min-width: 900px) and (min-height: 640px) {
+
+  .wob-root.is-board-screen .wob-stage,
+  .wob-root.is-listen-screen .wob-stage,
+  .wob-root.is-final-round-screen .wob-stage {
+    width: min(1500px, calc(100vw - 48px));
+    max-width: 1500px;
+  }
+
+  .wob-root.is-board-screen .wob-main,
+  .wob-root.is-listen-screen .wob-main,
+  .wob-root.is-final-round-screen .wob-main {
+    padding-left: clamp(18px, 3vw, 48px);
+    padding-right: clamp(18px, 3vw, 48px);
+  }
+}
+
 /* =========================
    Top bar / shell UI
    ========================= */
@@ -953,16 +970,16 @@ button.wob-ref-group {
 }
 
 .wob-ref-tile {
-  min-height: clamp(34px, calc(var(--wob-tile-size) * .88), 56px);
-  min-width: clamp(42px, calc(var(--wob-tile-size) * 1.35), 76px);
-  padding: 0 clamp(10px, calc(var(--wob-tile-size) * .32), 20px);
+  min-height: clamp(34px, calc(var(--wob-tile-size) * .88), 82px);
+  min-width: clamp(42px, calc(var(--wob-tile-size) * 1.35), 118px);
+  padding: 0 clamp(10px, calc(var(--wob-tile-size) * .32), 30px);
   border-radius: calc(var(--wob-tile-size) * .16);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
   background: #333333;
-  font-size: clamp(18px, calc(var(--wob-tile-size) * .52), 34px);
+  font-size: clamp(18px, calc(var(--wob-tile-size) * .52), 48px);
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
@@ -973,7 +990,7 @@ button.wob-ref-group {
 }
 
 .wob-ref-tile.is-book {
-  min-width: clamp(96px, calc(var(--wob-tile-size) * 4.6), 260px);
+  min-width: clamp(96px, calc(var(--wob-tile-size) * 4.6), 420px);
 }
 
 .wob-letter-burst {

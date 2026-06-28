@@ -700,7 +700,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.2-round-total-fit", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.3-desktop-fit", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1905,24 +1905,59 @@
     const board = document.getElementById("wobVerseBoard");
     const card = board?.closest(".wob-verse-card");
     if (!board || !card) return;
+
     const box = card.getBoundingClientRect();
+    const fitWidth = Math.max(80, box.width);
     const fitHeight = Math.max(80, box.height);
+    const boardRatio = fitWidth / Math.max(1, fitHeight);
+    const isWideBoard = fitWidth >= 900 && boardRatio >= 1.05;
+
     const letterCount = state.words.reduce((sum, word) => sum + word.letters.length, 0);
-    let size = clamp(Math.sqrt((box.width * fitHeight) / Math.max(24, letterCount)) * 1.38, 18, 56);
+    const maxTileSize = isWideBoard ? 88 : 56;
+    const minTileSize = isWideBoard ? 22 : 18;
+    const fitBoost = isWideBoard ? 1.62 : 1.38;
+
+    let size = clamp(
+      Math.sqrt((fitWidth * fitHeight) / Math.max(24, letterCount)) * fitBoost,
+      minTileSize,
+      maxTileSize
+    );
+
     const apply = (tileSize, lineGap) => {
       board.style.setProperty("--wob-tile-size", `${tileSize}px`);
       board.style.setProperty("--wob-tile-gap", `${Math.max(2, tileSize * .12)}px`);
       board.style.setProperty("--wob-line-gap", `${lineGap}px`);
     };
-    let lineGap = Math.max(6, size * .32);
-    for (let i = 0; i < 28; i += 1) {
+
+    let lineGap = Math.max(6, size * (isWideBoard ? .28 : .32));
+
+    for (let i = 0; i < 36; i += 1) {
       apply(size, lineGap);
-      const over = board.scrollHeight > fitHeight - 2 || board.scrollWidth > box.width - 2;
+
+      const over =
+        board.scrollHeight > fitHeight - 2 ||
+        board.scrollWidth > fitWidth - 2;
+
       if (!over) break;
-      size -= 1.5; lineGap = Math.max(4, size * .25); if (size <= 13) break;
+
+      size -= isWideBoard ? 2 : 1.5;
+      lineGap = Math.max(4, size * .25);
+
+      if (size <= 13) break;
     }
-    const extra = Math.max(0, (fitHeight - board.scrollHeight) / Math.max(1, Math.ceil(state.words.length / 4)));
-    if (extra > 8) apply(size, Math.min(size * .72, lineGap + extra * .38));
+
+    const extra = Math.max(
+      0,
+      (fitHeight - board.scrollHeight) / Math.max(1, Math.ceil(state.words.length / 4))
+    );
+
+    if (extra > 8) {
+      const extraSize = isWideBoard ? Math.min(extra * .10, 6) : 0;
+      apply(
+        Math.min(maxTileSize, size + extraSize),
+        Math.min(size * .72, lineGap + extra * .38)
+      );
+    }
   }
   window.addEventListener("resize", fitVerseBoardSoon);
   window.addEventListener("orientationchange", () => setTimeout(fitVerseBoardSoon, 250));
