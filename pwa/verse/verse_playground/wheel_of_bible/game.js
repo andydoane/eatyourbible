@@ -83,8 +83,8 @@
   // IMPORTANT: Set this back to false before sharing/publishing.
   const DEBUG_ONE_SPIN_ROUND = true;
 
-  // DEBUG: Phase 2 of the smart verse layout.
-  // true = choose explicit verse rows with candidate scoring.
+  // DEBUG: Phase 3 of the smart verse layout.
+  // true = choose explicit verse rows and scale them to fit the board.
   // false = use the old flex-wrap verse board.
   const DEBUG_SMART_VERSE_ROWS = true;
 
@@ -705,7 +705,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.4-smart-rows-p2", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.5-smart-fit-p3", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2112,24 +2112,66 @@
     const board = document.getElementById("wobVerseBoard");
     const card = board?.closest(".wob-verse-card");
     if (!board || !card) return;
+
     const box = card.getBoundingClientRect();
-    const fitHeight = Math.max(80, box.height);
-    const letterCount = state.words.reduce((sum, word) => sum + word.letters.length, 0);
-    let size = clamp(Math.sqrt((box.width * fitHeight) / Math.max(24, letterCount)) * 1.38, 18, 56);
+    const fitWidth = Math.max(80, box.width - 4);
+    const fitHeight = Math.max(80, box.height - 4);
+    const isSmartRows = board.classList.contains("is-smart-rows");
+
     const apply = (tileSize, lineGap) => {
       board.style.setProperty("--wob-tile-size", `${tileSize}px`);
       board.style.setProperty("--wob-tile-gap", `${Math.max(2, tileSize * .12)}px`);
       board.style.setProperty("--wob-line-gap", `${lineGap}px`);
     };
-    let lineGap = Math.max(6, size * .32);
-    for (let i = 0; i < 28; i += 1) {
-      apply(size, lineGap);
-      const over = board.scrollHeight > fitHeight - 2 || board.scrollWidth > box.width - 2;
-      if (!over) break;
-      size -= 1.5; lineGap = Math.max(4, size * .25); if (size <= 13) break;
+
+    const overflows = () => {
+      const rowOver = Array.from(board.querySelectorAll(".wob-verse-row, .wob-ref-board"))
+        .some(item => item.scrollWidth > fitWidth - 2);
+
+      return rowOver ||
+        board.scrollWidth > fitWidth - 2 ||
+        board.scrollHeight > fitHeight - 2;
+    };
+
+    if (!isSmartRows) {
+      const letterCount = state.words.reduce((sum, word) => sum + word.letters.length, 0);
+      let size = clamp(Math.sqrt((fitWidth * fitHeight) / Math.max(24, letterCount)) * 1.38, 18, 56);
+      let lineGap = Math.max(6, size * .32);
+
+      for (let i = 0; i < 28; i += 1) {
+        apply(size, lineGap);
+        if (!overflows()) break;
+
+        size -= 1.5;
+        lineGap = Math.max(4, size * .25);
+        if (size <= 13) break;
+      }
+
+      const extra = Math.max(0, (fitHeight - board.scrollHeight) / Math.max(1, Math.ceil(state.words.length / 4)));
+      if (extra > 8) apply(size, Math.min(size * .72, lineGap + extra * .38));
+      return;
     }
-    const extra = Math.max(0, (fitHeight - board.scrollHeight) / Math.max(1, Math.ceil(state.words.length / 4)));
-    if (extra > 8) apply(size, Math.min(size * .72, lineGap + extra * .38));
+
+    const maxTileSize = fitWidth < 520
+      ? 78
+      : fitWidth < 760
+        ? 88
+        : 98;
+
+    let size = maxTileSize;
+    let lineGap = Math.max(5, size * .27);
+
+    for (let i = 0; i < 70; i += 1) {
+      apply(size, lineGap);
+      if (!overflows()) break;
+
+      size -= size > 48 ? 1.25 : 1;
+      lineGap = Math.max(4, size * .23);
+
+      if (size <= 13) break;
+    }
+
+    apply(Math.max(13, size), Math.max(4, lineGap));
   }
   window.addEventListener("resize", fitVerseBoardSoon);
   window.addEventListener("orientationchange", () => setTimeout(fitVerseBoardSoon, 250));
