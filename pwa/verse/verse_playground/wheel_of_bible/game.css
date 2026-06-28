@@ -2160,7 +2160,6 @@ button.wob-ref-group {
 
 /* Other centered Chunk text uses an em-based nudge. */
 .wob-intro-word,
-.wob-money-pill,
 .wob-letter-value-money,
 .wob-letter-value-label,
 .wob-letter-choice,
@@ -2171,6 +2170,13 @@ button.wob-ref-group {
 .wob-spin-pop-value,
 .wob-spin-pop-title {
   padding-top: var(--wob-chunk-text-y-nudge);
+}
+
+/* The top-right money pill starts with 7px top/bottom padding,
+   so it needs an added nudge instead of replacing the top padding. */
+.wob-money-pill {
+  padding-top: calc(7px + var(--wob-chunk-text-y-nudge));
+  padding-bottom: 7px;
 }
 
 /* =========================
