@@ -2141,19 +2141,36 @@ button.wob-ref-group {
 }
 
 /* =========================
-   Chunk font tile alignment
+   Chunk font optical alignment
    ========================= */
 :root {
   --wob-chunk-tile-y-nudge: 0.092;
   --wob-chunk-ref-y-nudge: 0.092;
+  --wob-chunk-text-y-nudge: .15em;
 }
 
+/* Tile-sized elements use the tile height for the nudge. */
 .wob-tile {
   padding-top: calc(var(--wob-tile-size) * var(--wob-chunk-tile-y-nudge));
 }
 
 .wob-ref-tile {
   padding-top: calc(var(--wob-tile-size) * var(--wob-chunk-ref-y-nudge));
+}
+
+/* Other centered Chunk text uses an em-based nudge. */
+.wob-intro-word,
+.wob-money-pill,
+.wob-letter-value-money,
+.wob-letter-value-label,
+.wob-letter-choice,
+.wob-choice-tile,
+.wob-round-total-label,
+.wob-round-total-amount,
+.wob-root.is-challenge-screen .wob-big-title,
+.wob-spin-pop-value,
+.wob-spin-pop-title {
+  padding-top: var(--wob-chunk-text-y-nudge);
 }
 
 /* =========================
