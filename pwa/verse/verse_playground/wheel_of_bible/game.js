@@ -705,7 +705,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.6-aspect-rows", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.7-width-first-rows", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1892,7 +1892,7 @@
 
 
   function smartMinimumLineUnits() {
-    return 5;
+    return 4.6;
   }
 
   function smartReferenceUnits() {
@@ -1991,33 +1991,53 @@
   }
 
   function scoreSmartLinePlan(rows, box, refUnits) {
+    const minLineUnits = smartMinimumLineUnits();
+
     const rowWidths = rows.map(row => row.reduce((sum, word, index) => {
       return sum + smartWordUnits(word) + (index > 0 ? .72 : 0);
     }, 0));
 
     const verseWidth = Math.max(1, ...rowWidths);
-    const layoutWidth = Math.max(verseWidth, refUnits);
     const layoutHeight =
       rows.length +
       Math.max(0, rows.length - 1) * .36 +
       (refUnits > 0 ? 1.05 : 0) +
       (refUnits > 0 ? .72 : 0);
 
-    const layoutRatio = layoutWidth / Math.max(1, layoutHeight);
-    const tileByWidth = box.width / Math.max(1, layoutWidth);
+    const idealVerseWidth = Math.max(minLineUnits, box.ratio * layoutHeight);
+    const verseRatio = verseWidth / Math.max(1, layoutHeight);
+    const tileByWidth = box.width / Math.max(1, Math.max(verseWidth, refUnits * .72));
     const tileByHeight = box.height / Math.max(1, layoutHeight);
     const tileSize = Math.min(tileByWidth, tileByHeight);
 
     const averageWidth = rowWidths.reduce((sum, value) => sum + value, 0) / Math.max(1, rowWidths.length);
-    const balancePenalty = rowWidths.reduce((sum, value) => sum + Math.abs(value - averageWidth), 0) / Math.max(1, rowWidths.length);
-    const aspectPenalty = Math.abs(Math.log(layoutRatio / Math.max(.1, box.ratio))) * 120;
-    const orphanPenalty = rows.reduce((sum, row, index) => {
-      if (row.length !== 1) return sum;
-      if (rows.length <= 2) return sum;
-      return sum + (index === rows.length - 1 ? 16 : 8);
+
+    const aspectPenalty = Math.abs(Math.log(verseRatio / Math.max(.1, box.ratio))) * 330;
+
+    const widestLinePenalty = Math.max(0, verseWidth - idealVerseWidth);
+    const widestPenalty = widestLinePenalty * widestLinePenalty * 28;
+
+    const balancePenalty = rowWidths.reduce((sum, value) => {
+      return sum + Math.abs(value - averageWidth);
+    }, 0) / Math.max(1, rowWidths.length);
+
+    const shortLinePenalty = rowWidths.reduce((sum, width) => {
+      const shortBy = Math.max(0, minLineUnits - width);
+      return sum + shortBy * shortBy * 95;
     }, 0);
 
-    return aspectPenalty + balancePenalty * 2.4 + orphanPenalty - tileSize * 1.8;
+    const tinySingleWordPenalty = rows.reduce((sum, row, index) => {
+      if (row.length !== 1) return sum;
+      const width = rowWidths[index] || 0;
+      return width < minLineUnits ? sum + 120 : sum;
+    }, 0);
+
+    return aspectPenalty +
+      widestPenalty +
+      balancePenalty * .65 +
+      shortLinePenalty +
+      tinySingleWordPenalty -
+      tileSize * .45;
   }
 
   function chooseSmartVerseRows(words) {
@@ -2043,10 +2063,11 @@
       const averageTargetWidth = totalUnits / rowCount;
 
       const targetWidths = [
+        aspectTargetWidth * .86,
         aspectTargetWidth,
+        aspectTargetWidth * 1.14,
         (aspectTargetWidth + averageTargetWidth) / 2,
-        averageTargetWidth,
-        aspectTargetWidth * 1.18
+        averageTargetWidth
       ].map(value => clamp(value, minLineUnits, totalUnits));
 
       for (const targetWidth of Array.from(new Set(targetWidths.map(value => Math.round(value * 10) / 10)))) {
