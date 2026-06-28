@@ -2109,6 +2109,21 @@ button.wob-ref-group {
   letter-spacing: .01em;
 }
 
+/* =========================
+   Flat cleanup: selected shadows removed
+   ========================= */
+.wob-tile,
+.wob-money-pill,
+.wob-letter-value-card,
+.wob-round-total-pop,
+.wob-challenge-bonus-pop {
+  box-shadow: none;
+}
+
+.wob-letter-value-emoji {
+  filter: none;
+}
+
 @keyframes wobCenteredPopIn {
   0% {
     opacity: 0;
