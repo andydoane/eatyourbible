@@ -14,6 +14,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "WOB Chunk";
+  src: url("./wheel_of_bible_fonts/Chunk.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --wob-yellow: #ffc751;
   --wob-gold: #f7a928;
@@ -2105,6 +2113,29 @@ button.wob-ref-group {
 .wob-challenge-bonus-label,
 .wob-challenge-bonus-amount {
   font-family: "DD2 Titan One", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: .01em;
+}
+
+
+/* =========================
+   Chunk font targets
+   ========================= */
+.wob-intro-word,
+.wob-tile,
+.wob-ref-tile,
+.wob-money-pill,
+.wob-letter-value-money,
+.wob-letter-value-label,
+.wob-letter-choice,
+.wob-choice-tile,
+.wob-round-total-label,
+.wob-round-total-amount,
+.wob-root.is-challenge-screen .wob-big-title,
+.wob-root.is-challenge-screen .wob-challenge-word .wob-tile,
+.wob-spin-pop-value,
+.wob-spin-pop-title {
+  font-family: "WOB Chunk", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-weight: 400;
   letter-spacing: .01em;
 }
