@@ -2141,6 +2141,22 @@ button.wob-ref-group {
 }
 
 /* =========================
+   Chunk font tile alignment
+   ========================= */
+:root {
+  --wob-chunk-tile-y-nudge: 0.092;
+  --wob-chunk-ref-y-nudge: 0.092;
+}
+
+.wob-tile {
+  padding-top: calc(var(--wob-tile-size) * var(--wob-chunk-tile-y-nudge));
+}
+
+.wob-ref-tile {
+  padding-top: calc(var(--wob-tile-size) * var(--wob-chunk-ref-y-nudge));
+}
+
+/* =========================
    Flat cleanup: selected shadows removed
    ========================= */
 .wob-tile,
@@ -2155,6 +2171,8 @@ button.wob-ref-group {
 .wob-letter-value-emoji {
   filter: none;
 }
+
+
 
 @keyframes wobCenteredPopIn {
   0% {
