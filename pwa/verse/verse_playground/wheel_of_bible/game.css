@@ -1875,9 +1875,11 @@ button.wob-ref-group {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: min(88%, 440px);
+  width: max-content;
+  min-width: min(88vw, 360px);
+  max-width: min(96vw, 620px);
   border-radius: 34px;
-  padding: clamp(18px, 5vw, 30px);
+  padding: clamp(18px, 5vw, 30px) clamp(22px, 6vw, 42px);
   color: #ffffff;
   background: #2f7a32;
   box-shadow:
@@ -1899,10 +1901,11 @@ button.wob-ref-group {
 
 .wob-round-total-amount {
   margin-top: 6px;
-  font-size: clamp(42px, 11vw, 82px);
+  font-size: clamp(40px, 9.5vw, 82px);
   font-weight: 900;
   line-height: .9;
   color: #ffffff;
+  white-space: nowrap;
 }
 
 .wob-round-total-pop.is-leaving {
