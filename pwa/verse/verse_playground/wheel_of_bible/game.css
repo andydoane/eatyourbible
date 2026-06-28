@@ -2112,6 +2112,7 @@ button.wob-ref-group {
   user-select: none;
   -webkit-user-drag: none;
   filter: drop-shadow(0 12px 0 rgba(0, 0, 0, .20));
+  animation: wobSpinResultImagePop 560ms cubic-bezier(.18, 1.45, .28, 1) both;
 }
 
 .wob-spin-result-image-button {
@@ -2288,6 +2289,23 @@ button.wob-ref-group {
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(.82);
+  }
+}
+
+@keyframes wobSpinResultImagePop {
+  0% {
+    opacity: 0;
+    transform: scale(.58) rotate(-5deg);
+  }
+
+  62% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
   }
 }
 

@@ -24,6 +24,8 @@
   const MARQUEE_IMAGE = "./wheel_of_bible_images/marquee.svg";
   const BIBLE_BUX_SPIN_IMAGE_PREFIX = "./wheel_of_bible_images/wheel_of_bible_bible_bux_";
   const PRIZE_SPIN_IMAGE = "./wheel_of_bible_images/wheel_of_bible_prize.svg";
+  const SPIN_RESULT_IMAGE_HOLD_MS = 1550;
+  const SPIN_RESULT_IMAGE_LOAD_TIMEOUT_MS = 1400;
   const WHEEL_ICON_HTML = `<img class="wob-shell-title-icon" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const WHEEL_BUTTON_HTML = `<img class="wob-wheel-button-img" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const HELP_OVERLAY_ID = "wheelOfBibleHelpOverlay";
@@ -181,6 +183,73 @@
   function spinResultImageAlt(result) {
     if (result?.kind === "prize") return "Prize!";
     return `${formatMoney(result?.value)} Bible Bux`;
+  }
+
+
+  const spinResultImageCache = new Map();
+
+  function allSpinResultImageSrcs() {
+    const srcs = WHEEL_VALUES
+      .filter(item => item.kind === "cash")
+      .map(item => `${BIBLE_BUX_SPIN_IMAGE_PREFIX}${Math.max(0, Math.round(Number(item.value) || 0))}.png`);
+
+    srcs.push(PRIZE_SPIN_IMAGE);
+    return Array.from(new Set(srcs));
+  }
+
+  function preloadImage(src) {
+    const clean = String(src || "").trim();
+    if (!clean) return Promise.resolve(false);
+    if (spinResultImageCache.has(clean)) return spinResultImageCache.get(clean);
+
+    const promise = new Promise(resolve => {
+      const img = new Image();
+
+      img.onload = async () => {
+        try { await img.decode?.(); } catch (err) { }
+        resolve(true);
+      };
+
+      img.onerror = () => resolve(false);
+      img.src = clean;
+    });
+
+    spinResultImageCache.set(clean, promise);
+    return promise;
+  }
+
+  function preloadSpinResultImages() {
+    allSpinResultImageSrcs().forEach(src => preloadImage(src));
+  }
+
+  async function waitForSpinResultImage(scope) {
+    const img = scope?.querySelector?.(".wob-spin-result-image");
+    if (!img) return;
+
+    if (img.complete && img.naturalWidth > 0) {
+      try { await img.decode?.(); } catch (err) { }
+      return;
+    }
+
+    await new Promise(resolve => {
+      let done = false;
+      let fallbackId = null;
+
+      const finish = () => {
+        if (done) return;
+        done = true;
+        img.removeEventListener("load", finish);
+        img.removeEventListener("error", finish);
+        if (fallbackId) clearTimeout(fallbackId);
+        resolve();
+      };
+
+      img.addEventListener("load", finish, { once: true });
+      img.addEventListener("error", finish, { once: true });
+      fallbackId = setTimeout(finish, SPIN_RESULT_IMAGE_LOAD_TIMEOUT_MS);
+    });
+
+    try { await img.decode?.(); } catch (err) { }
   }
 
   function totalCash() { return state.baseCash + state.prizeCash + state.finalCash; }
@@ -631,7 +700,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.1-spin-images", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.2-preload-spin", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -639,7 +708,12 @@
   }
 
   async function beginRun() {
-    clearTimers(); await loadVerseJson(); buildVerseModel(); resetRunState(); await playIntroSequence();
+    clearTimers();
+    await loadVerseJson();
+    buildVerseModel();
+    resetRunState();
+    preloadSpinResultImages();
+    await playIntroSequence();
   }
 
   function resetRunState() {
@@ -783,6 +857,8 @@
         </div>
       `;
 
+      await waitForSpinResultImage(overlay);
+
       await new Promise(resolve => {
         const btn = document.getElementById("wobPrizeGiftButton");
         if (!btn) { resolve(); return; }
@@ -815,8 +891,9 @@
       </div>
     `;
 
+    await waitForSpinResultImage(overlay);
     playGood();
-    await sleep(950);
+    await sleep(SPIN_RESULT_IMAGE_HOLD_MS);
     renderSelectLetterScreen();
   }
 
