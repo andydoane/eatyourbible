@@ -93,7 +93,7 @@
   // Smart hyphenation planner.
   // The row planner compares whole-word layout against split-piece layout.
   const USE_SMART_HYPHENATION_PLANNER = true;
-  const SMART_HYPHENATE_MIN_LETTERS = 12;
+  const SMART_HYPHENATE_MIN_LETTERS = 11;
 
   let muted = false;
   let audioCtx = null;
