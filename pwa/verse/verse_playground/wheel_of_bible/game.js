@@ -83,8 +83,8 @@
   // IMPORTANT: Set this back to false before sharing/publishing.
   const DEBUG_ONE_SPIN_ROUND = true;
 
-  // DEBUG: Phase 1 of the smart verse layout.
-  // true = render explicit verse rows instead of relying on browser flex-wrap.
+  // DEBUG: Phase 2 of the smart verse layout.
+  // true = choose explicit verse rows with candidate scoring.
   // false = use the old flex-wrap verse board.
   const DEBUG_SMART_VERSE_ROWS = true;
 
@@ -705,7 +705,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.3-smart-rows-p1", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.4-smart-rows-p2", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1870,45 +1870,190 @@
     </${tag}>`;
   }
 
-  function simpleSmartVerseRowPattern(wordCount) {
-    const count = Math.max(0, Math.round(Number(wordCount) || 0));
-    if (!count) return [];
+  function smartWordLetterCount(word) {
+    return (word?.letters || []).filter(item => item.isLetter).length;
+  }
 
-    const rowCount = Math.max(
-      1,
-      Math.min(
-        count,
-        Math.round(clamp(Math.sqrt(count * 2.1), 2, 9))
-      )
-    );
+  function smartWordUnits(word) {
+    const letters = smartWordLetterCount(word);
+    return Math.max(1.25, letters + Math.max(0, letters - 1) * .12 + .72);
+  }
+
+  function smartRowWidthFromUnits(units, start, end) {
+    let width = 0;
+
+    for (let i = start; i < end; i += 1) {
+      width += Number(units[i]) || 0;
+      if (i > start) width += .72;
+    }
+
+    return width;
+  }
+
+  function smartReferenceUnits() {
+    const meta = state.referenceMeta || {};
+    const bookText = String(meta.book || "").trim();
+    const chapterText = meta.chapter ? String(meta.chapter) : "";
+    const verseText = meta.reference || (meta.verse ? String(meta.verse) : "");
+
+    const parts = [];
+
+    if (bookText) {
+      const bookLetters = normalizeLetters(bookText).length || bookText.length;
+      parts.push(clamp(bookLetters * .58 + 2.4, 4.6, 11.5));
+    }
+
+    if (chapterText) {
+      parts.push(clamp(chapterText.length * .75 + 1.8, 2.4, 4.2));
+    }
+
+    if (verseText) {
+      parts.push(clamp(String(verseText).length * .62 + 1.8, 2.4, 5.2));
+    }
+
+    if (!parts.length) return 0;
+
+    return parts.reduce((sum, value) => sum + value, 0) + Math.max(0, parts.length - 1) * .62;
+  }
+
+  function smartAvailableBoxEstimate() {
+    const stageWidth = Math.min(920, Math.max(280, window.innerWidth - 20));
+    const stageHeight = Math.max(280, window.innerHeight - 68);
+
+    return {
+      width: stageWidth,
+      height: stageHeight,
+      ratio: stageWidth / Math.max(1, stageHeight)
+    };
+  }
+
+  function buildSmartLinePlanForCount(words, units, lineCount, targetWidth) {
+    const n = words.length;
+    const rowsWanted = Math.max(1, Math.min(n, Math.round(Number(lineCount) || 1)));
+    const dp = Array.from({ length: rowsWanted + 1 }, () => Array(n + 1).fill(null));
+
+    dp[0][0] = { score: 0, prev: -1 };
+
+    for (let row = 1; row <= rowsWanted; row += 1) {
+      for (let end = row; end <= n; end += 1) {
+        let best = null;
+
+        for (let start = row - 1; start < end; start += 1) {
+          const previous = dp[row - 1][start];
+          if (!previous) continue;
+
+          const rowWidth = smartRowWidthFromUnits(units, start, end);
+          const diff = rowWidth - targetWidth;
+          const wordCount = end - start;
+          const shortRowPenalty = wordCount === 1 && n > rowsWanted ? 18 : 0;
+          const tooWidePenalty = rowWidth > targetWidth ? Math.abs(diff) * 3.2 : 0;
+          const score = previous.score + diff * diff + shortRowPenalty + tooWidePenalty;
+
+          if (!best || score < best.score) {
+            best = { score, prev: start };
+          }
+        }
+
+        dp[row][end] = best;
+      }
+    }
+
+    if (!dp[rowsWanted][n]) return null;
 
     const rows = [];
-    let left = count;
+    let end = n;
 
-    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
-      const rowsLeft = rowCount - rowIndex;
-      const size = Math.max(1, Math.ceil(left / rowsLeft));
-      rows.push(size);
-      left -= size;
+    for (let row = rowsWanted; row > 0; row -= 1) {
+      const item = dp[row][end];
+      if (!item) return null;
+
+      rows.unshift(words.slice(item.prev, end));
+      end = item.prev;
     }
 
     return rows;
   }
 
+  function scoreSmartLinePlan(rows, box, refUnits) {
+    const rowWidths = rows.map(row => row.reduce((sum, word, index) => {
+      return sum + smartWordUnits(word) + (index > 0 ? .72 : 0);
+    }, 0));
+
+    const verseWidth = Math.max(1, ...rowWidths);
+    const layoutWidth = Math.max(verseWidth, refUnits);
+    const layoutHeight =
+      rows.length +
+      Math.max(0, rows.length - 1) * .36 +
+      (refUnits > 0 ? 1.05 : 0) +
+      (refUnits > 0 ? .72 : 0);
+
+    const layoutRatio = layoutWidth / Math.max(1, layoutHeight);
+    const tileByWidth = box.width / Math.max(1, layoutWidth);
+    const tileByHeight = box.height / Math.max(1, layoutHeight);
+    const tileSize = Math.min(tileByWidth, tileByHeight);
+
+    const averageWidth = rowWidths.reduce((sum, value) => sum + value, 0) / Math.max(1, rowWidths.length);
+    const balancePenalty = rowWidths.reduce((sum, value) => sum + Math.abs(value - averageWidth), 0) / Math.max(1, rowWidths.length);
+    const aspectPenalty = Math.abs(Math.log(layoutRatio / Math.max(.1, box.ratio))) * 120;
+    const orphanPenalty = rows.reduce((sum, row, index) => {
+      if (row.length !== 1) return sum;
+      if (rows.length <= 2) return sum;
+      return sum + (index === rows.length - 1 ? 16 : 8);
+    }, 0);
+
+    return aspectPenalty + balancePenalty * 2.4 + orphanPenalty - tileSize * 1.8;
+  }
+
+  function chooseSmartVerseRows(words) {
+    const cleanWords = words.filter(Boolean);
+    if (!cleanWords.length) return [];
+
+    const box = smartAvailableBoxEstimate();
+    const units = cleanWords.map(smartWordUnits);
+    const refUnits = smartReferenceUnits();
+    const totalUnits = units.reduce((sum, value) => sum + value, 0) + Math.max(0, units.length - 1) * .72;
+
+    const maxRows = Math.min(
+      cleanWords.length,
+      Math.max(2, Math.ceil(Math.sqrt(cleanWords.length * 2.7)) + 4)
+    );
+
+    let best = null;
+
+    for (let rowCount = 1; rowCount <= maxRows; rowCount += 1) {
+      const estimatedHeight =
+        rowCount +
+        Math.max(0, rowCount - 1) * .36 +
+        (refUnits > 0 ? 1.05 : 0) +
+        (refUnits > 0 ? .72 : 0);
+
+      const aspectTargetWidth = Math.max(refUnits, box.ratio * estimatedHeight);
+      const averageTargetWidth = totalUnits / rowCount;
+      const targetWidth = Math.max(aspectTargetWidth, averageTargetWidth * .88);
+
+      const rows = buildSmartLinePlanForCount(cleanWords, units, rowCount, targetWidth);
+      if (!rows) continue;
+
+      const score = scoreSmartLinePlan(rows, box, refUnits);
+
+      if (!best || score < best.score) {
+        best = { rows, score };
+      }
+    }
+
+    return best?.rows || [cleanWords];
+  }
+
   function smartVerseRowsHtml(options = {}) {
-    const words = state.words.filter(Boolean);
-    const rowSizes = simpleSmartVerseRowPattern(words.length);
-    let offset = 0;
+    const rows = chooseSmartVerseRows(state.words);
 
-    return rowSizes.map((rowSize, rowIndex) => {
-      const rowWords = words.slice(offset, offset + rowSize);
-      offset += rowSize;
-
+    return rows.map((rowWords, rowIndex) => {
       return `<div class="wob-verse-row" data-row-index="${rowIndex}">
         ${rowWords.map(word => verseWordHtml(word, options)).join("")}
       </div>`;
     }).join("");
   }
+
 
   function oldFlexVerseHtml(options = {}) {
     return state.tokens.map(token => {
