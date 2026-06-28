@@ -81,7 +81,7 @@
   // DEBUG: Set to true to make the normal round only require 1 spin/letter.
   // This lets you advance to the Final Round quickly while testing.
   // IMPORTANT: Set this back to false before sharing/publishing.
-  const DEBUG_ONE_SPIN_ROUND = false;
+  const DEBUG_ONE_SPIN_ROUND = true;
 
   // DEBUG: Phase 1 of the smart verse layout.
   // true = render explicit verse rows instead of relying on browser flex-wrap.
