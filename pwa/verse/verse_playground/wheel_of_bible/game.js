@@ -86,12 +86,9 @@
   // Set to false only if you need to compare against the old flex-wrap board.
   const USE_SMART_VERSE_ROWS = true;
 
-  // Visual hyphen support.
-  // The renderer can safely show long words as split visual pieces.
+  // Long-word hyphenation support.
+  // The row planner may split long words into visual pieces when it improves fit.
   const USE_VISUAL_HYPHENATION_RENDER = true;
-
-  // Smart hyphenation planner.
-  // The row planner compares whole-word layout against split-piece layout.
   const USE_SMART_HYPHENATION_PLANNER = true;
   const SMART_HYPHENATE_MIN_LETTERS = 11;
 
@@ -712,7 +709,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.0-hyphen-planner-p2", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.1-hyphen-cleanup", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
