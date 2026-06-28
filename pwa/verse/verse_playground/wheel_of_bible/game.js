@@ -708,7 +708,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.8-final-cleanup", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.9-hyphen-render-p1", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2173,7 +2173,7 @@
     return `
       <div class="wob-verse-card is-with-reference">
         <div class="wob-verse-board ${boardClass}" id="wobVerseBoard">
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.9-hyphen-render-p1", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+          ${USE_SMART_VERSE_ROWS ? smartVerseRowsHtml(options) : oldFlexVerseHtml(options)}
           ${referenceTilesHtml(challenge)}
         </div>
       </div>`;
