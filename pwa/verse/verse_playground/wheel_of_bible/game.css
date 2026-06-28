@@ -411,7 +411,7 @@ body {
 }
 
 .wob-intro-wheel-wrap {
-  height: min(42vh, 320px);
+  height: min(40vh, 310px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -419,26 +419,28 @@ body {
 }
 
 .wob-intro-words {
-  height: clamp(92px, 20vh, 160px);
+  min-height: clamp(96px, 19vh, 170px);
+  margin-top: clamp(16px, 3.5vh, 44px);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: clamp(7px, 2vw, 18px);
+  gap: clamp(10px, 3vw, 26px);
   flex-wrap: wrap;
+  padding: 0 clamp(8px, 3vw, 24px);
 }
 
 .wob-intro-word {
   opacity: 0;
   transform: translateY(18px) scale(.72) rotate(-4deg);
   display: inline-flex;
-  border-radius: 22px;
-  padding: 8px 14px;
-  background: #fff7db;
-  color: #332818;
-  font-size: clamp(34px, 10vw, 78px);
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: clamp(40px, 11vw, 92px);
   font-weight: 900;
-  line-height: .9;
-  box-shadow: 0 8px 0 rgba(0, 0, 0, .20);
+  line-height: .86;
+  box-shadow: none;
   text-shadow: none;
 }
 
@@ -2182,7 +2184,6 @@ button.wob-ref-group {
 }
 
 /* Other centered Chunk text uses an em-based nudge. */
-.wob-intro-word,
 .wob-letter-value-money,
 .wob-letter-value-label,
 .wob-letter-choice,
