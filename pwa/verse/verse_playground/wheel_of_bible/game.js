@@ -86,6 +86,11 @@
   // Set to false only if you need to compare against the old flex-wrap board.
   const USE_SMART_VERSE_ROWS = true;
 
+  // Phase 1 visual hyphen support.
+  // This proves split-word rendering/challenge behavior before the row planner uses it.
+  const USE_VISUAL_HYPHENATION_RENDER = true;
+  const SMART_HYPHENATE_MIN_LETTERS = 12;
+
   let muted = false;
   let audioCtx = null;
   let masterGain = null;
@@ -1602,7 +1607,9 @@
     `, { status: "Find Tile", rootClass: "is-board-screen is-find-screen" });
     wireGameMenu(); fitVerseBoardSoon();
     const selector = challenge.type === "reference" ? `[data-ref-kind="${challenge.refKind}"]` : `[data-word-index="${challenge.wordIndex}"]`;
-    document.querySelector(selector)?.addEventListener("click", () => renderChallenge(challenge));
+    document.querySelectorAll(selector).forEach(item => {
+      item.addEventListener("click", () => renderChallenge(challenge));
+    });
   }
 
   function makeChoiceLetters(correctLetters, sourceLetters, targetCount = 9) {
@@ -1845,16 +1852,53 @@
     else renderSpinScreen();
   }
 
-  function verseWordHtml(word, { allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}) {
+  function visualWordPiecesForWord(word) {
+    const letterItems = (word?.letters || []).filter(item => item.isLetter);
+    const shouldSplit =
+      USE_VISUAL_HYPHENATION_RENDER &&
+      letterItems.length >= SMART_HYPHENATE_MIN_LETTERS &&
+      letterItems.length >= 10;
+
+    if (!shouldSplit) {
+      return [{
+        items: letterItems,
+        pieceIndex: 0,
+        pieceCount: 1,
+        trailingHyphen: false
+      }];
+    }
+
+    const splitAt = Math.round(clamp(Math.floor(letterItems.length / 2), 5, letterItems.length - 5));
+
+    return [
+      {
+        items: letterItems.slice(0, splitAt),
+        pieceIndex: 0,
+        pieceCount: 2,
+        trailingHyphen: true
+      },
+      {
+        items: letterItems.slice(splitAt),
+        pieceIndex: 1,
+        pieceCount: 2,
+        trailingHyphen: false
+      }
+    ];
+  }
+
+  function verseWordPieceHtml(word, piece, { allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}) {
     const isChallenge = challenge?.type === "word" && challenge.wordIndex === word.index;
     const finalMissingCount = finalMode ? finalMissingItemsForWord(word).length : 0;
     const solved = finalMode ? state.finalSolvedWordIndices.has(word.index) : false;
     const tag = isChallenge || (finalMode && finalMissingCount > 0) ? "button" : "span";
-    const attrs = tag === "button" ? `type="button" data-word-index="${word.index}"` : `data-word-index="${word.index}"`;
+    const attrs = tag === "button"
+      ? `type="button" data-word-index="${word.index}" data-word-piece="${piece.pieceIndex}"`
+      : `data-word-index="${word.index}" data-word-piece="${piece.pieceIndex}"`;
+    const pieceClass = piece.pieceCount > 1
+      ? (piece.pieceIndex === 0 ? "is-hyphen-piece" : "is-hyphen-continuation")
+      : "";
 
-    return `<${tag} class="wob-word ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
-      ${word.letters.map(item => {
-      if (!item.isLetter) return "";
+    const tileHtml = piece.items.map(item => {
       const tileKey = tileKeyFor(word.index, item.index);
       const hidden = finalMode
         ? (state.finalHiddenTileKeys.has(tileKey) && !state.finalFilledTileKeys.has(tileKey))
@@ -1863,9 +1907,24 @@
       const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
       const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
       const tileText = isChallenge ? "?" : (hidden ? "" : item.normalized);
+
       return `<span class="wob-tile ${hidden && !isChallenge ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile} ${isChallenge ? "is-question-tile" : ""}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${escapeHtml(tileText)}</span>`;
-    }).join("")}
+    }).join("");
+
+    const lastIndex = piece.items[piece.items.length - 1]?.index || 0;
+    const hyphenHtml = piece.trailingHyphen
+      ? `<span class="wob-tile is-hyphen-tile ${isChallenge ? "is-wiggle-tile" : ""}" aria-hidden="true" style="--tile-bg:#8b8b8b;--wiggle-delay:${(lastIndex + 1) * 70}ms">-</span>`
+      : "";
+
+    return `<${tag} class="wob-word ${pieceClass} ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
+      ${tileHtml}${hyphenHtml}
     </${tag}>`;
+  }
+
+  function verseWordHtml(word, options = {}) {
+    return visualWordPiecesForWord(word)
+      .map(piece => verseWordPieceHtml(word, piece, options))
+      .join("");
   }
 
   function smartWordLetterCount(word) {
@@ -2114,7 +2173,7 @@
     return `
       <div class="wob-verse-card is-with-reference">
         <div class="wob-verse-board ${boardClass}" id="wobVerseBoard">
-          ${USE_SMART_VERSE_ROWS ? smartVerseRowsHtml(options) : oldFlexVerseHtml(options)}
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.9-hyphen-render-p1", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
           ${referenceTilesHtml(challenge)}
         </div>
       </div>`;

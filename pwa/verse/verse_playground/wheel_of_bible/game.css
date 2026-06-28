@@ -868,6 +868,14 @@ body {
   cursor: default;
 }
 
+.wob-word.is-hyphen-piece {
+  margin-right: calc(var(--wob-tile-gap) * .18);
+}
+
+.wob-word.is-hyphen-continuation {
+  margin-left: calc(var(--wob-tile-gap) * .18);
+}
+
 button.wob-word {
   cursor: pointer;
 }
@@ -881,21 +889,10 @@ button.wob-word {
   filter: grayscale(.35);
 }
 
-.wob-tile {
-  width: var(--wob-tile-size);
-  height: var(--wob-tile-size);
-  border-radius: calc(var(--wob-tile-size) * .24);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #332818;
-  background: var(--tile-bg, #ffc751);
-  font-size: calc(var(--wob-tile-size) * .62);
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
-  box-shadow: 0 calc(var(--wob-tile-size) * .12) 0 rgba(0, 0, 0, .18), inset 0 calc(var(--wob-tile-size) * -.13) 0 rgba(0, 0, 0, .10), inset 0 0 0 2px rgba(255, 255, 255, .24);
-  transform-origin: center;
+
+.wob-tile.is-hyphen-tile {
+  color: #ffffff;
+  background: #8b8b8b;
 }
 
 .wob-tile.is-hidden {
