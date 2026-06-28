@@ -83,8 +83,8 @@
   // IMPORTANT: Set this back to false before sharing/publishing.
   const DEBUG_ONE_SPIN_ROUND = true;
 
-  // DEBUG: Phase 3 of the smart verse layout.
-  // true = choose explicit verse rows and scale them to fit the board.
+  // DEBUG: Smart verse layout.
+  // true = choose explicit verse rows by aspect ratio and scale them to fit the board.
   // false = use the old flex-wrap verse board.
   const DEBUG_SMART_VERSE_ROWS = true;
 
@@ -705,7 +705,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.5-smart-fit-p3b", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v2.6-aspect-rows", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1890,6 +1890,11 @@
     return width;
   }
 
+
+  function smartMinimumLineUnits() {
+    return 5;
+  }
+
   function smartReferenceUnits() {
     const meta = state.referenceMeta || {};
     const bookText = String(meta.book || "").trim();
@@ -1930,6 +1935,7 @@
   function buildSmartLinePlanForCount(words, units, lineCount, targetWidth) {
     const n = words.length;
     const rowsWanted = Math.max(1, Math.min(n, Math.round(Number(lineCount) || 1)));
+    const minLineUnits = smartMinimumLineUnits();
     const dp = Array.from({ length: rowsWanted + 1 }, () => Array(n + 1).fill(null));
 
     dp[0][0] = { score: 0, prev: -1 };
@@ -1945,9 +1951,19 @@
           const rowWidth = smartRowWidthFromUnits(units, start, end);
           const diff = rowWidth - targetWidth;
           const wordCount = end - start;
-          const shortRowPenalty = wordCount === 1 && n > rowsWanted ? 18 : 0;
-          const tooWidePenalty = rowWidth > targetWidth ? Math.abs(diff) * 3.2 : 0;
-          const score = previous.score + diff * diff + shortRowPenalty + tooWidePenalty;
+          const shortBy = Math.max(0, minLineUnits - rowWidth);
+
+          const balanceScore = diff * diff;
+          const shortLinePenalty = shortBy ? shortBy * shortBy * 140 : 0;
+          const singleShortWordPenalty = wordCount === 1 && shortBy > 0 ? 90 : 0;
+          const tooWidePenalty = rowWidth > targetWidth ? Math.abs(diff) * 1.8 : 0;
+
+          const score =
+            previous.score +
+            balanceScore +
+            shortLinePenalty +
+            singleShortWordPenalty +
+            tooWidePenalty;
 
           if (!best || score < best.score) {
             best = { score, prev: start };
@@ -2011,33 +2027,37 @@
     const box = smartAvailableBoxEstimate();
     const units = cleanWords.map(smartWordUnits);
     const refUnits = smartReferenceUnits();
+    const minLineUnits = smartMinimumLineUnits();
     const totalUnits = units.reduce((sum, value) => sum + value, 0) + Math.max(0, units.length - 1) * .72;
-
-    const maxRows = Math.min(
-      cleanWords.length,
-      Math.max(2, Math.ceil(Math.sqrt(cleanWords.length * 2.7)) + 4)
-    );
 
     let best = null;
 
-    for (let rowCount = 1; rowCount <= maxRows; rowCount += 1) {
+    for (let rowCount = 1; rowCount <= cleanWords.length; rowCount += 1) {
       const estimatedHeight =
         rowCount +
         Math.max(0, rowCount - 1) * .36 +
         (refUnits > 0 ? 1.05 : 0) +
         (refUnits > 0 ? .72 : 0);
 
-      const aspectTargetWidth = Math.max(refUnits, box.ratio * estimatedHeight);
+      const aspectTargetWidth = Math.max(minLineUnits, box.ratio * estimatedHeight);
       const averageTargetWidth = totalUnits / rowCount;
-      const targetWidth = Math.max(aspectTargetWidth, averageTargetWidth * .88);
 
-      const rows = buildSmartLinePlanForCount(cleanWords, units, rowCount, targetWidth);
-      if (!rows) continue;
+      const targetWidths = [
+        aspectTargetWidth,
+        (aspectTargetWidth + averageTargetWidth) / 2,
+        averageTargetWidth,
+        aspectTargetWidth * 1.18
+      ].map(value => clamp(value, minLineUnits, totalUnits));
 
-      const score = scoreSmartLinePlan(rows, box, refUnits);
+      for (const targetWidth of Array.from(new Set(targetWidths.map(value => Math.round(value * 10) / 10)))) {
+        const rows = buildSmartLinePlanForCount(cleanWords, units, rowCount, targetWidth);
+        if (!rows) continue;
 
-      if (!best || score < best.score) {
-        best = { rows, score };
+        const score = scoreSmartLinePlan(rows, box, refUnits);
+
+        if (!best || score < best.score) {
+          best = { rows, score };
+        }
       }
     }
 
