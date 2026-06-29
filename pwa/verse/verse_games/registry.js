@@ -6,7 +6,7 @@ window.EXTERNAL_VERSE_GAMES = [
       title: "Verse Scramble",
       description: "Tap the next correct word as fast as you can.",
       icon: "🔄",
-      iconImage: "./verse_images/game_icons/app_icon_verse_scramble.png",
+      iconImage: "./verse_images/game_icons/app_icon_scramble.png",
       cardColor: "#7f66c6",
       cardTextColor: "#ffffff",
       launchUrl: "./verse_games/verse_scramble_neo/index.html",
