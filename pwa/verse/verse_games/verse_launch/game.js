@@ -5,6 +5,8 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "chain";
   const GAME_TITLE = "Verse Launch";
+  const GAME_ICON = "🚀";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
 
   const GAME_THEME = {
     bg: "#7f66c6",
@@ -1342,7 +1344,8 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      icon: "🚀",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1513,7 +1516,7 @@
 
     window.VerseGameShell.renderCompleteScreen({
       app,
-      gameIcon: "🚀",
+      gameIcon: GAME_ICON,
       mode: state.mode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
