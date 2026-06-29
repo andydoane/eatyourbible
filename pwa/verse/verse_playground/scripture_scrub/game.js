@@ -4808,7 +4808,8 @@
     window.VerseGameShell.renderCompleteScreen({
       app,
       title: "Great Scrubbing!",
-      icon: "🧽",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       statsHtml: "",
       playAgainText: "Try Again",
       moreGamesText: "More Activities",
