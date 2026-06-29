@@ -4,6 +4,7 @@
   const GAME_ID = "ghost_writer";
   const GAME_TITLE = "Ghost Writer";
   const GAME_ICON = "👻";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const HELP_OVERLAY_ID = "ghostWriterHelpOverlay";
   const MENU_OVERLAY_ID = "ghostWriterGameMenuOverlay";
 
@@ -1159,6 +1160,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       debugBadge: "GW 3.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
