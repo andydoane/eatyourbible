@@ -3158,7 +3158,8 @@
     window.VerseGameShell.renderCompleteScreen({
       app,
       title: "Verse Jam Complete!",
-      icon: "🎵",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       playAgainText: "Play Again",
       moreGamesText: "More Playground",
       backLabel: "Back to Verse Playground",
