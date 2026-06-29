@@ -1197,20 +1197,21 @@ button.wob-ref-group {
   background: #2f7a32;
 }
 
-.wob-root.is-challenge-screen .wob-challenge-word .wob-ref-fixed {
-  min-height: clamp(24px, calc((100vw - 24px) / var(--challenge-count, 9) - 5px), 62px);
-  min-width: clamp(28px, calc((100vw - 24px) / var(--challenge-count, 9) - 5px), 68px);
-  padding: 0 clamp(8px, 1.8vw, 14px);
-  border-radius: calc(var(--wob-tile-size) * .16);
+
+.wob-root.is-challenge-screen .wob-challenge-word.is-reference-number {
+  gap: clamp(4px, 1.1vw, 9px);
+}
+
+.wob-ref-separator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-width: clamp(10px, 3vw, 22px);
+  height: var(--wob-tile-size);
   color: #ffffff;
-  background: #2f7a32;
-  box-shadow:
-    0 calc(var(--wob-tile-size) * .12) 0 rgba(0, 0, 0, .24),
-    inset 0 calc(var(--wob-tile-size) * -.13) 0 rgba(0, 0, 0, .16),
-    inset 0 0 0 2px rgba(255, 255, 255, .18);
+  font-size: calc(var(--wob-tile-size) * .78);
+  font-weight: 900;
+  line-height: 1;
 }
 
 .wob-choice-grid {
@@ -2294,7 +2295,8 @@ button.wob-ref-group {
 .wob-spin-pop-value,
 .wob-spin-pop-title,
 .wob-challenge-bonus-label,
-.wob-challenge-bonus-amount {
+.wob-challenge-bonus-amount,
+.wob-ref-separator {
   font-family: "DD2 Titan One", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-weight: 400;
   letter-spacing: .01em;
@@ -2318,7 +2320,8 @@ button.wob-ref-group {
 .wob-root.is-challenge-screen .wob-big-title,
 .wob-root.is-challenge-screen .wob-challenge-word .wob-tile,
 .wob-spin-pop-value,
-.wob-spin-pop-title {
+.wob-spin-pop-title,
+.wob-ref-separator {
   font-family: "WOB Chunk", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-weight: 400;
   letter-spacing: .01em;

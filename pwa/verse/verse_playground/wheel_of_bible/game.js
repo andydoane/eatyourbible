@@ -778,7 +778,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.3-challenge-hints", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.4-reference-hints", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1119,10 +1119,10 @@
 
     const amount = Math.max(0, Number(bonus) || 0);
     const popup = document.createElement("div");
-    popup.className = "wob-challenge-bonus-pop";
+    popup.className = "wob-round-total-pop";
     popup.innerHTML = `
-      <div class="wob-challenge-bonus-label">Nice!</div>
-      <div class="wob-challenge-bonus-amount">+ ${escapeHtml(formatMoney(amount))}</div>
+      <div class="wob-round-total-label">Nice!</div>
+      <div class="wob-round-total-amount">+${escapeHtml(formatMoney(amount))}</div>
     `;
     card.appendChild(popup);
 
@@ -1132,7 +1132,7 @@
 
     await sleep(1250);
     popup.classList.add("is-leaving");
-    await sleep(320);
+    await sleep(340);
     popup.remove();
   }
 
@@ -1598,44 +1598,33 @@
       };
     }
 
-    if (kind === "chapter") {
+    if (kind === "chapterVerse") {
       const chapter = String(meta.chapter || "");
-      const expected = normalizeDigits(chapter).split("");
+      const verseStart = String(meta.verse || "");
+      const verseEnd = meta.verseEnd == null ? "" : String(meta.verseEnd);
+      const verseDisplay = verseEnd ? `${verseStart}-${verseEnd}` : verseStart;
+      const displayText = [chapter, verseDisplay].filter(Boolean).join(":");
+      const expected = normalizeDigits(displayText).split("");
       if (!expected.length) return null;
+
       return {
         type: "reference",
-        refKind: "chapter",
+        refKind: "chapterVerse",
         inputKind: "numbers",
         expected,
-        title: "Chapter Challenge",
-        prompt: "What chapter is this verse from?",
-        displayText: chapter,
+        title: "Reference Challenge",
+        prompt: "What chapter and verse is this?",
+        displayText,
         color: "#2f7a32",
-        bonus: 1000 + expected.length * 300
+        bonus: 1600 + expected.length * 300
       };
     }
 
-    const verseStart = String(meta.verse || "");
-    const verseEnd = meta.verseEnd == null ? "" : String(meta.verseEnd);
-    const displayText = verseEnd ? `${verseStart}-${verseEnd}` : verseStart;
-    const expected = normalizeDigits(displayText).split("");
-    if (!expected.length) return null;
-
-    return {
-      type: "reference",
-      refKind: "verse",
-      inputKind: "numbers",
-      expected,
-      title: "Verse Number Challenge",
-      prompt: verseEnd ? "What verse numbers are these?" : "What verse number is this?",
-      displayText,
-      color: "#2f7a32",
-      bonus: 1000 + expected.length * 300
-    };
+    return null;
   }
 
   function makeReferenceComboChallenge() {
-    const steps = ["book", "chapter", "verse"]
+    const steps = ["book", "chapterVerse"]
       .map(kind => makeReferenceStep(kind))
       .filter(Boolean);
 
@@ -1669,6 +1658,7 @@
     challenge.prompt = step.prompt;
     challenge.fixedPrefix = step.fixedPrefix || "";
     challenge.displayText = step.displayText || "";
+    challenge.contextHtml = step.contextHtml || "";
     challenge.color = step.color || "#2f7a32";
     challenge.stepBonus = Number(step.bonus) || 0;
     challenge.bonus = Number(challenge.totalBonus) || challenge.stepBonus;
@@ -1782,11 +1772,12 @@
     const choiceClass = challenge.choices.length > 9 || challenge.inputKind === "numbers" ? "is-wide" : "";
     const showPrompt = challenge.type === "reference";
     const isWordChallenge = challenge.type === "word";
+    const canUseHints = challenge.type === "word" || challenge.type === "reference";
     const instruction = challenge.inputKind === "numbers" ? "Tap the numbers in order" : "Tap the letters in order";
     const contextHtml = isWordChallenge
       ? findEchoContext(challenge.word, state.challengeHintIndexes)
       : challenge.contextHtml;
-    const hintAvailable = isWordChallenge && challengeHintableIndexes(challenge).length > 0;
+    const hintAvailable = canUseHints && challengeHintableIndexes(challenge).length > 0;
 
     app.innerHTML = rootHtml(`
       <div class="wob-word-challenge-root">
@@ -1798,7 +1789,7 @@
         <div class="wob-choice-grid is-rowed ${choiceClass}">
           ${choiceRowsHtml(challenge.choices, state.challengeFlash, state.challengeBad, "choice")}
         </div>
-        ${isWordChallenge ? `<button class="wob-hint-button no-zoom ${hintAvailable ? "" : "is-disabled"}" id="challengeHintButton" type="button" ${hintAvailable ? "" : "disabled"}>Hint</button>` : ""}
+        ${canUseHints ? `<button class="wob-hint-button no-zoom ${hintAvailable ? "" : "is-disabled"}" id="challengeHintButton" type="button" ${hintAvailable ? "" : "disabled"}>Hint</button>` : ""}
       </div>
     `, { status: "Challenge", rootClass: "is-challenge-screen" });
     wireGameMenu();
@@ -1810,20 +1801,20 @@
     if (challenge.type === "reference" && challenge.refKind === "book") {
       return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length + (challenge.fixedPrefix ? 1 : 0))}">
         ${challenge.fixedPrefix ? `<span class="wob-tile" style="--tile-bg:${challenge.color}">${escapeHtml(challenge.fixedPrefix)}</span>` : ""}
-        ${lettersToTiles(challenge.displayText, challenge.expected, filledCount, challenge.color)}
+        ${lettersToTiles(challenge.displayText, challenge.expected, filledCount, challenge.color, state.challengeHintIndexes)}
       </div>`;
     }
     if (challenge.type === "reference") {
       let digitIndex = 0;
-      return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, String(challenge.displayText || "").length)}">
+      return `<div class="wob-challenge-word is-reference-number ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, String(challenge.displayText || "").length)}">
         ${Array.from(String(challenge.displayText || "")).map(char => {
         if (/\d/.test(char)) {
-          const show = digitIndex < filledCount;
+          const show = digitIndex < filledCount || state.challengeHintIndexes.has(digitIndex);
           const text = show ? challenge.expected[digitIndex] : "";
           digitIndex += 1;
           return `<span class="wob-tile ${show ? "" : "is-hidden"}" style="--tile-bg:${challenge.color}">${escapeHtml(text)}</span>`;
         }
-        return `<span class="wob-punct">${escapeHtml(char)}</span>`;
+        return `<span class="wob-ref-separator">${escapeHtml(char)}</span>`;
       }).join("")}
       </div>`;
     }
@@ -1832,17 +1823,29 @@
 
 
   function challengeHintableIndexes(challenge) {
-    if (!challenge || challenge.type !== "word") return [];
+    if (!challenge) return [];
 
     const expected = challenge.expected || [];
-    return expected
-      .map((_, index) => index)
-      .filter(index => index > 0 && !state.challengeHintIndexes.has(index));
+    const filledCount = Math.max(0, Number(state.challengeInputIndex) || 0);
+
+    if (challenge.type === "word") {
+      return expected
+        .map((_, index) => index)
+        .filter(index => index > 0 && !state.challengeHintIndexes.has(index));
+    }
+
+    if (challenge.type === "reference") {
+      return expected
+        .map((_, index) => index)
+        .filter(index => index >= filledCount && !state.challengeHintIndexes.has(index));
+    }
+
+    return [];
   }
 
   async function handleChallengeHint() {
     const challenge = state.currentChallenge;
-    if (!challenge || challenge.type !== "word") return;
+    if (!challenge) return;
 
     const hintable = challengeHintableIndexes(challenge);
     if (!hintable.length) {
@@ -1850,7 +1853,10 @@
       return;
     }
 
-    const revealCount = (challenge.expected || []).length >= 8 ? 3 : 2;
+    const revealCount = challenge.type === "reference"
+      ? 1
+      : ((challenge.expected || []).length >= 8 ? 3 : 2);
+
     hintable.slice(0, revealCount).forEach(index => state.challengeHintIndexes.add(index));
     state.challengeHintCount += 1;
 
@@ -1858,11 +1864,11 @@
     drawChallenge();
   }
 
-  function lettersToTiles(displayText, expected, filledCount, color) {
+  function lettersToTiles(displayText, expected, filledCount, color, hintIndexes = new Set()) {
     let alphaIndex = 0;
     return Array.from(String(displayText || "")).map(char => {
       if (/[A-Za-z]/.test(char)) {
-        const show = alphaIndex < filledCount;
+        const show = alphaIndex < filledCount || hintIndexes.has(alphaIndex);
         const text = show ? expected[alphaIndex] : "";
         alphaIndex += 1;
         return `<span class="wob-tile ${show ? "" : "is-hidden"}" style="--tile-bg:${color || "#ffc751"}">${escapeHtml(text)}</span>`;
@@ -1910,7 +1916,7 @@
     if (!challenge) return;
 
     if (challenge.isReferenceSequence) {
-      const stepEarned = challengeBonusAfterHints(challenge.stepBonus, 0);
+      const stepEarned = challengeBonusAfterHints(challenge.stepBonus, state.challengeHintCount);
       challenge.sequenceEarnedBonus = (Number(challenge.sequenceEarnedBonus) || 0) + stepEarned;
 
       const steps = challenge.referenceSteps || [];
@@ -1926,6 +1932,7 @@
       state.refChallengeDone.book = true;
       state.refChallengeDone.chapter = true;
       state.refChallengeDone.verse = true;
+      state.refChallengeDone.chapterVerse = true;
 
       const bonus = Math.max(0, Math.round(Number(challenge.sequenceEarnedBonus) || 0));
       state.baseCash += bonus;
