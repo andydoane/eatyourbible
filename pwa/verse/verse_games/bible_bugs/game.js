@@ -4,6 +4,7 @@
 
   const GAME_ID = "bible_bugs";
   const GAME_TITLE = "Bible Bugs";
+  const GAME_ICON = "🐸";
   const BUILD_AREA = "compact";
   const HELP_OVERLAY_ID = "bbHelpOverlay";
   const GAME_MENU_ID = "bbGameMenuOverlay";
@@ -150,6 +151,7 @@
   const soundBufferPromises = new Map();
 
   const shell = window.VerseGameShell;
+  const GAME_ICON_HTML = shell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const parsedRef = shell.parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
   const buildData = shell.buildVerseSegments({
     verseText: ctx.verseText || "",
@@ -410,8 +412,9 @@
     shell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      icon: "🐸",
-            debugBadge: "BB 4.1",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
+      debugBadge: "",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
