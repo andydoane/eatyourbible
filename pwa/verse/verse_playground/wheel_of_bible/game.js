@@ -142,6 +142,8 @@
     challengeInputIndex: 0,
     challengeFlash: "",
     challengeBad: false,
+    challengeHintCount: 0,
+    challengeHintIndexes: new Set(),
     finalStartedAt: 0,
     finalTimeLeft: 60,
     finalSolvedWordIndices: new Set(),
@@ -352,13 +354,13 @@
     return true;
   }
 
-  function challengeBonusAfterMistakes(rawBonus, wrongCount, autoFilled) {
+  function challengeBonusAfterHints(rawBonus, hintCount) {
     const base = Math.max(0, Number(rawBonus) || 0);
-    const misses = Math.max(0, Number(wrongCount) || 0);
+    const hints = Math.max(0, Number(hintCount) || 0);
 
-    if (autoFilled || misses >= 3) return 0;
-    if (misses === 2) return Math.round(base * .5);
-    if (misses === 1) return Math.round(base * .75);
+    if (hints >= 3) return Math.round(base * .25);
+    if (hints === 2) return Math.round(base * .5);
+    if (hints === 1) return Math.round(base * .75);
     return base;
   }
 
@@ -636,6 +638,12 @@
   function playPop(i = 0) { playTone({ midi: 64 + (i % 5) * 2, duration: .08, volume: .18 }); }
   function playPrize() { playTone({ midi: 72, duration: .10, volume: .25 }); setTimeout(() => playTone({ midi: 76, duration: .10, volume: .24 }), 70); setTimeout(() => playTone({ midi: 84, duration: .18, volume: .28 }), 145); }
 
+  function playHint() {
+    playTone({ midi: 67, duration: .08, volume: .18, type: "triangle" });
+    setTimeout(() => playTone({ midi: 72, duration: .09, volume: .18, type: "triangle" }), 70);
+    setTimeout(() => playTone({ midi: 76, duration: .12, volume: .16, type: "triangle" }), 145);
+  }
+
   function stopVerseAudio() { if (!verseAudioEl) return; try { verseAudioEl.pause(); verseAudioEl.currentTime = 0; } catch (err) { } }
   async function tryPlayAudioCandidatesAndWait(candidates, fallbackMs = 1200) {
     const audio = createVerseAudioElement();
@@ -770,7 +778,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.1-hyphen-cleanup", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.3-challenge-hints", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -796,6 +804,7 @@
     state.nextPrize = null;
     prepareNextPrize();
     state.currentChallenge = null; state.challengeInputIndex = 0; state.challengeWrongCount = 0; state.challengeAutoFilled = false;
+    state.challengeHintCount = 0; state.challengeHintIndexes = new Set();
     state.finalSolvedWordIndices = new Set(); state.finalHiddenTileKeys = new Set(); state.finalFilledTileKeys = new Set(); state.finalActiveWord = null; state.finalInputIndex = 0; state.finalLetterStreak = 0;
     state.completed = false;
   }
@@ -953,7 +962,7 @@
             `;
           }
 
-          waitForSpinResultImage(popCard).then(() => setTimeout(resolve, 1250));
+          waitForSpinResultImage(popCard).then(() => setTimeout(resolve, 2500));
         }, { once: true });
       });
 
@@ -1433,15 +1442,18 @@
     return makeWordChallenge(word);
   }
 
-  function findEchoContext(word) {
+  function findEchoContext(word, hintIndexes = new Set()) {
     const target = normalizeWord(word.display);
     const parts = state.echoParts.length ? state.echoParts : [state.verseText];
 
     const firstLetterBlank = (text) => {
       const letters = normalizeLetters(text).split("");
       if (!letters.length) return "___";
-      if (letters.length === 1) return "_";
-      return `${letters[0]}${"_".repeat(Math.max(1, letters.length - 1))}`;
+
+      return letters.map((letter, index) => {
+        if (index === 0 || hintIndexes.has(index)) return letter;
+        return "_";
+      }).join("");
     };
 
     const wordCountInText = (text) => tokenizeVerse(text).filter(token => token.kind === "word").length;
@@ -1752,6 +1764,8 @@
     state.challengeBad = false;
     state.challengeWrongCount = 0;
     state.challengeAutoFilled = false;
+    state.challengeHintCount = 0;
+    state.challengeHintIndexes = new Set();
 
     const remainingExpected = (challenge.expected || []).slice(state.challengeInputIndex);
     const uniqueCorrect = Array.from(new Set(remainingExpected));
@@ -1767,24 +1781,29 @@
     const challenge = state.currentChallenge;
     const choiceClass = challenge.choices.length > 9 || challenge.inputKind === "numbers" ? "is-wide" : "";
     const showPrompt = challenge.type === "reference";
-    const missesText = state.challengeWrongCount > 0
-      ? ` • Misses: ${Math.min(3, state.challengeWrongCount)}/3`
-      : "";
+    const isWordChallenge = challenge.type === "word";
+    const instruction = challenge.inputKind === "numbers" ? "Tap the numbers in order" : "Tap the letters in order";
+    const contextHtml = isWordChallenge
+      ? findEchoContext(challenge.word, state.challengeHintIndexes)
+      : challenge.contextHtml;
+    const hintAvailable = isWordChallenge && challengeHintableIndexes(challenge).length > 0;
 
     app.innerHTML = rootHtml(`
       <div class="wob-word-challenge-root">
-        <div class="wob-big-title">${escapeHtml(challenge.title || "Challenge")}</div>
+        <div class="wob-big-title ${challenge.title === "Key Word Challenge" ? "is-key-word-title" : ""}">${escapeHtml(challenge.title || "Challenge")}</div>
+        <div class="wob-challenge-instruction">${escapeHtml(instruction)}</div>
         ${showPrompt ? `<div class="wob-challenge-prompt">${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
-        ${challenge.contextHtml ? `<div class="wob-context-card">${challenge.contextHtml}</div>` : ""}
+        ${contextHtml ? `<div class="wob-context-card">${contextHtml}</div>` : ""}
         ${typedChallengeHtml(challenge, state.challengeInputIndex)}
         <div class="wob-choice-grid is-rowed ${choiceClass}">
           ${choiceRowsHtml(challenge.choices, state.challengeFlash, state.challengeBad, "choice")}
         </div>
-        <div class="wob-bonus-line">${challenge.inputKind === "numbers" ? "Tap the Numbers in Order" : "Tap the Letters in Order"}${escapeHtml(missesText)}</div>
+        ${isWordChallenge ? `<button class="wob-hint-button no-zoom ${hintAvailable ? "" : "is-disabled"}" id="challengeHintButton" type="button" ${hintAvailable ? "" : "disabled"}>Hint</button>` : ""}
       </div>
     `, { status: "Challenge", rootClass: "is-challenge-screen" });
     wireGameMenu();
     document.querySelectorAll("[data-choice]").forEach(btn => btn.addEventListener("click", () => handleChallengeChoice(btn.dataset.choice || "")));
+    document.getElementById("challengeHintButton")?.addEventListener("click", handleChallengeHint);
   }
 
   function typedChallengeHtml(challenge, filledCount) {
@@ -1811,6 +1830,34 @@
     return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length)}">${lettersToTiles(challenge.word.display, challenge.expected, filledCount, challenge.color)}</div>`;
   }
 
+
+  function challengeHintableIndexes(challenge) {
+    if (!challenge || challenge.type !== "word") return [];
+
+    const expected = challenge.expected || [];
+    return expected
+      .map((_, index) => index)
+      .filter(index => index > 0 && !state.challengeHintIndexes.has(index));
+  }
+
+  async function handleChallengeHint() {
+    const challenge = state.currentChallenge;
+    if (!challenge || challenge.type !== "word") return;
+
+    const hintable = challengeHintableIndexes(challenge);
+    if (!hintable.length) {
+      drawChallenge();
+      return;
+    }
+
+    const revealCount = (challenge.expected || []).length >= 8 ? 3 : 2;
+    hintable.slice(0, revealCount).forEach(index => state.challengeHintIndexes.add(index));
+    state.challengeHintCount += 1;
+
+    playHint();
+    drawChallenge();
+  }
+
   function lettersToTiles(displayText, expected, filledCount, color) {
     let alphaIndex = 0;
     return Array.from(String(displayText || "")).map(char => {
@@ -1834,20 +1881,10 @@
     if (!expected) return;
 
     if (choice !== expected) {
-      state.challengeWrongCount += 1;
       state.challengeFlash = choice;
       state.challengeBad = true;
       playBad();
       document.getElementById("challengeWord")?.classList.add("is-no");
-
-      if (state.challengeWrongCount >= 3) {
-        state.challengeAutoFilled = true;
-        state.challengeInputIndex = challenge.expected.length;
-        drawChallenge();
-        await sleep(1200);
-        await finishChallenge(challenge);
-        return;
-      }
 
       await sleep(300);
       state.challengeFlash = "";
@@ -1873,7 +1910,7 @@
     if (!challenge) return;
 
     if (challenge.isReferenceSequence) {
-      const stepEarned = challengeBonusAfterMistakes(challenge.stepBonus, state.challengeWrongCount, state.challengeAutoFilled);
+      const stepEarned = challengeBonusAfterHints(challenge.stepBonus, 0);
       challenge.sequenceEarnedBonus = (Number(challenge.sequenceEarnedBonus) || 0) + stepEarned;
 
       const steps = challenge.referenceSteps || [];
@@ -1908,7 +1945,7 @@
     if (challenge.type === "reference") state.refChallengeDone[challenge.refKind] = true;
 
     const rawBonus = Math.max(0, Number(challenge.bonus) || 500);
-    const bonus = challengeBonusAfterMistakes(rawBonus, state.challengeWrongCount, state.challengeAutoFilled);
+    const bonus = challengeBonusAfterHints(rawBonus, challenge.type === "word" ? state.challengeHintCount : 0);
 
     state.baseCash += bonus;
     updateHud();

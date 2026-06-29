@@ -1092,6 +1092,18 @@ button.wob-ref-group {
   font-size: clamp(28px, 7vw, 54px);
 }
 
+.wob-root.is-challenge-screen .wob-big-title.is-key-word-title {
+  color: #ffd984;
+}
+
+.wob-challenge-instruction {
+  color: #ffffff;
+  font-size: clamp(18px, 4.6vw, 29px);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
 .wob-challenge-prompt {
   max-width: min(94%, 680px);
   color: #332818;
@@ -1261,6 +1273,34 @@ button.wob-ref-group {
   text-align: center;
 }
 
+.wob-hint-button {
+  border: 0;
+  border-radius: 999px;
+  min-width: clamp(128px, 34vw, 190px);
+  min-height: clamp(48px, 8vh, 64px);
+  padding: 9px 22px;
+  font: inherit;
+  font-size: clamp(22px, 5.4vw, 34px);
+  font-weight: 900;
+  line-height: 1;
+  color: #333333;
+  background: #ffd984;
+  box-shadow: 0 7px 0 rgba(0, 0, 0, .24), inset 0 -5px 0 rgba(0, 0, 0, .10);
+  cursor: pointer;
+}
+
+.wob-hint-button:active {
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .24), inset 0 -5px 0 rgba(0, 0, 0, .10);
+}
+
+.wob-hint-button.is-disabled,
+.wob-hint-button[disabled] {
+  opacity: .28;
+  filter: grayscale(.45);
+  cursor: default;
+  transform: none !important;
+}
 /* =========================
    Bonus / final / money screens
    ========================= */
