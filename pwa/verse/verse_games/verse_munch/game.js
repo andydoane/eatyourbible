@@ -4,6 +4,10 @@
 
   const GAME_ID = "verse_munch";
 
+  const GAME_TITLE = "Verse Munch";
+  const GAME_ICON = "😋";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
+
   const GAME_THEME = {
     bg: "#7f66c6",
     accent: "#7f66c6"
@@ -567,6 +571,11 @@ function renderIntro(){
     app,
     title: "Verse Munch",
     iconHtml: `<img src="verse_munch_images/munch_positive_2.png" alt="" draggable="false">`,
+
+    title: GAME_TITLE,
+    icon: GAME_ICON,
+    iconHtml: GAME_ICON_HTML,
+
     helpHtml: introHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
@@ -737,7 +746,7 @@ function renderComplete(){
 
   window.VerseGameShell.renderCompleteScreen({
     app,
-    gameIcon: "😋",
+    gameIcon: GAME_ICON,
     mode: selectedMode,
     verseId: ctx.verseId,
     gameId: GAME_ID,
