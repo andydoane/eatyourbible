@@ -2729,7 +2729,8 @@
     window.VerseGameShell.renderCompleteScreen({
       app,
       title: "Verse Typed!",
-      icon: "🐛",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       statsHtml: `Correct typing: ${pct}%<br>Best streak: ${state.bestStreak}`,
       playAgainText: "Play Again",
       moreGamesText: "More Playground",
