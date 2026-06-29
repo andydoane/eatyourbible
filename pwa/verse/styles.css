@@ -1668,9 +1668,50 @@ Zoo To-Do Clipboard Prototype
     min-height: 50px;
   }
 
-  .practice-game-emoji {
+  .practice-game-icon-wrap {
+    width: clamp(74px, 20vw, 112px);
+    height: clamp(74px, 20vw, 112px);
+  }
+
+  .practice-game-icon-emoji {
     font-size: clamp(52px, 15vw, 88px);
   }
+}
+
+.practice-game-icon-wrap {
+  position: relative;
+  width: clamp(86px, 24vw, 140px);
+  height: clamp(86px, 24vw, 140px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  flex: 0 0 auto;
+}
+
+.practice-game-icon-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.18));
+}
+
+.practice-game-icon-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(58px, 18vw, 112px);
+  line-height: 1;
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.18);
+}
+
+.practice-game-icon-emoji[hidden] {
+  display: none;
 }
 
 .practice-game-card.practice-simple-card {
@@ -1696,7 +1737,7 @@ Zoo To-Do Clipboard Prototype
   color: var(--practice-card-text);
 }
 
-.practice-game-card.practice-simple-card .practice-game-emoji-wrap {
+.practice-game-card.practice-simple-card .practice-game-icon-wrap {
   margin: 0;
 }
 

@@ -2728,6 +2728,8 @@ function getExternalPracticeGames() {
       id: manifest.id,
       title: manifest.title || "Practice Game",
       icon: manifest.icon || "🎮",
+      iconImage: manifest.iconImage || "",
+      iconAlt: manifest.iconAlt || `${manifest.title || "Practice Game"} icon`,
       desc: manifest.description || "",
       cardColor: manifest.cardColor || "#7f66c6",
       cardTextColor: manifest.cardTextColor || "#ffffff",
@@ -2736,8 +2738,25 @@ function getExternalPracticeGames() {
     }));
 }
 
-function getPracticeGames() {
-  return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
+function getExternalPlaygroundActivities() {
+  const list = Array.isArray(window.EXTERNAL_VERSE_PLAYGROUND) ? window.EXTERNAL_VERSE_PLAYGROUND : [];
+
+  return list
+    .filter(entry => entry && entry.enabled !== false)
+    .map(entry => entry.manifest)
+    .filter(manifest => manifest && manifest.visibleInCarousel !== false)
+    .map(manifest => ({
+      id: manifest.id,
+      title: manifest.title || "Playground Activity",
+      icon: manifest.icon || "🎵",
+      iconImage: manifest.iconImage || "",
+      iconAlt: manifest.iconAlt || `${manifest.title || "Playground Activity"} icon`,
+      desc: manifest.description || "",
+      cardColor: manifest.cardColor || "#2b1748",
+      cardTextColor: manifest.cardTextColor || "#ffffff",
+      source: "external",
+      manifest
+    }));
 }
 
 function getExternalPlaygroundActivities() {
@@ -3122,6 +3141,29 @@ function bindLongPress(element, {
   }, true);
 }
 
+function renderPracticeCardIcon({ icon = "🎮", iconImage = "", iconAlt = "", title = "Practice Game" } = {}) {
+  const safeIcon = escapeHtml(icon || "🎮");
+  const safeIconImage = escapeHtml(iconImage || "");
+  const safeIconAlt = escapeHtml(iconAlt || `${title || "Practice Game"} icon`);
+
+  if (!safeIconImage) {
+    return `<span class="practice-game-icon-emoji" aria-hidden="true">${safeIcon}</span>`;
+  }
+
+  return `
+    <img
+      class="practice-game-icon-img"
+      src="${safeIconImage}"
+      alt="${safeIconAlt}"
+      loading="lazy"
+      decoding="async"
+      draggable="false"
+      onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+    >
+    <span class="practice-game-icon-emoji" hidden aria-hidden="true">${safeIcon}</span>
+  `;
+}
+
 function getPracticeGameIcon(game) {
   if (!game) return "🎮";
 
@@ -3214,9 +3256,11 @@ function renderGameMixCard() {
       aria-label="Play Game Mix"
     >
       <div class="practice-game-card-top">
-        <div class="practice-game-emoji-wrap" aria-hidden="true">
-          <div class="practice-game-emoji-shadow"></div>
-          <div class="practice-game-emoji">🔀</div>
+        <div class="practice-game-icon-wrap" aria-hidden="true">
+          ${renderPracticeCardIcon({
+    icon: "🔀",
+    title: "Game Mix"
+  })}
         </div>
 
         <div class="practice-game-title">
@@ -3231,7 +3275,7 @@ function renderGameMixCard() {
   `;
 }
 
-function renderPracticeHubCard({ id, title, icon, cardColor, cardTextColor }) {
+function renderPracticeHubCard({ id, title, icon, iconImage = "", iconAlt = "", cardColor, cardTextColor }) {
   return `
     <button
       class="practice-game-card practice-simple-card no-zoom"
@@ -3241,8 +3285,13 @@ function renderPracticeHubCard({ id, title, icon, cardColor, cardTextColor }) {
       aria-label="${title}"
     >
       <div class="practice-game-card-top">
-        <div class="practice-game-emoji-wrap" aria-hidden="true">
-          <div class="practice-game-emoji">${icon}</div>
+        <div class="practice-game-icon-wrap" aria-hidden="true">
+          ${renderPracticeCardIcon({
+    icon,
+    iconImage,
+    iconAlt,
+    title
+  })}
         </div>
 
         <div class="practice-game-title">
@@ -3263,8 +3312,8 @@ function renderPlaygroundActivityCard(activity) {
       aria-label="Play ${activity.title}"
     >
       <div class="practice-game-card-top">
-        <div class="practice-game-emoji-wrap" aria-hidden="true">
-          <div class="practice-game-emoji">${activity.icon}</div>
+        <div class="practice-game-icon-wrap" aria-hidden="true">
+          ${renderPracticeCardIcon(activity)}
         </div>
 
         <div class="practice-game-title">
@@ -3274,7 +3323,6 @@ function renderPlaygroundActivityCard(activity) {
     </button>
   `;
 }
-
 
 function renderPracticeGameCard(game, verseProgress) {
   const gameProgress = verseProgress?.games?.[game.id];
@@ -3288,9 +3336,8 @@ function renderPracticeGameCard(game, verseProgress) {
       aria-label="Play ${game.title}"
     >
       <div class="practice-game-card-top">
-        <div class="practice-game-emoji-wrap" aria-hidden="true">
-          
-          <div class="practice-game-emoji">${game.icon}</div>
+        <div class="practice-game-icon-wrap" aria-hidden="true">
+          ${renderPracticeCardIcon(game)}
         </div>
 
         <div class="practice-game-title">
