@@ -7,6 +7,7 @@
   const GAME_ID = "verse_typer";
   const GAME_TITLE = "Verse Typer";
   const GAME_ICON = "🐛";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const HELP_OVERLAY_ID = "verseTyperHelpOverlay";
 
   const GAME_THEME = {
@@ -969,6 +970,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       debugBadge: "",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
