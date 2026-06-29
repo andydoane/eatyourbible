@@ -789,7 +789,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.7-final-round-polish", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.8-final-progress-fix", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2566,7 +2566,7 @@
   function finalProgressHtml() {
     const ratio = finalRoundProgressRatio();
 
-    return `<span class="wob-final-progress-board" id="wobFinalProgressBoard" aria-label="Final round time remaining">
+    return `<span class="wob-ref-board wob-final-progress-board" id="wobFinalProgressBoard" aria-label="Final round time remaining">
       <span class="wob-final-progress-track">
         <span class="wob-final-progress-fill ${finalRoundProgressClass(ratio)}" id="finalProgressFill" style="--final-progress:${ratio}"></span>
       </span>
