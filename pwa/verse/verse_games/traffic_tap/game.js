@@ -4,6 +4,10 @@
 
   const GAME_ID = "traffic_tap_external";
 
+  const GAME_TITLE = "Traffic Tap";
+  const GAME_ICON = "🚗";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
+
 
 
   const GAME_THEME = {
@@ -689,8 +693,9 @@
 
     window.VerseGameShell.renderTitleScreen({
       app,
-      title: "Traffic Tap",
-      icon: "🚗",
+      title: GAME_TITLE,
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
