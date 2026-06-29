@@ -5,6 +5,8 @@
 
   const GAME_ID = "versey_bird";
   const GAME_TITLE = "Versey Bird";
+  const GAME_ICON = "🐤";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const GAME_THEME = { bg: "#333333", accent: "#333333" };
   const BUILD_AREA = "compact";
   const HELP_OVERLAY_ID = "vb2HelpOverlay";
@@ -470,7 +472,8 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      icon: "🐤",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: introHelpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
