@@ -3,6 +3,10 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "tower_bible";
 
+  const GAME_TITLE = "Tower of Bible";
+  const GAME_ICON = "🏰";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
+
   const GAME_THEME = {
     bg: "#a0dce2",
     accent: "#40b9c5"
@@ -232,8 +236,9 @@
 
     window.VerseGameShell.renderTitleScreen({
       app,
-      title: "Tower of Bible",
-      icon: "🏰",
+      title: GAME_TITLE,
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -351,7 +356,7 @@
 
     window.VerseGameShell.renderCompleteScreen({
       app,
-      gameIcon: "🏰",
+      gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
