@@ -17,6 +17,7 @@
   const GAME_ID = "wheel_of_bible";
   const GAME_TITLE = "Wheel of Bible";
   const GAME_ICON = "🎡";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const WHEEL_BUTTON_IMAGE = "./wheel_of_bible_images/button_wheel.png";
   const WHEEL_FACE_IMAGE = "./wheel_of_bible_images/wheel_face.svg";
   const DOLLAR_BILL_IMAGE = "./wheel_of_bible_images/dollar_bill.png";
@@ -789,7 +790,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, iconHtml: GAME_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
