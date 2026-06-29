@@ -4,6 +4,9 @@
 
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "scramble";
+  const GAME_TITLE = "Verse Scramble";
+  const GAME_ICON = "🔄";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
 
   const GAME_THEME = {
     bg: "#7f66c6",
@@ -972,8 +975,9 @@
   function renderIntro(){
     window.VerseGameShell.renderTitleScreen({
       app,
-      title: "Verse Scramble",
-      icon: "🔄",
+      title: GAME_TITLE,
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
