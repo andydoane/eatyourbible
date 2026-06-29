@@ -7,6 +7,7 @@
   const GAME_ID = "verse_jam";
   const GAME_TITLE = "Verse Jam";
   const GAME_ICON = "🎹";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const HELP_OVERLAY_ID = "verseJamHelpOverlay";
   const BUILD_AREA = "compact";
 
@@ -3067,6 +3068,7 @@
       app,
       title: GAME_TITLE,
       icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start",
