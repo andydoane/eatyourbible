@@ -6,6 +6,8 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "verse_splat";
   const GAME_TITLE = "Verse Splat";
+  const GAME_ICON = "🫟";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
 
 const GAME_THEME = {
   bg: "#7f66c6",
@@ -687,7 +689,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 3.9",
+    debugBadge: "",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -967,7 +969,7 @@ function gameplayShell({ bonus=false }){
 function renderEndScreen(){
   window.VerseGameShell.renderCompleteScreen({
     app,
-    gameIcon: "🫟",
+    gameIcon: GAME_ICON,
     mode: state.mode,
     verseId: ctx.verseId,
     gameId: GAME_ID,
