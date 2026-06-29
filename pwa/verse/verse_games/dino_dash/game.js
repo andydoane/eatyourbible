@@ -5,6 +5,8 @@
 
   const GAME_ID = "dino_dash";
   const GAME_TITLE = "Dino Dash";
+  const GAME_ICON = "🦖";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const GAME_THEME = { bg: "#333333", accent: "#333333" };
   const BUILD_AREA = "large";
   const HELP_OVERLAY_ID = "dd2HelpOverlay";
@@ -306,7 +308,8 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      icon: "🦖",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: introHelpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -2165,7 +2168,7 @@
     cleanupResize();
     window.VerseGameShell.renderCompleteScreen({
       app,
-      gameIcon: "🦖",
+      gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
