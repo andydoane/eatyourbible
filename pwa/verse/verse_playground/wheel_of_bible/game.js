@@ -90,7 +90,7 @@
 
   // TESTING: Set to true only when you want the normal round to require 1 spin/letter.
   // Keep false for normal gameplay.
-  const DEBUG_ONE_SPIN_ROUND = false;
+  const DEBUG_ONE_SPIN_ROUND = true;
 
   // Smart verse layout is the production/default board layout.
   // Set to false only if you need to compare against the old flex-wrap board.
