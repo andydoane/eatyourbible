@@ -693,6 +693,16 @@ body {
   animation: wobPrizePop 520ms cubic-bezier(.18, 1.45, .28, 1) both;
 }
 
+.wob-letter-value-prize-image {
+  display: block;
+  width: clamp(96px, 28vw, 176px);
+  max-height: clamp(96px, 24vh, 176px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, .20));
+  animation: wobPrizePop 520ms cubic-bezier(.18, 1.45, .28, 1) both;
+}
+
 .wob-letter-value-card {
   width: 100%;
   border-radius: 28px;
@@ -1410,6 +1420,24 @@ button.wob-ref-group {
   animation: wobPrizePop 360ms ease both;
 }
 
+.wob-prize-card.is-image-only {
+  width: clamp(72px, 18vw, 118px);
+  height: clamp(72px, 18vw, 118px);
+  padding: 4px;
+  background: transparent;
+  box-shadow: none;
+  display: grid;
+  place-items: center;
+}
+
+.wob-prize-card-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .18));
+}
+
 .wob-money-panel #completeBtn {
   flex: 0 0 auto;
   margin-bottom: 2px;
@@ -2124,6 +2152,15 @@ button.wob-ref-group {
   font-size: clamp(76px, 21vw, 150px);
   line-height: .9;
   animation: wobPrizePop 520ms cubic-bezier(.18, 1.45, .28, 1) both;
+}
+
+.wob-open-prize-image {
+  display: block;
+  width: min(76vw, 340px);
+  max-height: min(38vh, 320px);
+  height: auto;
+  margin: 0 auto 8px;
+  object-fit: contain;
 }
 
 .wob-spin-pop-card.is-opened {

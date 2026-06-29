@@ -64,14 +64,23 @@
   ];
 
   const PRIZES = [
-    { emoji: "🎁", name: "Surprise Box", value: 1200 },
-    { emoji: "🛴", name: "Scooter", value: 1400 },
-    { emoji: "🎮", name: "Game Prize", value: 1500 },
-    { emoji: "🚲", name: "Bike", value: 1800 },
-    { emoji: "🏰", name: "Castle Trip", value: 2000 },
-    { emoji: "🚀", name: "Rocket Ride", value: 2200 },
-    { emoji: "🦖", name: "Dino Dig", value: 2500 },
-    { emoji: "🏆", name: "Golden Trophy", value: 3000 }
+    { name: "Treasure Chest", value: 10000, image: "./wheel_of_bible_images/wheel_of_bible_prize_treasure.png" },
+    { name: "Go-Kart", value: 6000, image: "./wheel_of_bible_images/wheel_of_bible_prize_go_kart.png" },
+    { name: "Balloon Ride", value: 5500, image: "./wheel_of_bible_images/wheel_of_bible_prize_hot_air_balloon.png" },
+    { name: "Brick Castle Set", value: 4500, image: "./wheel_of_bible_images/wheel_of_bible_prize_brick_castle.png" },
+    { name: "Bounce Party", value: 4000, image: "./wheel_of_bible_images/wheel_of_bible_prize_bouncy_house.png" },
+    { name: "Video Games", value: 3500, image: "./wheel_of_bible_images/wheel_of_bible_prize_video_game_console.png" },
+    { name: "Water Park Day", value: 3000, image: "./wheel_of_bible_images/wheel_of_bible_prize_water_park.png" },
+    { name: "Monster Truck", value: 2800, image: "./wheel_of_bible_images/wheel_of_bible_prize_monster_truck.png" },
+    { name: "Robot Assistant", value: 2600, image: "./wheel_of_bible_images/wheel_of_bible_prize_robot.png" },
+    { name: "Remote Control Car", value: 2400, image: "./wheel_of_bible_images/wheel_of_bible_prize_rc_car.png" },
+    { name: "Science Lab", value: 2200, image: "./wheel_of_bible_images/wheel_of_bible_prize_science_lab.png" },
+    { name: "Trading Cards", value: 2000, image: "./wheel_of_bible_images/wheel_of_bible_prize_trading_cards.png" },
+    { name: "Art Kit", value: 1800, image: "./wheel_of_bible_images/wheel_of_bible_prize_art_kit.png" },
+    { name: "Headphones", value: 1600, image: "./wheel_of_bible_images/wheel_of_bible_prize_headphones.png" },
+    { name: "Juggling Lessons", value: 1400, image: "./wheel_of_bible_images/wheel_of_bible_prize_juggling_lessons.png" },
+    { name: "Movie Night", value: 1300, image: "./wheel_of_bible_images/wheel_of_bible_prize_movie_night.png" },
+    { name: "Taco Tuesday", value: 1100, image: "./wheel_of_bible_images/wheel_of_bible_prize_taco_tuesday.png" }
   ];
 
   const NORMAL_ROUND_MIN_SELECTED = 6;
@@ -127,6 +136,8 @@
     prizeCash: 0,
     finalCash: 0,
     prizeEarnings: [],
+    prizeBagIndices: [],
+    nextPrize: null,
     currentChallenge: null,
     challengeInputIndex: 0,
     challengeFlash: "",
@@ -229,6 +240,56 @@
 
   function preloadSpinResultImages() {
     allSpinResultImageSrcs().forEach(src => preloadImage(src));
+  }
+
+
+  function prizeImageSrc(prize) {
+    return String(prize?.image || "").trim();
+  }
+
+  function prizeImageAlt(prize) {
+    return prize?.name ? `${prize.name} prize` : "Prize";
+  }
+
+  function shuffledPrizeIndices() {
+    const indices = PRIZES.map((_, index) => index);
+
+    for (let i = indices.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = indices[i];
+      indices[i] = indices[j];
+      indices[j] = temp;
+    }
+
+    return indices;
+  }
+
+  function prepareNextPrize() {
+    if (!PRIZES.length) {
+      state.nextPrize = null;
+      return null;
+    }
+
+    if (!state.prizeBagIndices.length) {
+      state.prizeBagIndices = shuffledPrizeIndices();
+    }
+
+    const nextIndex = state.prizeBagIndices.shift();
+    const prize = PRIZES[nextIndex] || PRIZES[0];
+
+    state.nextPrize = prize;
+    preloadImage(prizeImageSrc(prize));
+
+    return prize;
+  }
+
+  function consumeNextPrize() {
+    const prize = state.nextPrize || prepareNextPrize() || PRIZES[0];
+
+    // Queue and preload the next unused prize in the background.
+    prepareNextPrize();
+
+    return prize;
   }
 
   async function waitForSpinResultImage(scope) {
@@ -731,6 +792,9 @@
     state.refChallengeDone = { book: false, chapter: false, verse: false };
     state.selectedSpin = null; state.lastSelectedLetter = ""; state.turnCount = 0;
     state.baseCash = 0; state.prizeCash = 0; state.finalCash = 0; state.prizeEarnings = [];
+    state.prizeBagIndices = [];
+    state.nextPrize = null;
+    prepareNextPrize();
     state.currentChallenge = null; state.challengeInputIndex = 0; state.challengeWrongCount = 0; state.challengeAutoFilled = false;
     state.finalSolvedWordIndices = new Set(); state.finalHiddenTileKeys = new Set(); state.finalFilledTileKeys = new Set(); state.finalActiveWord = null; state.finalInputIndex = 0; state.finalLetterStreak = 0;
     state.completed = false;
@@ -838,7 +902,7 @@
     const raw = WHEEL_VALUES[index];
     let result = { ...raw };
     if (raw.kind === "prize") {
-      const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
+      const prize = consumeNextPrize();
       result = { kind: "prize", label: "PRIZE", value: prize.value, prize };
       playPrize();
     } else playGood();
@@ -878,15 +942,18 @@
 
           const popCard = overlay.querySelector(".wob-spin-pop-card");
           if (popCard) {
-            popCard.className = "wob-spin-pop-card is-opened";
+            const prizeSrc = prizeImageSrc(result.prize);
+            const prizeAlt = prizeImageAlt(result.prize);
+
+            popCard.className = "wob-spin-pop-card is-opened is-prize-opened";
             popCard.innerHTML = `
-              <div class="wob-open-prize-emoji">${escapeHtml(result.prize.emoji)}</div>
+              <img class="wob-spin-result-image wob-open-prize-image" src="${escapeHtml(prizeSrc)}" alt="${escapeHtml(prizeAlt)}" draggable="false">
               <div class="wob-spin-pop-title">${escapeHtml(result.prize.name)}</div>
               <div class="wob-spin-pop-value">${escapeHtml(formatMoney(result.value))}</div>
             `;
           }
 
-          setTimeout(resolve, 1250);
+          waitForSpinResultImage(popCard).then(() => setTimeout(resolve, 1250));
         }, { once: true });
       });
 
@@ -909,12 +976,13 @@
   function renderSelectLetterScreen() {
     state.screen = "selectLetter";
     const spinValue = Math.max(0, Number(state.selectedSpin?.value) || 0);
-    const prizeEmoji = state.selectedSpin?.kind === "prize" ? state.selectedSpin.prize?.emoji || "🎁" : "";
+    const prize = state.selectedSpin?.kind === "prize" ? state.selectedSpin.prize : null;
+    const prizeSrc = prizeImageSrc(prize);
 
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-letter-select-panel">
         <div class="wob-letter-value-wrap">
-          ${prizeEmoji ? `<div class="wob-letter-value-emoji">${escapeHtml(prizeEmoji)}</div>` : ""}
+          ${prizeSrc ? `<img class="wob-letter-value-prize-image" src="${escapeHtml(prizeSrc)}" alt="${escapeHtml(prizeImageAlt(prize))}" draggable="false">` : ""}
           <div class="wob-letter-value-card">
             <div class="wob-letter-value-money">${escapeHtml(formatMoney(spinValue))}</div>
             <div class="wob-letter-value-label">per letter</div>
@@ -2502,7 +2570,18 @@
     wireGameMenu(); await animateMoneyCount(document.getElementById("moneyCount"), 0, normalTotal, 1400);
     const prizeList = document.getElementById("prizeList"); let running = normalTotal;
     for (const prize of state.prizeEarnings) {
-      const card = document.createElement("div"); card.className = "wob-prize-card"; card.textContent = `${prize.emoji} ${prize.name} +${formatMoney(prize.total)}`; prizeList?.appendChild(card);
+      const card = document.createElement("div");
+      const img = document.createElement("img");
+
+      card.className = "wob-prize-card is-image-only";
+      img.className = "wob-prize-card-image";
+      img.src = prizeImageSrc(prize);
+      img.alt = prizeImageAlt(prize);
+      img.draggable = false;
+
+      card.appendChild(img);
+      prizeList?.appendChild(card);
+
       playPrize(); await animateMoneyCount(document.getElementById("moneyCount"), running, running + prize.total, 520); running += prize.total; await sleep(160);
     }
     document.getElementById("completeBtn").style.display = "inline-flex";
