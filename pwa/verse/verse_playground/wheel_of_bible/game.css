@@ -1500,6 +1500,7 @@ button.wob-ref-group {
 .wob-money-total {
   width: min(92%, 560px);
   border-radius: 34px;
+  min-height: clamp(96px, 18vh, 156px);
   padding: clamp(14px, 4vw, 24px) clamp(18px, 5vw, 32px);
   color: #ffffff;
   background: #2f7a32;
@@ -1513,6 +1514,9 @@ button.wob-ref-group {
     0 22px 36px rgba(0, 0, 0, .18),
     inset 0 -8px 0 rgba(0, 0, 0, .14),
     inset 0 0 0 4px rgba(255, 255, 255, .16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wob-prize-list {
@@ -1629,6 +1633,14 @@ button.wob-ref-group {
   font-weight: 900;
   line-height: .9;
   color: #ffffff;
+}
+
+.wob-verse-complete-card {
+  width: min(88%, 500px);
+}
+
+.wob-verse-complete-title {
+  font-size: clamp(38px, 10vw, 76px);
 }
 
 @keyframes wobTimesUpOverlayIn {
@@ -2451,7 +2463,6 @@ button.wob-ref-group {
 /* Other centered Chunk text uses an em-based nudge. */
 .wob-letter-burst,
 .wob-floating-money,
-.wob-money-total,
 .wob-times-up-title,
 .wob-letter-value-money,
 .wob-letter-value-label,

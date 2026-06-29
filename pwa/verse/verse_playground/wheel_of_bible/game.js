@@ -789,7 +789,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.9-timeup-preload-chunk", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v4.0-final-complete-score", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2679,7 +2679,7 @@
       state.finalActiveWord = null;
 
       if (finalRoundComplete()) {
-        await finishFinalRound({ showTimesUp: false });
+        await finishFinalRound({ showTimesUp: false, showVerseComplete: true });
         return;
       }
 
@@ -2689,11 +2689,12 @@
     renderFinalModal();
   }
 
-  async function finishFinalRound({ showTimesUp = true } = {}) {
+  async function finishFinalRound({ showTimesUp = true, showVerseComplete = false } = {}) {
     if (finalTimerId) { clearInterval(finalTimerId); finalTimerId = null; }
     document.getElementById("wobFinalModal")?.remove();
 
     if (showTimesUp) await showTimesUpPopup();
+    else if (showVerseComplete) await showVerseCompletePopup();
 
     renderMoneyTotalScreen();
   }
@@ -2711,6 +2712,31 @@
       <div class="wob-times-up-card">
         <img class="wob-times-up-clock" src="${CLOCK_IMAGE}" alt="" draggable="false">
         <div class="wob-times-up-title">Time’s Up!</div>
+      </div>
+    `;
+    card.appendChild(popup);
+
+    playPrize();
+    await sleep(2500);
+
+    popup.classList.add("is-leaving");
+    await sleep(320);
+    popup.remove();
+  }
+
+
+  async function showVerseCompletePopup() {
+    const card = document.querySelector(".wob-card");
+    if (!card) {
+      await sleep(900);
+      return;
+    }
+
+    const popup = document.createElement("div");
+    popup.className = "wob-times-up-overlay";
+    popup.innerHTML = `
+      <div class="wob-times-up-card wob-verse-complete-card">
+        <div class="wob-times-up-title wob-verse-complete-title">Verse complete!</div>
       </div>
     `;
     card.appendChild(popup);
