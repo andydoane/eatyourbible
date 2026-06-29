@@ -893,7 +893,9 @@
 
     window.VerseGameShell.renderCompleteScreen({
       app,
-      gameIcon: "🏁",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
+      gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
