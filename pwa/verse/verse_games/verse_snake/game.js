@@ -5,6 +5,8 @@
 
   const GAME_ID = "verse_snake";
   const GAME_TITLE = "Verse Snake";
+  const GAME_ICON = "🐍";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const HELP_OVERLAY_ID = "vslHelpOverlay";
 
   const GAME_THEME = {
@@ -650,7 +652,8 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      icon: "🐍",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -2442,7 +2445,7 @@
 
     window.VerseGameShell.renderCompleteScreen({
       app,
-      gameIcon: "🐍",
+      gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
