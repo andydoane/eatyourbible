@@ -101,6 +101,16 @@
   const USE_SMART_HYPHENATION_PLANNER = true;
   const SMART_HYPHENATE_MIN_LETTERS = 11;
 
+
+  const LOW_CONTENT_CHALLENGE_WORDS = new Set([
+    "a", "an", "and", "are", "as", "at", "be", "but", "by",
+    "for", "from", "had", "has", "have", "he", "her", "him",
+    "his", "i", "if", "in", "is", "it", "its", "me", "my",
+    "of", "on", "or", "our", "she", "so", "that", "the",
+    "their", "them", "then", "they", "this", "to", "up",
+    "us", "was", "we", "were", "who", "with", "you", "your"
+  ]);
+
   let muted = false;
   let audioCtx = null;
   let masterGain = null;
@@ -778,7 +788,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.5-hint-skip-fix", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.6-smart-keywords", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1405,6 +1415,43 @@
 
   function alphaCountForWord(word) { return word.letters.filter(item => item.isLetter).length; }
 
+
+  function hidePlanRankForWord(word) {
+    const clean = normalizeWord(word?.display || word?.clean || "");
+    if (!clean) return -1;
+
+    return state.hidePlanWords.findIndex(item => normalizeWord(item) === clean);
+  }
+
+  function isLowContentChallengeWord(word) {
+    const clean = normalizeWord(word?.display || word?.clean || "");
+    return LOW_CONTENT_CHALLENGE_WORDS.has(clean);
+  }
+
+  function challengeWordQualityScore(word) {
+    const alpha = alphaCountForWord(word);
+    const revealed = revealedCountForWord(word);
+    const hidePlanRank = hidePlanRankForWord(word);
+    let score = 0;
+
+    if (hidePlanRank >= 0) {
+      score += 120 - Math.min(12, hidePlanRank) * 2;
+    } else if (word.isKeyword) {
+      score += 80;
+    }
+
+    if (isLowContentChallengeWord(word)) score -= 110;
+
+    if (alpha >= 7) score += 35;
+    else if (alpha >= 5) score += 22;
+    else if (alpha <= 3) score -= 15;
+
+    score += Math.min(8, revealed) * 10;
+    if (revealed <= 0) score -= 8;
+
+    return score;
+  }
+
   function chooseChallengeTarget() {
     const progress = state.uniqueLetters.length ? state.revealedLetters.size / state.uniqueLetters.length : 0;
 
@@ -1427,14 +1474,20 @@
       if (state.challengeHistory.has(word.index)) return false;
       return true;
     });
+
     if (!candidates.length) return null;
+
     candidates.sort((a, b) => {
-      const ak = a.isKeyword ? 1 : 0, bk = b.isKeyword ? 1 : 0;
-      if (bk !== ak) return bk - ak;
+      const as = challengeWordQualityScore(a);
+      const bs = challengeWordQualityScore(b);
+      if (bs !== as) return bs - as;
+
       const ar = revealedCountForWord(a), br = revealedCountForWord(b);
       if (br !== ar) return br - ar;
+
       return alphaCountForWord(b) - alphaCountForWord(a);
     });
+
     const pool = candidates.slice(0, Math.min(5, candidates.length));
     const word = pool[Math.floor(Math.random() * pool.length)];
     return makeWordChallenge(word);

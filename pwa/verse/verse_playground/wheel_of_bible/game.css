@@ -1479,6 +1479,13 @@ button.wob-ref-group {
   filter: drop-shadow(0 6px 0 rgba(0, 0, 0, .18));
 }
 
+.wob-spin-pop-card.is-prize .wob-spin-result-image,
+.wob-spin-pop-card.is-prize-opened .wob-spin-result-image,
+.wob-letter-value-prize-image,
+.wob-prize-card-image {
+  filter: none;
+}
+
 .wob-money-panel #completeBtn {
   flex: 0 0 auto;
   margin-bottom: 2px;
@@ -2206,6 +2213,18 @@ button.wob-ref-group {
 
 .wob-spin-pop-card.is-opened {
   animation: wobPrizeOpenCard 500ms cubic-bezier(.18, 1.35, .3, 1) both;
+}
+
+.wob-spin-pop-card.is-prize-opened {
+  width: min(92vw, 520px);
+  padding: clamp(14px, 4vw, 24px);
+}
+
+.wob-spin-pop-card.is-prize-opened .wob-spin-pop-value {
+  max-width: 100%;
+  font-size: clamp(42px, 11vw, 76px);
+  line-height: .9;
+  white-space: nowrap;
 }
 
 .wob-spin-pop-card.is-image {
