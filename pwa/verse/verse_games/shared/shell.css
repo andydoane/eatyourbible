@@ -214,6 +214,28 @@ body {
   height: auto;
 }
 
+.vm-game-icon .vm-game-icon-img,
+.vm-game-difficulty-icon .vm-game-icon-img {
+  display: block;
+  width: clamp(104px, 34vw, 190px);
+  height: clamp(104px, 34vw, 190px);
+  max-width: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.vm-game-icon-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.vm-game-icon-fallback[hidden] {
+  display: none;
+}
+
 .vm-game-title {
   font-size: clamp(34px, 8vw, 58px);
   font-weight: 900;

@@ -8,6 +8,43 @@
       .replace(/'/g, "&#39;");
   }
 
+  function gameIconImageHtml(src = "", fallbackIcon = "🎮", alt = "") {
+    const safeSrc = escapeHtml(src || "");
+    const safeFallbackIcon = escapeHtml(fallbackIcon || "🎮");
+    const safeAlt = escapeHtml(alt || "");
+
+    if (!safeSrc) {
+      return safeFallbackIcon;
+    }
+
+    return `
+      <img
+        class="vm-game-icon-img"
+        src="${safeSrc}"
+        alt="${safeAlt}"
+        loading="lazy"
+        decoding="async"
+        draggable="false"
+        onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+      >
+      <span class="vm-game-icon-fallback" hidden>${safeFallbackIcon}</span>
+    `;
+  }
+
+  function gameIconImageHtmlForId(gameId = "", fallbackIcon = "🎮", alt = "") {
+    const safeGameId = String(gameId || "").trim();
+
+    if (!safeGameId) {
+      return gameIconImageHtml("", fallbackIcon, alt);
+    }
+
+    return gameIconImageHtml(
+      `../../verse_images/game_icons/app_icon_${safeGameId}.png`,
+      fallbackIcon,
+      alt
+    );
+  }
+
   function styleVarsHtml(options = {}){
     const vars = [];
 
@@ -2091,6 +2128,8 @@ function renderCompleteScreen({
     wireHelp,
     gameMenuHtml,
     wireGameMenu,
+    gameIconImageHtml,
+    gameIconImageHtmlForId,
     renderTitleScreen,
     renderModeSelect,
     renderCompleteScreen
