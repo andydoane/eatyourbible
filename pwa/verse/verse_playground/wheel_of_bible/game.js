@@ -778,7 +778,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.4-reference-hints", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.5-hint-skip-fix", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -1126,8 +1126,6 @@
     `;
     card.appendChild(popup);
 
-    // Use one quick money burst behind the popup.
-    spawnDollarExplosion(card, 0, 900, "classic");
     playPrize();
 
     await sleep(1250);
@@ -1843,6 +1841,20 @@
     return [];
   }
 
+
+  function advanceReferenceChallengePastHints(challenge) {
+    if (!challenge || challenge.type !== "reference") return;
+
+    const expected = challenge.expected || [];
+    let nextIndex = Math.max(0, Number(state.challengeInputIndex) || 0);
+
+    while (nextIndex < expected.length && state.challengeHintIndexes.has(nextIndex)) {
+      nextIndex += 1;
+    }
+
+    state.challengeInputIndex = nextIndex;
+  }
+
   async function handleChallengeHint() {
     const challenge = state.currentChallenge;
     if (!challenge) return;
@@ -1860,7 +1872,17 @@
     hintable.slice(0, revealCount).forEach(index => state.challengeHintIndexes.add(index));
     state.challengeHintCount += 1;
 
+    if (challenge.type === "reference") {
+      advanceReferenceChallengePastHints(challenge);
+    }
+
     playHint();
+
+    if (challenge.type === "reference" && state.challengeInputIndex >= (challenge.expected || []).length) {
+      await finishChallenge(challenge);
+      return;
+    }
+
     drawChallenge();
   }
 
@@ -1903,6 +1925,10 @@
     state.challengeFlash = choice;
     state.challengeBad = false;
     state.challengeInputIndex += 1;
+
+    if (challenge.type === "reference") {
+      advanceReferenceChallengePastHints(challenge);
+    }
 
     if (state.challengeInputIndex >= challenge.expected.length) {
       await finishChallenge(challenge);
