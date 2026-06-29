@@ -3,6 +3,10 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "foodslice";
 
+  const GAME_TITLE = "Food Slice";
+  const GAME_ICON = "🍉";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
+
   const GAME_THEME = {
     bg: "#333333",
     accent: "#333333"
@@ -222,8 +226,9 @@
 
     window.VerseGameShell.renderTitleScreen({
       app,
-      title: "Food Slice",
-      icon: "🍉",
+      title: GAME_TITLE,
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -349,7 +354,7 @@
 
     window.VerseGameShell.renderCompleteScreen({
       app,
-      gameIcon: "🍉",
+      gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
