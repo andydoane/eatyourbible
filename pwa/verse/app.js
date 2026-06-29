@@ -2738,25 +2738,8 @@ function getExternalPracticeGames() {
     }));
 }
 
-function getExternalPlaygroundActivities() {
-  const list = Array.isArray(window.EXTERNAL_VERSE_PLAYGROUND) ? window.EXTERNAL_VERSE_PLAYGROUND : [];
-
-  return list
-    .filter(entry => entry && entry.enabled !== false)
-    .map(entry => entry.manifest)
-    .filter(manifest => manifest && manifest.visibleInCarousel !== false)
-    .map(manifest => ({
-      id: manifest.id,
-      title: manifest.title || "Playground Activity",
-      icon: manifest.icon || "🎵",
-      iconImage: manifest.iconImage || "",
-      iconAlt: manifest.iconAlt || `${manifest.title || "Playground Activity"} icon`,
-      desc: manifest.description || "",
-      cardColor: manifest.cardColor || "#2b1748",
-      cardTextColor: manifest.cardTextColor || "#ffffff",
-      source: "external",
-      manifest
-    }));
+function getPracticeGames() {
+  return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
 }
 
 function getExternalPlaygroundActivities() {
@@ -2770,6 +2753,8 @@ function getExternalPlaygroundActivities() {
       id: manifest.id,
       title: manifest.title || "Playground Activity",
       icon: manifest.icon || "🎵",
+      iconImage: manifest.iconImage || "",
+      iconAlt: manifest.iconAlt || `${manifest.title || "Playground Activity"} icon`,
       desc: manifest.description || "",
       cardColor: manifest.cardColor || "#2b1748",
       cardTextColor: manifest.cardTextColor || "#ffffff",
