@@ -2810,7 +2810,7 @@
     const statsText = `${formatMoney(totalCash())} earned • ${state.finalFilledTileKeys.size} final letters filled`;
     if (shell().renderCompleteScreen) {
       shell().renderCompleteScreen({
-        app, title: "Wheel Complete!", icon: "🎡", iconHtml: WHEEL_ICON_HTML, statsText, playAgainText: "Play Again", moreGamesText: "Back to Playground", backLabel: "Back to Playground", theme: GAME_THEME,
+        app, title: "Wheel Complete!", icon: GAME_ICON, iconHtml: GAME_ICON_HTML, statsText, playAgainText: "Play Again", moreGamesText: "Back to Playground", backLabel: "Back to Playground", theme: GAME_THEME,
         onPlayAgain: () => beginRun(), onMoreGames: () => bridge().exitGame?.()
       });
     } else {
