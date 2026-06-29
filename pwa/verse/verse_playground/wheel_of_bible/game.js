@@ -86,6 +86,7 @@
   const NORMAL_ROUND_MIN_SELECTED = 6;
   const NORMAL_ROUND_UNIQUE_RATIO = 0.55;
   const FINAL_ROUND_HIDE_RATIO = 0.5;
+  const FINAL_ROUND_SECONDS = 60;
 
   // TESTING: Set to true only when you want the normal round to require 1 spin/letter.
   // Keep false for normal gameplay.
@@ -155,7 +156,7 @@
     challengeHintCount: 0,
     challengeHintIndexes: new Set(),
     finalStartedAt: 0,
-    finalTimeLeft: 60,
+    finalTimeLeft: FINAL_ROUND_SECONDS,
     finalSolvedWordIndices: new Set(),
     finalHiddenTileKeys: new Set(),
     finalFilledTileKeys: new Set(),
@@ -788,7 +789,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.6-smart-keywords", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.7-final-round-polish", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2407,17 +2408,18 @@
       <div class="wob-verse-card is-with-reference">
         <div class="wob-verse-board ${boardClass}" id="wobVerseBoard">
           ${USE_SMART_VERSE_ROWS ? smartVerseRowsHtml(options) : oldFlexVerseHtml(options)}
-          ${referenceTilesHtml(challenge)}
+          ${referenceTilesHtml(challenge, { finalMode })}
         </div>
       </div>`;
   }
 
 
-  function referenceTilesHtml(challenge) {
+  function referenceTilesHtml(challenge, { finalMode = false } = {}) {
     const meta = state.referenceMeta || {};
     const bookText = String(meta.book || "").trim().toUpperCase();
     const chapter = meta.chapter == null ? "" : String(meta.chapter);
     const verseText = meta.verse == null ? "" : (meta.verseEnd ? `${meta.verse}-${meta.verseEnd}` : String(meta.verse));
+    if (finalMode) return finalProgressHtml();
     if (!bookText && !chapter && !verseText) return "";
 
     const bookClass = challenge?.type === "reference" && challenge.refKind === "book" ? "is-wiggling" : "";
@@ -2512,11 +2514,13 @@
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-final-intro-panel">
         <div class="wob-final-intro-center">
-          <img class="wob-final-intro-wheel" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false">
-          <div class="wob-big-title">FINAL ROUND!</div>
-          <div class="wob-subtitle">One minute to fill in as many missing letters as possible.</div>
+          <div class="wob-final-intro-wheel-wrap">
+            <img class="wob-final-intro-wheel" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false">
+          </div>
+          <div class="wob-big-title wob-final-intro-title">FINAL ROUND!</div>
+          <div class="wob-subtitle wob-final-intro-subtitle">One minute to fill in as many missing letters as possible.</div>
         </div>
-        <button class="wob-btn no-zoom" id="startFinalBtn" type="button">Start Final Round</button>
+        <button class="wob-btn wob-final-begin-btn no-zoom" id="startFinalBtn" type="button">Begin!</button>
       </div>
     `, { status: "Final Round", rootClass: "is-final-intro-screen" });
     wireGameMenu(); document.getElementById("startFinalBtn")?.addEventListener("click", startFinalRound);
@@ -2525,28 +2529,69 @@
   function startFinalRound() {
     state.screen = "finalRound";
     state.finalStartedAt = Date.now();
-    state.finalTimeLeft = 60;
+    state.finalTimeLeft = FINAL_ROUND_SECONDS;
     state.finalActiveWord = null;
     state.finalInputIndex = 0;
     state.finalLetterStreak = 0;
     buildFinalHiddenTiles();
     renderFinalRound();
+    updateFinalProgressBar();
+
     finalTimerId = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - state.finalStartedAt) / 1000);
-      state.finalTimeLeft = Math.max(0, 60 - elapsed);
-      const timer = document.getElementById("finalTimer"); if (timer) timer.textContent = String(state.finalTimeLeft);
-      if (state.finalTimeLeft <= 0) finishFinalRound();
+      const elapsedMs = Date.now() - state.finalStartedAt;
+      state.finalTimeLeft = Math.max(0, FINAL_ROUND_SECONDS - Math.floor(elapsedMs / 1000));
+      updateFinalProgressBar();
+
+      if (elapsedMs >= FINAL_ROUND_SECONDS * 1000) {
+        state.finalTimeLeft = 0;
+        updateFinalProgressBar();
+        finishFinalRound();
+      }
     }, 250);
+  }
+
+
+  function finalRoundProgressRatio() {
+    const startedAt = Number(state.finalStartedAt) || Date.now();
+    const elapsedMs = Math.max(0, Date.now() - startedAt);
+    return clamp(1 - (elapsedMs / (FINAL_ROUND_SECONDS * 1000)), 0, 1);
+  }
+
+  function finalRoundProgressClass(ratio) {
+    if (ratio <= .2) return "is-red";
+    if (ratio <= .5) return "is-yellow";
+    return "is-green";
+  }
+
+  function finalProgressHtml() {
+    const ratio = finalRoundProgressRatio();
+
+    return `<span class="wob-final-progress-board" id="wobFinalProgressBoard" aria-label="Final round time remaining">
+      <span class="wob-final-progress-track">
+        <span class="wob-final-progress-fill ${finalRoundProgressClass(ratio)}" id="finalProgressFill" style="--final-progress:${ratio}"></span>
+      </span>
+    </span>`;
+  }
+
+  function updateFinalProgressBar() {
+    const fill = document.getElementById("finalProgressFill");
+    if (!fill) return;
+
+    const ratio = finalRoundProgressRatio();
+    fill.style.setProperty("--final-progress", ratio.toFixed(4));
+    fill.classList.toggle("is-green", ratio > .5);
+    fill.classList.toggle("is-yellow", ratio <= .5 && ratio > .2);
+    fill.classList.toggle("is-red", ratio <= .2);
   }
 
   function renderFinalRound() {
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
-        <div class="wob-final-hud"><div class="wob-final-timer"><span id="finalTimer">${escapeHtml(String(state.finalTimeLeft))}</span>s</div><div class="wob-subtitle">Tap words with missing letters!</div></div>
+        <div class="wob-final-hud"><div class="wob-subtitle wob-final-instruction">Tap words with missing letters!</div></div>
         ${verseBoardHtml({ finalMode: true })}
       </div>
     `, { status: "Final Round", rootClass: "is-board-screen is-final-round-screen" });
-    wireGameMenu(); fitVerseBoardSoon();
+    wireGameMenu(); fitVerseBoardSoon(); updateFinalProgressBar();
     document.querySelectorAll("button[data-word-index]").forEach(btn => btn.addEventListener("click", () => {
       const index = Number(btn.dataset.wordIndex); if (state.finalSolvedWordIndices.has(index)) return; openFinalWord(index);
     }));
@@ -2683,7 +2728,7 @@
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-money-panel">
         <div class="wob-money-center">
-          <div class="wob-big-title">Bible Bux</div>
+          <div class="wob-big-title wob-money-total-title">Bible Bux</div>
           <div class="wob-money-total" id="moneyCount">$0</div>
           <div class="wob-prize-list" id="prizeList"></div>
         </div>
