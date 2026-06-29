@@ -1,10 +1,4 @@
-@font-face {
-  font-family: "DD2 Titan One";
-  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
+/* Legacy display font removed; WOB display text now uses Chunk. */
 
 @font-face {
   font-family: "Baloo 2";
@@ -2406,7 +2400,7 @@ button.wob-ref-group {
 .wob-challenge-bonus-label,
 .wob-challenge-bonus-amount,
 .wob-ref-separator {
-  font-family: "DD2 Titan One", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: "WOB Chunk", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-weight: 400;
   letter-spacing: .01em;
 }
@@ -2455,6 +2449,10 @@ button.wob-ref-group {
 }
 
 /* Other centered Chunk text uses an em-based nudge. */
+.wob-letter-burst,
+.wob-floating-money,
+.wob-money-total,
+.wob-times-up-title,
 .wob-letter-value-money,
 .wob-letter-value-label,
 .wob-letter-choice,
@@ -2464,7 +2462,10 @@ button.wob-ref-group {
 .wob-spins-remaining,
 .wob-root.is-challenge-screen .wob-big-title,
 .wob-spin-pop-value,
-.wob-spin-pop-title {
+.wob-spin-pop-title,
+.wob-challenge-bonus-label,
+.wob-challenge-bonus-amount,
+.wob-ref-separator {
   padding-top: var(--wob-chunk-text-y-nudge);
 }
 

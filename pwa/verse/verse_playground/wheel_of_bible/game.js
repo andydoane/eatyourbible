@@ -789,7 +789,7 @@
   function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.8-final-progress-fix", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      app, title: GAME_TITLE, icon: GAME_ICON, debugBadge: "WOB v3.9-timeup-preload-chunk", iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
       onBack: () => bridge().exitGame?.(),
       onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -2528,6 +2528,7 @@
 
   function startFinalRound() {
     state.screen = "finalRound";
+    preloadImage(CLOCK_IMAGE);
     state.finalStartedAt = Date.now();
     state.finalTimeLeft = FINAL_ROUND_SECONDS;
     state.finalActiveWord = null;
@@ -2715,7 +2716,7 @@
     card.appendChild(popup);
 
     playPrize();
-    await sleep(1450);
+    await sleep(2500);
 
     popup.classList.add("is-leaving");
     await sleep(320);
