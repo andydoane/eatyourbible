@@ -12,6 +12,7 @@
   const GAME_ID = "scripture_scrub";
   const GAME_TITLE = "Scripture Scrub";
   const GAME_ICON = "🧽";
+  const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
   const HELP_OVERLAY_ID = "scriptureScrubHelpOverlay";
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
@@ -981,6 +982,7 @@
       title: GAME_TITLE,
       debugBadge: "",
       icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       startText: "Start Scrubbing",
