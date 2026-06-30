@@ -746,6 +746,8 @@ function renderComplete(){
 
   window.VerseGameShell.renderCompleteScreen({
     app,
+    icon: GAME_ICON,
+    iconHtml: GAME_ICON_HTML,
     gameIcon: GAME_ICON,
     mode: selectedMode,
     verseId: ctx.verseId,
