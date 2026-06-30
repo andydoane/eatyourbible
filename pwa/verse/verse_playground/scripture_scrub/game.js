@@ -4802,6 +4802,21 @@
     }
   }
 
+  async function markVersePracticed() {
+    const verseId = ctx.verseId;
+    if (!verseId) return { ok: false };
+
+    try {
+      if (typeof window.VerseGameBridge.markVersePracticed === "function") {
+        return await window.VerseGameBridge.markVersePracticed({ verseId });
+      }
+    } catch (err) {
+      console.warn("Scripture Scrub could not mark verse as practiced", err);
+    }
+
+    return { ok: false };
+  }
+
   function renderEndScreen() {
     cleanupRound();
 
