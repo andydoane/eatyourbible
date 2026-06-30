@@ -3032,9 +3032,17 @@
     el.addEventListener("animationend", () => el.remove(), { once: true });
   }
 
-  function markPlaygroundPracticed() {
+  async function markPlaygroundPracticed() {
     const verseId = ctx.verseId;
     if (!verseId) return { ok: false };
+
+    if (typeof window.VerseGameBridge.markVersePracticed === "function") {
+      try {
+        return await window.VerseGameBridge.markVersePracticed({ verseId });
+      } catch (err) {
+        console.warn("Verse Jam bridge markVersePracticed failed; falling back.", err);
+      }
+    }
 
     try {
       const raw = localStorage.getItem("verseMemoryProgress");
