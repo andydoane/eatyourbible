@@ -4819,6 +4819,7 @@
 
   function renderEndScreen() {
     cleanupRound();
+    void markVersePracticed();
 
     window.VerseGameShell.renderCompleteScreen({
       app,
