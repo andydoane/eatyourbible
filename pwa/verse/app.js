@@ -7047,6 +7047,8 @@ function screenPracticeHub(idx) {
     id: "games",
     title: "Games",
     icon: "🎮",
+    iconImage: IMG_DIR + "app_icon_controller.png",
+    iconAlt: "Games",
     cardColor: "#7f66c6",
     cardTextColor: "#ffffff"
   })}
@@ -7055,6 +7057,8 @@ function screenPracticeHub(idx) {
     id: "playground",
     title: "Playground",
     icon: "🛝",
+    iconImage: IMG_DIR + "app_icon_slide.png",
+    iconAlt: "Playground",
     cardColor: "#a7cb6f",
     cardTextColor: "#ffffff"
   })}
