@@ -1516,6 +1516,8 @@
 
     window.VerseGameShell.renderCompleteScreen({
       app,
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       gameIcon: GAME_ICON,
       mode: state.mode,
       verseId: ctx.verseId,
