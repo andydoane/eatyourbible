@@ -195,7 +195,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Splat the next correct bouncing goo blob.",
       icon: "🫟",
       iconImage: "./verse_images/game_icons/app_icon_verse_splat.png",
-      cardColor: "#7f66c6",
+      cardColor: "#333333",
       cardTextColor: "#FFFFFF",
       launchUrl: "./verse_games/verse_splat/index.html",
       visibleInCarousel: true,
