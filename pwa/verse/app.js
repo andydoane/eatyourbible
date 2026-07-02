@@ -596,19 +596,233 @@ function getRequestedVerseIdFromUrl() {
 const audioEl = new Audio();
 audioEl.preload = "auto";
 
+const UI_AUDIO_DIR = "ui_audio/";
+const APP_AUDIO_SILENCE_FILE = AUDIO_DIR + "silence.mp3";
+const UI_TAP_SOUND_FILES = [
+  UI_AUDIO_DIR + "ui_sound_pop_1.mp3",
+  UI_AUDIO_DIR + "ui_sound_pop_2.mp3"
+];
+
+const UI_TAP_VOLUME = 0.12;
+
 let learnMenuOpen = false;
 let learnMenuPausedAudio = false;
 
 let muted = false;
+
+let appAudioContext = null;
+let appAudioUnlocked = false;
+let appAudioUnlockPromise = null;
+let appSilenceAudio = null;
+
+let uiTapBuffers = [];
+let uiTapBuffersPromise = null;
+let uiTapSoundIndex = 0;
+let lastUiTapSoundAt = 0;
+
+function getAppAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+  if (!AudioContextClass) return null;
+
+  if (!appAudioContext) {
+    try {
+      appAudioContext = new AudioContextClass();
+    } catch (err) {
+      console.warn("Could not create app AudioContext", err);
+      appAudioContext = null;
+    }
+  }
+
+  return appAudioContext;
+}
+
+function ensureAppSilenceAudio() {
+  if (appSilenceAudio) return appSilenceAudio;
+
+  appSilenceAudio = new Audio(APP_AUDIO_SILENCE_FILE);
+  appSilenceAudio.preload = "auto";
+  appSilenceAudio.muted = true;
+  appSilenceAudio.volume = 0;
+  appSilenceAudio.setAttribute("playsinline", "");
+  appSilenceAudio.setAttribute("webkit-playsinline", "");
+
+  return appSilenceAudio;
+}
+
+async function playAppSilenceUnlock() {
+  try {
+    const silence = ensureAppSilenceAudio();
+
+    silence.muted = true;
+    silence.volume = 0;
+    silence.currentTime = 0;
+
+    await silence.play();
+
+    try {
+      silence.pause();
+      silence.currentTime = 0;
+    } catch (err) { }
+
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function playTinyUnlockBlip(ctx) {
+  if (!ctx) return;
+
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const now = ctx.currentTime || 0;
+
+    osc.type = "sine";
+    osc.frequency.value = 440;
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.03);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.035);
+  } catch (err) { }
+}
+
+function decodeAudioDataCompat(ctx, arrayBuffer) {
+  return new Promise((resolve, reject) => {
+    try {
+      const result = ctx.decodeAudioData(arrayBuffer, resolve, reject);
+
+      if (result && typeof result.then === "function") {
+        result.then(resolve).catch(reject);
+      }
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+function preloadUiTapSoundBuffers() {
+  if (uiTapBuffers.length) return Promise.resolve(uiTapBuffers);
+  if (uiTapBuffersPromise) return uiTapBuffersPromise;
+
+  uiTapBuffersPromise = (async () => {
+    const ctx = getAppAudioContext();
+
+    if (!ctx) return [];
+
+    const decoded = await Promise.all(
+      UI_TAP_SOUND_FILES.map(async (src) => {
+        try {
+          const res = await fetch(src, { cache: "force-cache" });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const arrayBuffer = await res.arrayBuffer();
+          return await decodeAudioDataCompat(ctx, arrayBuffer);
+        } catch (err) {
+          console.warn("Could not preload UI tap sound", src, err);
+          return null;
+        }
+      })
+    );
+
+    uiTapBuffers = decoded.filter(Boolean);
+    return uiTapBuffers;
+  })();
+
+  return uiTapBuffersPromise;
+}
+
+async function unlockAppAudio() {
+  if (appAudioUnlocked) return true;
+  if (appAudioUnlockPromise) return appAudioUnlockPromise;
+
+  appAudioUnlockPromise = (async () => {
+    const silencePromise = playAppSilenceUnlock();
+    const ctx = getAppAudioContext();
+
+    try {
+      if (ctx && ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      playTinyUnlockBlip(ctx);
+
+      appAudioUnlocked = true;
+      preloadUiTapSoundBuffers();
+
+      await silencePromise;
+      return true;
+    } catch (err) {
+      console.warn("Could not unlock app audio yet", err);
+      return false;
+    } finally {
+      appAudioUnlockPromise = null;
+    }
+  })();
+
+  return appAudioUnlockPromise;
+}
+
+function playUiTapSound() {
+  if (muted) return;
+
+  const now = performance.now();
+
+  // Prevent double-pops from rapid nested taps.
+  if (now - lastUiTapSoundAt < 60) return;
+  lastUiTapSoundAt = now;
+
+  const ctx = getAppAudioContext();
+
+  if (!ctx) return;
+
+  if (ctx.state === "suspended") {
+    unlockAppAudio();
+    return;
+  }
+
+  if (!uiTapBuffers.length) {
+    preloadUiTapSoundBuffers();
+    return;
+  }
+
+  try {
+    const buffer = uiTapBuffers[uiTapSoundIndex % uiTapBuffers.length];
+    uiTapSoundIndex += 1;
+
+    if (!buffer) return;
+
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+
+    source.buffer = buffer;
+    gain.gain.value = UI_TAP_VOLUME;
+
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start();
+  } catch (err) {
+    console.warn("Could not play UI tap sound", err);
+  }
+}
+
 function applyMute() {
   audioEl.muted = muted;
 }
+
 function toggleMute() {
   muted = !muted;
   applyMute();
-  // stop current audio immediately
+
+  // stop current verse/instruction audio immediately
   try { audioEl.pause(); } catch (e) { }
   try { audioEl.currentTime = 0; } catch (e) { }
+
   renderNav(); // update icon
 }
 
@@ -7532,12 +7746,79 @@ function render() {
 }
 
 /* =========================
+   App-wide UI tap sounds
+   ========================= */
+
+const UI_TAP_SOUND_SELECTOR = [
+  "button",
+  "a[href]",
+  "[role='button']",
+  "[data-ui-sound]",
+  ".title-action-btn",
+  ".title-zoo-strip",
+  ".practice-game-card",
+  ".new-verse-card",
+  ".progress-row",
+  ".pet-card",
+  ".todo-dev-row"
+].join(",");
+
+let appUiTapSoundsBound = false;
+
+function getUiTapSoundTarget(eventTarget) {
+  if (!eventTarget || typeof eventTarget.closest !== "function") return null;
+
+  if (eventTarget.closest("[data-no-ui-sound]")) return null;
+
+  const tapTarget = eventTarget.closest(UI_TAP_SOUND_SELECTOR);
+  if (!tapTarget) return null;
+
+  if (tapTarget.disabled) return null;
+  if (tapTarget.getAttribute("aria-disabled") === "true") return null;
+
+  return tapTarget;
+}
+
+function setupAppUiTapSounds() {
+  if (appUiTapSoundsBound) return;
+  appUiTapSoundsBound = true;
+
+  // Start loading the buffers early. The actual unlock still happens on a user gesture.
+  preloadUiTapSoundBuffers();
+
+  document.addEventListener("pointerdown", (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+
+    const tapTarget = getUiTapSoundTarget(event.target);
+
+    // Still try to unlock on real taps, even if this particular target is silent.
+    unlockAppAudio();
+
+    if (!tapTarget) return;
+
+    playUiTapSound();
+  }, { capture: true, passive: true });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.repeat) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    const tapTarget = getUiTapSoundTarget(event.target);
+    if (!tapTarget) return;
+
+    unlockAppAudio();
+    playUiTapSound();
+  }, true);
+}
+
+/* =========================
    8. App Bootstrap
    ========================= */
 
 (async function init() {
   preloadLearnInstructionImages();
   loadPetNameBlocklist();
+  setupAppUiTapSounds();
 
   await loadVerseList();
   HAS_VERSE_SELECTION = hasVerseIdInUrl();
