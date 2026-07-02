@@ -604,6 +604,7 @@ const UI_TAP_SOUND_FILES = [
 ];
 
 const UI_TAP_VOLUME = 0.12;
+const UI_TAP_FALLBACK_VOLUME = 0.035;
 
 let learnMenuOpen = false;
 let learnMenuPausedAudio = false;
@@ -620,6 +621,7 @@ let uiTapBuffersPromise = null;
 let uiTapSoundIndex = 0;
 let lastUiTapSoundAt = 0;
 let lastUiTapGestureAt = 0;
+let lastUiTapFallbackAt = 0;
 
 function getAppAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -696,6 +698,58 @@ function playTinyUnlockBlip(ctx) {
     osc.start(now);
     osc.stop(now + 0.035);
   } catch (err) { }
+}
+
+function playUiTapFallbackNow() {
+  if (muted) return;
+
+  const nowMs = performance.now();
+
+  // Prevent double fallback sounds from touchstart + pointerdown.
+  if (nowMs - lastUiTapFallbackAt < 90) return;
+  lastUiTapFallbackAt = nowMs;
+
+  const ctx = getAppAudioContext();
+  if (!ctx) return;
+
+  try {
+    // Do this inside the same gesture, but do not wait for the promise.
+    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => { });
+    }
+
+    const now = ctx.currentTime || 0;
+
+    const popGain = ctx.createGain();
+    popGain.gain.setValueAtTime(0.0001, now);
+    popGain.gain.exponentialRampToValueAtTime(UI_TAP_FALLBACK_VOLUME, now + 0.008);
+    popGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.075);
+    popGain.connect(ctx.destination);
+
+    const popOsc = ctx.createOscillator();
+    popOsc.type = "triangle";
+    popOsc.frequency.setValueAtTime(760, now);
+    popOsc.frequency.exponentialRampToValueAtTime(380, now + 0.065);
+    popOsc.connect(popGain);
+    popOsc.start(now);
+    popOsc.stop(now + 0.08);
+
+    const thumpGain = ctx.createGain();
+    thumpGain.gain.setValueAtTime(0.0001, now);
+    thumpGain.gain.exponentialRampToValueAtTime(UI_TAP_FALLBACK_VOLUME * 0.55, now + 0.006);
+    thumpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+    thumpGain.connect(ctx.destination);
+
+    const thumpOsc = ctx.createOscillator();
+    thumpOsc.type = "sine";
+    thumpOsc.frequency.setValueAtTime(190, now);
+    thumpOsc.frequency.exponentialRampToValueAtTime(95, now + 0.05);
+    thumpOsc.connect(thumpGain);
+    thumpOsc.start(now);
+    thumpOsc.stop(now + 0.06);
+  } catch (err) {
+    console.warn("Could not play fallback UI tap sound", err);
+  }
 }
 
 function decodeAudioDataCompat(ctx, arrayBuffer) {
@@ -781,29 +835,20 @@ async function unlockAppAudio() {
   return appAudioUnlockPromise;
 }
 
-function playUiTapSound({ force = false, loadAndPlay = true } = {}) {
+function playUiTapSound({ force = false } = {}) {
   if (muted) return;
 
   const ctx = getAppAudioContext();
-
   if (!ctx) return;
 
-  if (ctx.state === "suspended") {
-    unlockAppAudio().then(() => {
-      playUiTapSound({ force: true, loadAndPlay });
-    });
-    return;
+  if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+    ctx.resume().catch(() => { });
   }
 
+  // Do not wait for async loading here. If the MP3 buffers are not ready,
+  // the gesture handler will use the instant generated fallback instead.
   if (!uiTapBuffers.length) {
-    if (loadAndPlay) {
-      preloadUiTapSoundBuffers().then((buffers) => {
-        if (buffers && buffers.length) {
-          playUiTapSound({ force: true, loadAndPlay: false });
-        }
-      });
-    }
-
+    preloadUiTapSoundBuffers();
     return;
   }
 
@@ -7816,11 +7861,25 @@ function setupAppUiTapSounds() {
 
     const tapTarget = getUiTapSoundTarget(event.target);
 
-    // Unlock from a real user gesture. Then play once buffers are available.
-    unlockAppAudio().then(() => {
-      if (!tapTarget) return;
-      playUiTapSound({ force: true, loadAndPlay: true });
-    });
+    // Start/resume the context immediately inside the gesture.
+    const ctx = getAppAudioContext();
+    if (ctx && ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => { });
+    }
+
+    // Still unlock/prime the shared app audio path.
+    unlockAppAudio();
+    preloadUiTapSoundBuffers();
+
+    if (!tapTarget) return;
+
+    // If the MP3 pop buffers are ready, use the real shared pop sounds.
+    // Otherwise, play a generated pop immediately inside this same gesture.
+    if (uiTapBuffers.length) {
+      playUiTapSound({ force: true });
+    } else {
+      playUiTapFallbackNow();
+    }
   }
 
   document.addEventListener("touchstart", handleUiTapGesture, { capture: true, passive: true });
@@ -7833,9 +7892,19 @@ function setupAppUiTapSounds() {
     const tapTarget = getUiTapSoundTarget(event.target);
     if (!tapTarget) return;
 
-    unlockAppAudio().then(() => {
-      playUiTapSound({ force: true, loadAndPlay: true });
-    });
+    const ctx = getAppAudioContext();
+    if (ctx && ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => { });
+    }
+
+    unlockAppAudio();
+    preloadUiTapSoundBuffers();
+
+    if (uiTapBuffers.length) {
+      playUiTapSound({ force: true });
+    } else {
+      playUiTapFallbackNow();
+    }
   }, true);
 }
 
