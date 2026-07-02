@@ -619,6 +619,7 @@ let uiTapBuffers = [];
 let uiTapBuffersPromise = null;
 let uiTapSoundIndex = 0;
 let lastUiTapSoundAt = 0;
+let lastUiTapGestureAt = 0;
 
 function getAppAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -642,8 +643,12 @@ function ensureAppSilenceAudio() {
 
   appSilenceAudio = new Audio(APP_AUDIO_SILENCE_FILE);
   appSilenceAudio.preload = "auto";
-  appSilenceAudio.muted = true;
-  appSilenceAudio.volume = 0;
+
+  // iOS/Safari is more reliable when the primer is audible-but-nearly-silent,
+  // rather than muted or volume 0.
+  appSilenceAudio.muted = false;
+  appSilenceAudio.volume = 0.001;
+
   appSilenceAudio.setAttribute("playsinline", "");
   appSilenceAudio.setAttribute("webkit-playsinline", "");
 
@@ -654,8 +659,8 @@ async function playAppSilenceUnlock() {
   try {
     const silence = ensureAppSilenceAudio();
 
-    silence.muted = true;
-    silence.volume = 0;
+    silence.muted = false;
+    silence.volume = 0.001;
     silence.currentTime = 0;
 
     await silence.play();
@@ -721,6 +726,7 @@ function preloadUiTapSoundBuffers() {
         try {
           const res = await fetch(src, { cache: "force-cache" });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
           const arrayBuffer = await res.arrayBuffer();
           return await decodeAudioDataCompat(ctx, arrayBuffer);
         } catch (err) {
@@ -733,6 +739,13 @@ function preloadUiTapSoundBuffers() {
     uiTapBuffers = decoded.filter(Boolean);
     return uiTapBuffers;
   })();
+
+  uiTapBuffersPromise.finally(() => {
+    // If iOS/Safari failed the first decode/load attempt, allow a later tap to retry.
+    if (!uiTapBuffers.length) {
+      uiTapBuffersPromise = null;
+    }
+  });
 
   return uiTapBuffersPromise;
 }
@@ -768,28 +781,37 @@ async function unlockAppAudio() {
   return appAudioUnlockPromise;
 }
 
-function playUiTapSound() {
+function playUiTapSound({ force = false, loadAndPlay = true } = {}) {
   if (muted) return;
-
-  const now = performance.now();
-
-  // Prevent double-pops from rapid nested taps.
-  if (now - lastUiTapSoundAt < 60) return;
-  lastUiTapSoundAt = now;
 
   const ctx = getAppAudioContext();
 
   if (!ctx) return;
 
   if (ctx.state === "suspended") {
-    unlockAppAudio();
+    unlockAppAudio().then(() => {
+      playUiTapSound({ force: true, loadAndPlay });
+    });
     return;
   }
 
   if (!uiTapBuffers.length) {
-    preloadUiTapSoundBuffers();
+    if (loadAndPlay) {
+      preloadUiTapSoundBuffers().then((buffers) => {
+        if (buffers && buffers.length) {
+          playUiTapSound({ force: true, loadAndPlay: false });
+        }
+      });
+    }
+
     return;
   }
+
+  const now = performance.now();
+
+  // Prevent double-pops from touchstart + pointerdown or rapid nested taps.
+  if (!force && now - lastUiTapSoundAt < 60) return;
+  lastUiTapSoundAt = now;
 
   try {
     const buffer = uiTapBuffers[uiTapSoundIndex % uiTapBuffers.length];
@@ -805,7 +827,7 @@ function playUiTapSound() {
 
     source.connect(gain);
     gain.connect(ctx.destination);
-    source.start();
+    source.start(0);
   } catch (err) {
     console.warn("Could not play UI tap sound", err);
   }
@@ -7783,21 +7805,26 @@ function setupAppUiTapSounds() {
   if (appUiTapSoundsBound) return;
   appUiTapSoundsBound = true;
 
-  // Start loading the buffers early. The actual unlock still happens on a user gesture.
-  preloadUiTapSoundBuffers();
-
-  document.addEventListener("pointerdown", (event) => {
+  function handleUiTapGesture(event) {
     if (event.button !== undefined && event.button !== 0) return;
+
+    const now = performance.now();
+
+    // iOS may fire touchstart and pointerdown for the same tap.
+    if (now - lastUiTapGestureAt < 90) return;
+    lastUiTapGestureAt = now;
 
     const tapTarget = getUiTapSoundTarget(event.target);
 
-    // Still try to unlock on real taps, even if this particular target is silent.
-    unlockAppAudio();
+    // Unlock from a real user gesture. Then play once buffers are available.
+    unlockAppAudio().then(() => {
+      if (!tapTarget) return;
+      playUiTapSound({ force: true, loadAndPlay: true });
+    });
+  }
 
-    if (!tapTarget) return;
-
-    playUiTapSound();
-  }, { capture: true, passive: true });
+  document.addEventListener("touchstart", handleUiTapGesture, { capture: true, passive: true });
+  document.addEventListener("pointerdown", handleUiTapGesture, { capture: true, passive: true });
 
   document.addEventListener("keydown", (event) => {
     if (event.repeat) return;
@@ -7806,8 +7833,9 @@ function setupAppUiTapSounds() {
     const tapTarget = getUiTapSoundTarget(event.target);
     if (!tapTarget) return;
 
-    unlockAppAudio();
-    playUiTapSound();
+    unlockAppAudio().then(() => {
+      playUiTapSound({ force: true, loadAndPlay: true });
+    });
   }, true);
 }
 
