@@ -1633,6 +1633,19 @@ function renderCompleteScreen({
   const medal = getModeMedal(normalizedMode);
   const alreadyCompleted = !!completion?.alreadyCompleted;
   const petUnlocked = !!completion?.reward?.petUnlockTriggered;
+
+  if (petUnlocked) {
+    if (gameMix && typeof window.VerseGameBridge?.openPetUnlockFromMix === "function") {
+      window.VerseGameBridge.openPetUnlockFromMix(gameId);
+      return;
+    }
+
+    if (typeof window.VerseGameBridge?.openPetUnlock === "function") {
+      window.VerseGameBridge.openPetUnlock();
+      return;
+    }
+  }
+
   const zooTodoComplete = !petUnlocked && isZooTodoLaunchForVerse(verseId);
 
   const displayIcon = petUnlocked
