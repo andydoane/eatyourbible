@@ -6242,36 +6242,204 @@ function screenVerseDetail(idx) {
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
+const BIBLOPET_UNLOCK_POOF_CLOUD_SVG = `
+<svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
+</svg>`;
+
+function spawnBibloPetUnlockPoofAtElement(targetEl, opts = {}) {
+  const layer = document.getElementById("petUnlockPoofLayer");
+  if (!targetEl || !layer) return;
+
+  const rect = targetEl.getBoundingClientRect();
+  const layerRect = layer.getBoundingClientRect();
+
+  const x = rect.left + rect.width / 2 - layerRect.left;
+  const y = rect.top + rect.height / 2 - layerRect.top;
+
+  const count = opts.count ?? 9;
+  const distance = opts.distance ?? Math.max(56, Math.round(Math.min(rect.width, rect.height) * 0.34));
+  const jitter = opts.jitter ?? 8;
+  const duration = opts.duration ?? 680;
+  const cloudSize = opts.cloudSize ?? Math.max(96, Math.round(Math.min(rect.width, rect.height) * 0.58));
+  const colors = opts.colors ?? ["#ffffff"];
+  const sizePool = opts.sizePool ?? [8, 10, 12, 15, 18];
+
+  const rand = (min, max) => min + Math.random() * (max - min);
+  const pick = (items) => items[Math.floor(Math.random() * items.length)] || items[0];
+
+  const burst = document.createElement("div");
+  burst.className = "bp-unlock-poof";
+  burst.style.left = `${x}px`;
+  burst.style.top = `${y}px`;
+
+  const burstBoxSize = Math.max(160, Math.ceil((distance + cloudSize) * 2.05));
+  burst.style.width = `${burstBoxSize}px`;
+  burst.style.height = `${burstBoxSize}px`;
+
+  const cloud = document.createElement("div");
+  cloud.className = "bp-unlock-poof-cloud";
+  cloud.style.setProperty("--bp-unlock-poof-cloud-size", `${cloudSize}px`);
+  cloud.style.setProperty("--bp-unlock-poof-cloud-dur", `${Math.max(500, duration - 90)}ms`);
+  cloud.innerHTML = BIBLOPET_UNLOCK_POOF_CLOUD_SVG;
+  burst.appendChild(cloud);
+
+  const baseAngle = Math.random() * Math.PI * 2;
+  const step = (Math.PI * 2) / count;
+
+  for (let i = 0; i < count; i += 1) {
+    const angle = baseAngle + step * i + rand(-0.12, 0.12);
+    const dist = distance + rand(-jitter, jitter);
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist;
+    const size = pick(sizePool) + rand(-0.5, 0.5);
+
+    const particle = document.createElement("div");
+    particle.className = "bp-unlock-poof-particle";
+    particle.style.setProperty("--bp-unlock-poof-size", `${size.toFixed(1)}px`);
+    particle.style.setProperty("--bp-unlock-poof-dur", `${duration}ms`);
+    particle.style.setProperty("--bp-unlock-poof-start-scale", `${rand(0.68, 0.82).toFixed(2)}`);
+    particle.style.setProperty("--bp-unlock-poof-end-scale", `${rand(1.10, 1.24).toFixed(2)}`);
+    particle.style.setProperty("--bp-unlock-poof-tx", `${tx.toFixed(1)}px`);
+    particle.style.setProperty("--bp-unlock-poof-ty", `${ty.toFixed(1)}px`);
+    particle.style.setProperty("--bp-unlock-poof-delay", `${Math.round(rand(0, 18))}ms`);
+    particle.style.background = colors[i % colors.length];
+    burst.appendChild(particle);
+  }
+
+  layer.appendChild(burst);
+
+  requestAnimationFrame(() => {
+    cloud.classList.add("is-live");
+    burst.querySelectorAll(".bp-unlock-poof-particle").forEach((particle) => {
+      const delay = Number.parseInt(particle.style.getPropertyValue("--bp-unlock-poof-delay"), 10) || 0;
+      window.setTimeout(() => particle.classList.add("is-live"), delay);
+    });
+  });
+
+  window.setTimeout(() => burst.remove(), duration + 160);
+}
+
 function screenPetUnlock(idx) {
   const verseId = State.pendingPetUnlockVerseId;
   const verseItem = getVerseListItemById(verseId);
+  const verseRef = verseItem ? verseItem.ref : "";
   const petEmoji = getBibloPetEmojiForVerseId(verseId);
+  const petName = getBibloPetDisplayNameForVerseId(verseId);
+  const isMixUnlock = isGameMixPetUnlockRequest();
+  const keepPlayingText = isMixUnlock ? "Continue Mix" : "Keep Practicing";
+  const careText = verseRef
+    ? `Practice ${verseRef} to keep ${petName} happy.`
+    : `Practice this verse to keep ${petName} happy.`;
+
+  if (verseId) {
+    preloadBibloPetImageForVerseId(verseId);
+  }
 
   const wrap = document.createElement("div");
   wrap.className = "pet-unlock-screen";
 
   wrap.innerHTML = `
     ${homePillHtml()}
+
     <div class="pet-unlock-shell">
-      <div class="pet-unlock-card">
-        <div class="pet-unlock-emoji pet-emoji-unlocked">
-          ${bibloPetVisualHtml(verseId, petEmoji)}
+      <div class="pet-unlock-poof-layer" id="petUnlockPoofLayer" aria-hidden="true"></div>
+
+      <div class="pet-unlock-box-phase">
+        <div class="pet-unlock-box-stage">
+          <div class="pet-unlock-dust" aria-hidden="true">
+            <span style="--dust-x:-88px; --dust-y:12px; --dust-size:16px; --dust-delay:0ms;"></span>
+            <span style="--dust-x:-58px; --dust-y:20px; --dust-size:11px; --dust-delay:30ms;"></span>
+            <span style="--dust-x:-28px; --dust-y:25px; --dust-size:14px; --dust-delay:50ms;"></span>
+            <span style="--dust-x:0px; --dust-y:27px; --dust-size:10px; --dust-delay:20ms;"></span>
+            <span style="--dust-x:32px; --dust-y:23px; --dust-size:13px; --dust-delay:45ms;"></span>
+            <span style="--dust-x:62px; --dust-y:17px; --dust-size:12px; --dust-delay:25ms;"></span>
+            <span style="--dust-x:90px; --dust-y:10px; --dust-size:17px; --dust-delay:0ms;"></span>
+          </div>
+
+          <button
+            class="pet-unlock-box-button no-zoom"
+            id="petUnlockBoxBtn"
+            type="button"
+            aria-label="Open your BibloPet box"
+          >
+            <img
+              class="pet-unlock-box-img"
+              src="${IMG_DIR}biblopet_box.png"
+              alt=""
+              draggable="false"
+              onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+            >
+            <span class="pet-unlock-box-fallback" hidden>📦</span>
+          </button>
         </div>
+
+        <div class="pet-unlock-arrival-text">Your pet has arrived!</div>
       </div>
 
-      <div class="pet-unlock-title">BibloPet Unlocked!</div>
-      <div class="pet-unlock-ref">${verseItem ? verseItem.ref : ""}</div>
+      <div class="pet-unlock-reveal-phase" aria-live="polite">
+        <div class="pet-unlock-care-text">${escapeHtml(careText)}</div>
 
-      <div class="celebration-actions">
-        <button class="carousel-main no-zoom" id="btnPetUnlockPractice">
-          ${isGameMixPetUnlockRequest() ? "Continue Mix" : "Practice"}
-        </button>
-        <button class="carousel-main no-zoom" id="btnPetUnlockVisit">
-          ${isGameMixPetUnlockRequest() ? "Visit BibloPet Zoo" : "Visit BibloPet"}
-        </button>
+        <div class="pet-unlock-card">
+          <div class="pet-unlock-reveal-pet pet-emoji-unlocked">
+            ${bibloPetVisualHtml(verseId, petEmoji)}
+          </div>
+        </div>
+
+        <div class="pet-unlock-title">Meet ${escapeHtml(petName)}!</div>
+
+        <div class="celebration-actions pet-unlock-reveal-actions">
+          <button class="carousel-main no-zoom" id="btnPetUnlockVisit" type="button">
+            Visit ${escapeHtml(petName)}
+          </button>
+          <button class="carousel-main no-zoom" id="btnPetUnlockPractice" type="button">
+            ${escapeHtml(keepPlayingText)}
+          </button>
+        </div>
       </div>
     </div>
   `;
+
+  const boxBtn = wrap.querySelector("#petUnlockBoxBtn");
+  let packageOpened = false;
+
+  const openPackage = () => {
+    if (packageOpened) return;
+    packageOpened = true;
+
+    wrap.classList.add("is-opening");
+    if (boxBtn) boxBtn.disabled = true;
+
+    spawnBibloPetUnlockPoofAtElement(boxBtn, {
+      count: 11,
+      distance: 78,
+      jitter: 10,
+      duration: 720,
+      cloudSize: 142,
+      colors: ["#ffffff"],
+      sizePool: [8, 10, 12, 15, 18]
+    });
+
+    window.setTimeout(() => {
+      wrap.classList.remove("is-opening");
+      wrap.classList.add("is-revealed");
+
+      const visitBtn = wrap.querySelector("#btnPetUnlockVisit");
+      if (visitBtn) {
+        try {
+          visitBtn.focus({ preventScroll: true });
+        } catch (err) { }
+      }
+    }, 560);
+  };
+
+  if (boxBtn) {
+    boxBtn.onclick = openPackage;
+  }
+
+  window.setTimeout(() => {
+    wrap.classList.add("is-box-ready");
+  }, 920);
 
   const btnPractice = wrap.querySelector("#btnPetUnlockPractice");
   if (btnPractice) {
@@ -6329,7 +6497,7 @@ function screenPetUnlock(idx) {
     }
   }
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+  return makeSlide({ idx, bg: "#a7cb6f", navHidden: true, inner: wrap });
 }
 
 function screenPetStats(idx) {

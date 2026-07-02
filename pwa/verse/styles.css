@@ -4566,70 +4566,534 @@ BibloPet Unlock Screen
 }
 
 .pet-unlock-screen {
+  position: relative;
   min-height: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px;
+  padding: calc(18px + var(--safeT)) 18px calc(18px + var(--safeB));
+  background: #a7cb6f;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.pet-unlock-screen .screen-home-pill {
+  z-index: 30;
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.pet-unlock-screen .pet-unlock-shell {
+  padding-top: 0;
 }
 
 .pet-unlock-shell {
+  position: relative;
   width: min(92vw, 760px);
-  min-height: 70vh;
+  height: min(100%, 760px);
+  min-height: min(720px, 100%);
   margin: 0 auto;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  overflow: visible;
+}
+
+.pet-unlock-poof-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.pet-unlock-box-phase,
+.pet-unlock-reveal-phase {
+  grid-area: 1 / 1;
+  width: min(100%, 560px);
+}
+
+.pet-unlock-box-phase {
+  position: relative;
+  z-index: 4;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  gap: 16px;
-  text-align: center;
+  justify-content: center;
+  gap: clamp(14px, 3vh, 24px);
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease,
+    filter 260ms ease;
 }
 
-.pet-unlock-kicker {
-  font-size: clamp(28px, 8vw, 54px);
+.pet-unlock-screen.is-opening .pet-unlock-box-phase,
+.pet-unlock-screen.is-revealed .pet-unlock-box-phase {
+  opacity: 0;
+  transform: scale(0.74);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.pet-unlock-box-stage {
+  position: relative;
+  width: min(74vw, 350px);
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+}
+
+.pet-unlock-box-button {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transform-origin: center bottom;
+  animation: petUnlockBoxDrop 920ms cubic-bezier(.24, .84, .24, 1.02) both;
+}
+
+.pet-unlock-screen.is-box-ready:not(.is-opening):not(.is-revealed) .pet-unlock-box-button {
+  animation: petUnlockBoxWiggle 1500ms ease-in-out infinite;
+}
+
+.pet-unlock-screen.is-opening .pet-unlock-box-button {
+  animation: petUnlockBoxOpenShake 330ms linear both;
+}
+
+.pet-unlock-box-button:disabled {
+  cursor: default;
+}
+
+.pet-unlock-box-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 16px 0 rgba(0, 0, 0, 0.16)) drop-shadow(0 22px 28px rgba(0, 0, 0, 0.20));
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.pet-unlock-box-fallback {
+  font-size: clamp(120px, 38vw, 250px);
   line-height: 1;
+  filter: drop-shadow(0 16px 0 rgba(0, 0, 0, 0.16));
 }
 
-.pet-unlock-card {
-  width: min(100%, 420px);
-  min-height: clamp(150px, 28vh, 220px);
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #222;
+.pet-unlock-box-fallback[hidden] {
+  display: none;
+}
+
+.pet-unlock-dust {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 15%;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.pet-unlock-dust span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--dust-size, 12px);
+  height: var(--dust-size, 12px);
+  margin-left: calc(var(--dust-size, 12px) / -2);
+  margin-top: calc(var(--dust-size, 12px) / -2);
+  border-radius: 999px;
+  background: rgba(120, 76, 38, 0.38);
+  transform: translate(0, 0) scale(0.25);
+  opacity: 0;
+  animation: petUnlockDustPuff 700ms ease-out calc(720ms + var(--dust-delay, 0ms)) both;
+}
+
+.pet-unlock-arrival-text {
+  max-width: 14ch;
+  font-size: clamp(34px, 9vw, 64px);
+  font-weight: 900;
+  line-height: 0.98;
+  text-wrap: balance;
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+  animation: petUnlockTextPop 360ms cubic-bezier(.18, 1.35, .35, 1) 980ms both;
+}
+
+.pet-unlock-reveal-phase {
+  position: relative;
+  z-index: 5;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 18px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  gap: clamp(10px, 2vh, 16px);
+  opacity: 0;
+  transform: scale(0.78) translateY(18px);
+  pointer-events: none;
+  transition:
+    opacity 360ms ease,
+    transform 420ms cubic-bezier(.18, 1.35, .35, 1);
 }
 
-.pet-unlock-emoji {
-  font-size: clamp(88px, 22vw, 170px);
-  line-height: 1;
-  animation: petPop 0.4s ease-out, petWobble 2.2s ease-in-out infinite;
+.pet-unlock-screen.is-revealed .pet-unlock-reveal-phase {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
 }
 
-.pet-unlock-title {
-  font-size: clamp(28px, 7vw, 52px);
+.pet-unlock-care-text {
+  width: min(92vw, 520px);
+  font-size: clamp(19px, 4.8vw, 31px);
   font-weight: 900;
   line-height: 1.08;
   text-wrap: balance;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.14);
 }
 
-.pet-unlock-ref {
-  font-size: clamp(18px, 4vw, 28px);
+.pet-unlock-card {
+  width: min(76vw, 340px);
+  aspect-ratio: 1 / 1;
+  border-radius: 32px;
+  background: #ffffff;
+  color: #222222;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  box-shadow: 0 14px 0 rgba(0, 0, 0, 0.18), 0 24px 34px rgba(0, 0, 0, 0.20);
+  transform-origin: center bottom;
+  animation: petUnlockCardPop 520ms cubic-bezier(.18, 1.35, .35, 1) 120ms both;
+}
+
+.pet-unlock-reveal-pet {
+  width: 75%;
+  height: 75%;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  transform-origin: center bottom;
+  animation: petUnlockPetBounce 900ms ease-in-out 420ms both;
+}
+
+.pet-unlock-reveal-pet .biblopet-visual {
+  width: 100%;
+  height: 100%;
+}
+
+.pet-unlock-reveal-pet .biblopet-img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.pet-unlock-reveal-pet .biblopet-emoji-fallback {
+  font-size: clamp(90px, 28vw, 190px);
+}
+
+.pet-unlock-title {
+  max-width: min(92vw, 560px);
+  font-size: clamp(34px, 9vw, 64px);
   font-weight: 900;
-  opacity: 0.98;
+  line-height: 0.98;
+  text-wrap: balance;
+  text-shadow: 0 5px 0 rgba(0, 0, 0, 0.16);
 }
 
+.pet-unlock-ref,
 .pet-unlock-subtext {
-  font-size: clamp(16px, 3.8vw, 24px);
-  font-weight: 700;
-  line-height: 1.28;
-  max-width: 30ch;
-  text-wrap: balance;
-  opacity: 0.96;
+  display: none;
 }
+
+.pet-unlock-reveal-actions {
+  width: min(100%, 420px);
+  margin-top: 2px;
+}
+
+.pet-unlock-reveal-actions .carousel-main {
+  width: 100%;
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: clamp(20px, 5vw, 28px);
+}
+
+.bp-unlock-poof {
+  position: absolute;
+  width: 132px;
+  height: 132px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.bp-unlock-poof-cloud {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--bp-unlock-poof-cloud-size, 70px);
+  height: var(--bp-unlock-poof-cloud-size, 70px);
+  transform: translate(-50%, -50%) scale(0.14);
+  opacity: 0;
+  color: #ffffff;
+  filter: drop-shadow(0 2px 0 rgba(255, 255, 255, 0.22)) drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+}
+
+.bp-unlock-poof-cloud svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bp-unlock-poof-cloud path {
+  fill: currentColor;
+}
+
+.bp-unlock-poof-cloud.is-live {
+  animation: bpUnlockPoofCloudRipple var(--bp-unlock-poof-cloud-dur, 540ms) linear forwards;
+}
+
+.bp-unlock-poof-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--bp-unlock-poof-size, 12px);
+  height: var(--bp-unlock-poof-size, 12px);
+  margin-left: calc(var(--bp-unlock-poof-size, 12px) / -2);
+  margin-top: calc(var(--bp-unlock-poof-size, 12px) / -2);
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 1;
+  transform: translate(0, 0) scale(var(--bp-unlock-poof-start-scale, 0.75));
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.28));
+  transition:
+    transform var(--bp-unlock-poof-dur, 620ms) cubic-bezier(0.12, 0.75, 0.22, 1),
+    opacity var(--bp-unlock-poof-dur, 620ms) linear;
+}
+
+.bp-unlock-poof-particle.is-live {
+  opacity: 0;
+  transform: translate(var(--bp-unlock-poof-tx, 0px), var(--bp-unlock-poof-ty, 0px)) scale(var(--bp-unlock-poof-end-scale, 1.12));
+}
+
+@keyframes petUnlockBoxDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-120vh) scaleX(1) scaleY(1);
+  }
+
+  14% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+
+  78% {
+    transform: translateY(0) scaleX(1.16) scaleY(0.78);
+  }
+
+  88% {
+    transform: translateY(-18px) scaleX(0.94) scaleY(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes petUnlockBoxWiggle {
+
+  0%,
+  64%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  70% {
+    transform: rotate(-4deg) scale(1.025);
+  }
+
+  76% {
+    transform: rotate(4deg) scale(1.025);
+  }
+
+  82% {
+    transform: rotate(-2deg) scale(1.015);
+  }
+
+  88% {
+    transform: rotate(2deg) scale(1.015);
+  }
+
+  94% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes petUnlockBoxOpenShake {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+
+  20% {
+    transform: translateX(-9px) rotate(-5deg) scale(1.04);
+  }
+
+  40% {
+    transform: translateX(9px) rotate(5deg) scale(1.06);
+  }
+
+  60% {
+    transform: translateX(-6px) rotate(-3deg) scale(1.08);
+  }
+
+  80% {
+    transform: translateX(6px) rotate(3deg) scale(1.04);
+  }
+
+  100% {
+    transform: translateX(0) rotate(0deg) scale(0.82);
+  }
+}
+
+@keyframes petUnlockDustPuff {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.25);
+  }
+
+  18% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--dust-x, 0px), var(--dust-y, 0px)) scale(1.2);
+  }
+}
+
+@keyframes petUnlockTextPop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.86);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes petUnlockCardPop {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.72);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(0) scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes petUnlockPetBounce {
+
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  35% {
+    transform: translateY(-10px) scale(1.05);
+  }
+
+  65% {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+@keyframes bpUnlockPoofCloudRipple {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.14) rotate(-8deg);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.82) rotate(4deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.45) rotate(14deg);
+  }
+}
+
+@media (max-height: 680px) {
+  .pet-unlock-shell {
+    min-height: 100%;
+  }
+
+  .pet-unlock-box-stage {
+    width: min(58vw, 270px);
+  }
+
+  .pet-unlock-card {
+    width: min(58vw, 260px);
+  }
+
+  .pet-unlock-care-text {
+    font-size: clamp(17px, 4.2vw, 24px);
+  }
+
+  .pet-unlock-title {
+    font-size: clamp(30px, 7vw, 48px);
+  }
+
+  .pet-unlock-reveal-phase {
+    gap: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .pet-unlock-box-button,
+  .pet-unlock-screen.is-box-ready:not(.is-opening):not(.is-revealed) .pet-unlock-box-button,
+  .pet-unlock-dust span,
+  .pet-unlock-arrival-text,
+  .pet-unlock-card,
+  .pet-unlock-reveal-pet,
+  .bp-unlock-poof-cloud.is-live {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
+
 
 /* =========================
 Final Recall layout fix
