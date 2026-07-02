@@ -4827,7 +4827,10 @@ BibloPet Unlock Screen
   width: 100%;
   flex: 0 0 auto;
   margin: 0;
+  font-family: "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-size: clamp(20px, 5vw, 28px);
+  font-weight: 900;
+  line-height: 1.05;
 }
 
 .pet-unlock-reveal-actions #btnPetUnlockVisit {
