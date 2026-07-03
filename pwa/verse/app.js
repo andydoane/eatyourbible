@@ -1460,8 +1460,10 @@ function openRestoreProgressDialog(importedProgress, saveData) {
 }
 
 function generateResetMathQuestion() {
-  const a = Math.floor(Math.random() * 8) + 4;
-  const b = Math.floor(Math.random() * 8) + 4;
+  // Two-digit number plus one-digit number.
+  // Keep the answer two digits too, so the confirmation stays simple.
+  const a = Math.floor(Math.random() * 80) + 10; // 10–89
+  const b = Math.floor(Math.random() * 9) + 1;   // 1–9
 
   return {
     question: `${a} + ${b}`,
@@ -1492,7 +1494,7 @@ function resetAllProgressData() {
 }
 
 function openResetProgressDialog() {
-  const challenge = generateResetMathQuestion();
+  let challenge = generateResetMathQuestion();
 
   const resetBtn = dlgBtn("Reset", {
     onClick: () => {
@@ -1522,21 +1524,26 @@ function openResetProgressDialog() {
           To confirm, answer this question:
         </p>
 
-        <label class="settings-reset-label" for="settingsResetAnswer">
+        <label
+          class="settings-reset-label"
+          id="settingsResetQuestionLabel"
+          for="settingsResetAnswer"
+        >
           ${escapeHtml(challenge.question)} =
         </label>
 
         <input
           class="settings-reset-input"
           id="settingsResetAnswer"
-          type="number"
+          type="text"
           inputmode="numeric"
+          pattern="[0-9]*"
           autocomplete="off"
           aria-label="Reset confirmation answer"
         >
 
-        <div class="settings-reset-hint">
-          The Reset button will unlock when the answer is correct.
+        <div class="settings-reset-hint" id="settingsResetHint">
+          If you enter a wrong digit, the question will change.
         </div>
       </div>
     `,
@@ -1550,13 +1557,66 @@ function openResetProgressDialog() {
   });
 
   const input = document.getElementById("settingsResetAnswer");
+  const label = document.getElementById("settingsResetQuestionLabel");
+  const hint = document.getElementById("settingsResetHint");
+
+  function setNewResetChallenge(message = "New question. Try again.") {
+    challenge = generateResetMathQuestion();
+
+    if (label) {
+      label.textContent = `${challenge.question} =`;
+    }
+
+    if (hint) {
+      hint.textContent = message;
+    }
+
+    if (input) {
+      input.value = "";
+      input.focus();
+    }
+
+    resetBtn.disabled = true;
+  }
 
   if (input) {
     input.focus();
 
     input.addEventListener("input", () => {
-      const value = Number(String(input.value || "").trim());
-      resetBtn.disabled = value !== challenge.answer;
+      const rawValue = String(input.value || "");
+      const digitsOnly = rawValue.replace(/\D/g, "");
+
+      if (rawValue !== digitsOnly) {
+        input.value = digitsOnly;
+      }
+
+      if (!digitsOnly) {
+        resetBtn.disabled = true;
+
+        if (hint) {
+          hint.textContent = "If you enter a wrong digit, the question will change.";
+        }
+
+        return;
+      }
+
+      const answerText = String(challenge.answer);
+
+      // The typed digits must match the answer from left to right.
+      // Example: answer 53 allows "5", then "53". Anything else resets.
+      if (!answerText.startsWith(digitsOnly)) {
+        setNewResetChallenge("That digit was not right, so the question changed.");
+        return;
+      }
+
+      const isCorrect = digitsOnly === answerText;
+      resetBtn.disabled = !isCorrect;
+
+      if (hint) {
+        hint.textContent = isCorrect
+          ? "Correct. You can reset now."
+          : "Keep typing the answer.";
+      }
     });
   }
 }
