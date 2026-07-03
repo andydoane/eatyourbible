@@ -27,8 +27,8 @@ const PET_IMG_DIR = "pet_images/";
 const SETTINGS_GEAR_ICON = IMG_DIR + "settings_gear.png";
 
 const APP_VERSION = "1.0.0";
-const SUPPORT_EMAIL = "support@example.com";
-const PRIVACY_POLICY_URL = "https://example.com/privacy";
+const SUPPORT_EMAIL = "BibloZooApp@gmail.com";
+const PRIVACY_POLICY_URL = "https://andydoane.github.io/eatyourbible/pwa/verse/privacy_policy.html";
 
 // =========================================================
 // DEBUG fallback: lets the app run offline (file://) without fetch()
