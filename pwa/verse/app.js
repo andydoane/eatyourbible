@@ -603,8 +603,11 @@ const UI_TAP_SOUND_FILES = [
   UI_AUDIO_DIR + "ui_sound_pop_2.mp3"
 ];
 
+const UI_PET_UNLOCK_SOUND_FILE = UI_AUDIO_DIR + "ui_pet_unlock.mp3";
+
 const UI_TAP_VOLUME = 0.12;
 const UI_TAP_FALLBACK_VOLUME = 0.035;
+const UI_PET_UNLOCK_VOLUME = 0.55;
 
 let learnMenuOpen = false;
 let learnMenuPausedAudio = false;
@@ -622,6 +625,10 @@ let uiTapSoundIndex = 0;
 let lastUiTapSoundAt = 0;
 let lastUiTapGestureAt = 0;
 let lastUiTapFallbackAt = 0;
+
+let petUnlockSoundBuffer = null;
+let petUnlockSoundPromise = null;
+let lastPetUnlockSoundAt = 0;
 
 function getAppAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -779,6 +786,79 @@ function decodeAudioDataCompat(ctx, arrayBuffer) {
       reject(err);
     }
   });
+}
+
+function preloadPetUnlockSoundBuffer() {
+  if (petUnlockSoundBuffer) return Promise.resolve(petUnlockSoundBuffer);
+  if (petUnlockSoundPromise) return petUnlockSoundPromise;
+
+  petUnlockSoundPromise = (async () => {
+    const ctx = getAppAudioContext();
+
+    if (!ctx) return null;
+
+    try {
+      const res = await fetch(UI_PET_UNLOCK_SOUND_FILE, { cache: "force-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const arrayBuffer = await res.arrayBuffer();
+      const buffer = await decodeAudioDataCompat(ctx, arrayBuffer);
+
+      petUnlockSoundBuffer = buffer;
+      return petUnlockSoundBuffer;
+    } catch (err) {
+      console.warn("Could not preload BibloPet unlock sound", UI_PET_UNLOCK_SOUND_FILE, err);
+      return null;
+    } finally {
+      if (!petUnlockSoundBuffer) {
+        petUnlockSoundPromise = null;
+      }
+    }
+  })();
+
+  return petUnlockSoundPromise;
+}
+
+function playPetUnlockPackageSound({ allowFallback = true } = {}) {
+  if (muted) return;
+
+  const nowMs = performance.now();
+
+  // Prevent double sound from touchstart + pointerdown + click.
+  if (nowMs - lastPetUnlockSoundAt < 180) return;
+  lastPetUnlockSoundAt = nowMs;
+
+  const ctx = getAppAudioContext();
+  if (!ctx) return;
+
+  try {
+    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
+      ctx.resume().catch(() => { });
+    }
+
+    if (!petUnlockSoundBuffer) {
+      preloadPetUnlockSoundBuffer();
+
+      // If the MP3 is not decoded yet, give iOS immediate gesture-timed feedback.
+      if (allowFallback) {
+        playUiTapFallbackNow();
+      }
+
+      return;
+    }
+
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+
+    source.buffer = petUnlockSoundBuffer;
+    gain.gain.value = UI_PET_UNLOCK_VOLUME;
+
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(0);
+  } catch (err) {
+    console.warn("Could not play BibloPet unlock sound", err);
+  }
 }
 
 function preloadUiTapSoundBuffers() {
@@ -6652,6 +6732,8 @@ function screenPetUnlock(idx) {
     preloadBibloPetImageForVerseId(verseId);
   }
 
+  preloadPetUnlockSoundBuffer();
+
   const wrap = document.createElement("div");
   wrap.className = "pet-unlock-screen";
 
@@ -6678,6 +6760,7 @@ function screenPetUnlock(idx) {
             id="petUnlockBoxBtn"
             type="button"
             aria-label="Open your BibloPet box"
+            data-no-ui-sound
           >
             <img
               class="pet-unlock-box-img"
@@ -6719,9 +6802,13 @@ function screenPetUnlock(idx) {
   const boxBtn = wrap.querySelector("#petUnlockBoxBtn");
   let packageOpened = false;
 
-  const openPackage = () => {
+  const openPackage = (event) => {
+    if (event?.button !== undefined && event.button !== 0) return;
     if (packageOpened) return;
     packageOpened = true;
+
+    primeAppAudioFromGesture({ playFeedback: false });
+    playPetUnlockPackageSound({ allowFallback: true });
 
     wrap.classList.add("is-opening");
     if (boxBtn) boxBtn.disabled = true;
@@ -6750,6 +6837,8 @@ function screenPetUnlock(idx) {
   };
 
   if (boxBtn) {
+    boxBtn.addEventListener("touchstart", openPackage, { passive: true });
+    boxBtn.addEventListener("pointerdown", openPackage, { passive: true });
     boxBtn.onclick = openPackage;
   }
 
