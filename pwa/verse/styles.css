@@ -1971,11 +1971,12 @@ Settings Screen
 }
 
 .settings-card-title {
-  color: #7f66c6;
+  color: #333333;
   font-size: clamp(24px, 5.8vw, 34px);
   font-weight: 900;
   line-height: 1;
   margin-bottom: 6px;
+  text-align: center;
 }
 
 .settings-card-text {

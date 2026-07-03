@@ -6083,10 +6083,6 @@ function screenSettings(idx) {
 
         <section class="settings-card">
           <div class="settings-card-title">Backup &amp; Restore</div>
-          <div class="settings-card-text">
-            Save a backup before changing devices or deleting the app.
-          </div>
-
           <div class="settings-action-list">
             <button class="settings-action no-zoom" type="button" data-settings-action="export">
               Export Save Data
