@@ -6073,11 +6073,13 @@ function screenSettings(idx) {
   wrap.className = "settings-screen";
 
   wrap.innerHTML = `
-    ${homePillHtml("Back to Home")}
-
     <div class="settings-page">
       <div class="settings-shell">
-        <h1 class="settings-heading">Settings</h1>
+        <div class="settings-header">
+          ${homePillHtml("Back to Home")}
+          <h1 class="settings-heading">Settings</h1>
+          <div class="settings-header-spacer" aria-hidden="true"></div>
+        </div>
 
         <section class="settings-card">
           <div class="settings-card-title">Backup &amp; Restore</div>

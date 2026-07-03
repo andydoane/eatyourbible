@@ -1906,14 +1906,10 @@ Settings Screen
   position: relative;
 }
 
-.settings-screen .screen-home-pill {
-  left: max(18px, calc((100vw - 700px) / 2));
-}
-
 .settings-page {
   width: 100%;
   min-height: 100%;
-  padding: calc(72px + var(--safeT)) clamp(12px, 4vw, 28px) calc(34px + var(--safeB));
+  padding: calc(18px + var(--safeT)) clamp(12px, 4vw, 28px) calc(34px + var(--safeB));
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -1923,11 +1919,39 @@ Settings Screen
   width: min(100%, 700px);
   display: flex;
   flex-direction: column;
-  gap: clamp(14px, 3vw, 20px);
+  gap: clamp(22px, 5vw, 34px);
+}
+
+.settings-header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 54px 1fr 54px;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-header .screen-home-pill {
+  position: static;
+  top: auto;
+  left: auto;
+  width: 54px;
+  min-height: var(--tap);
+  padding: 0;
+  justify-self: start;
+}
+
+.settings-header .screen-home-pill .nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.settings-header-spacer {
+  width: 54px;
+  height: var(--tap);
 }
 
 .settings-heading {
-  margin: 0 0 2px;
+  margin: 0;
   color: #ffffff;
   font-size: clamp(40px, 10vw, 70px);
   font-weight: 900;
