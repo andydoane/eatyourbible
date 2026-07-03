@@ -752,6 +752,21 @@ function playUiTapFallbackNow() {
   }
 }
 
+function primeAppAudioFromGesture({ playFeedback = false } = {}) {
+  const ctx = getAppAudioContext();
+
+  if (ctx && ctx.state === "suspended" && typeof ctx.resume === "function") {
+    ctx.resume().catch(() => { });
+  }
+
+  if (playFeedback) {
+    playUiTapFallbackNow();
+  }
+
+  unlockAppAudio();
+  preloadUiTapSoundBuffers();
+}
+
 function decodeAudioDataCompat(ctx, arrayBuffer) {
   return new Promise((resolve, reject) => {
     try {
@@ -5213,14 +5228,31 @@ function screenIntro(idx) {
   const wrap = document.createElement("div");
   wrap.className = "quiz-intro";
   wrap.innerHTML = `
-    <img src="${INTRO_LOGO}" alt="Logo" onerror="this.style.display='none'">
+    <img
+      id="introAudioUnlockLogo"
+      src="${INTRO_LOGO}"
+      alt="Logo"
+      draggable="false"
+      onerror="this.style.display='none'"
+    >
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start</div>
   `;
-  wrap.onclick = () => {
+
+  let introStarted = false;
+
+  function startIntroFromGesture() {
+    if (introStarted) return;
+    introStarted = true;
+
+    primeAppAudioFromGesture({ playFeedback: true });
+
     go(SKIP_TITLE_SEQUENCE ? Screen.TITLE : Screen.TITLE_SEQUENCE);
-  };
+  }
+
+  wrap.onclick = startIntroFromGesture;
+
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
@@ -5281,6 +5313,9 @@ function screenTitleSequence(idx) {
 
   wrap.onclick = () => {
     if (!readyForTap) return;
+
+    primeAppAudioFromGesture({ playFeedback: true });
+
     go(Screen.TITLE);
   };
 
@@ -7823,6 +7858,7 @@ const UI_TAP_SOUND_SELECTOR = [
   "[data-ui-sound]",
   ".title-action-btn",
   ".title-zoo-strip",
+  ".title-picker-select",
   ".practice-game-card",
   ".new-verse-card",
   ".progress-row",
