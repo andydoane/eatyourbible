@@ -6802,8 +6802,8 @@ function screenPetUnlock(idx) {
 
     spawnBibloPetUnlockPoofAtElement(boxBtn, {
       count: 11,
-      distance: 78,
-      jitter: 10,
+      distance: 132,
+      jitter: 16,
       duration: 720,
       cloudSize: 142,
       colors: ["#ffffff"],
