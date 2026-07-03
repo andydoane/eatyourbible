@@ -1840,6 +1840,242 @@ Game Mix Finished Screen
   color: #111;
 }
 
+.title-picker-tools {
+  width: min(100%, 700px);
+  max-width: 700px;
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 50px;
+  align-items: center;
+  gap: 10px;
+}
+
+.title-picker-tools .title-picker {
+  width: 100%;
+  max-width: none;
+  margin-top: 0;
+  min-width: 0;
+}
+
+.title-settings-btn {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 14px;
+  padding: 7px;
+  background: #66529e;
+  color: #ffffff;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.title-settings-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.24);
+}
+
+.title-settings-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (max-width: 380px) {
+  .title-picker-tools {
+    grid-template-columns: minmax(0, 1fr) 50px;
+    gap: 8px;
+  }
+}
+
+/* =========================
+Settings Screen
+========================= */
+
+.settings-screen {
+  height: 100%;
+  background: var(--purple);
+  color: #ffffff;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+}
+
+.settings-screen .screen-home-pill {
+  left: max(18px, calc((100vw - 700px) / 2));
+}
+
+.settings-page {
+  width: 100%;
+  min-height: 100%;
+  padding: calc(72px + var(--safeT)) clamp(12px, 4vw, 28px) calc(34px + var(--safeB));
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.settings-shell {
+  width: min(100%, 700px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 3vw, 20px);
+}
+
+.settings-heading {
+  margin: 0 0 2px;
+  color: #ffffff;
+  font-size: clamp(40px, 10vw, 70px);
+  font-weight: 900;
+  line-height: 0.95;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.settings-card {
+  width: 100%;
+  border-radius: clamp(22px, 5vw, 34px);
+  background: #fbf8f6;
+  color: #333333;
+  padding: clamp(16px, 4vw, 26px);
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.24);
+  text-align: left;
+}
+
+.settings-card-title {
+  color: #7f66c6;
+  font-size: clamp(24px, 5.8vw, 34px);
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.settings-card-text {
+  color: #333333;
+  font-size: clamp(16px, 4vw, 21px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+.settings-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-action {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: #7f66c6;
+  color: #ffffff;
+  font: inherit;
+  font-size: clamp(18px, 4.6vw, 24px);
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+  text-align: center;
+}
+
+.settings-action:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+}
+
+.settings-action-danger {
+  background: #ff5a51;
+}
+
+.settings-version {
+  margin-top: 14px;
+  color: rgba(51, 51, 51, 0.72);
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.settings-card-danger .settings-card-title {
+  color: #ff5a51;
+}
+
+.settings-info-dialog {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+  line-height: 1.32;
+}
+
+.settings-info-dialog p {
+  margin: 0 0 12px;
+}
+
+.settings-info-dialog ul {
+  margin: 0 0 12px 20px;
+  padding: 0;
+}
+
+.settings-info-dialog li {
+  margin: 4px 0;
+}
+
+.settings-reset-dialog {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 700;
+  line-height: 1.32;
+}
+
+.settings-reset-dialog p {
+  margin: 0 0 12px;
+}
+
+.settings-reset-label {
+  display: block;
+  margin: 8px 0 6px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.settings-reset-input {
+  width: 100%;
+  height: 54px;
+  border: none;
+  border-radius: 16px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 24px;
+  font-weight: 900;
+  text-align: center;
+  background: #ffffff;
+  color: #111111;
+}
+
+.settings-reset-hint {
+  margin-top: 8px;
+  font-size: 14px;
+  opacity: 0.82;
+  text-align: center;
+}
+
+.dlg-btn.danger {
+  background: #ff5a51;
+  color: #ffffff;
+}
+
+.dlg-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+  transform: none;
+}
+
 /* =========================
 Title Page BibloPet Zoo Strip
 ========================= */

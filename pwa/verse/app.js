@@ -24,6 +24,11 @@ const WORDS_AUDIO_DIR = AUDIO_DIR + "words/";
 const DATA_DIR = "verse_data/";
 const IMG_DIR = "verse_images/";
 const PET_IMG_DIR = "pet_images/";
+const SETTINGS_GEAR_ICON = IMG_DIR + "settings_gear.png";
+
+const APP_VERSION = "1.0.0";
+const SUPPORT_EMAIL = "support@example.com";
+const PRIVACY_POLICY_URL = "https://example.com/privacy";
 
 // =========================================================
 // DEBUG fallback: lets the app run offline (file://) without fetch()
@@ -1288,6 +1293,366 @@ function saveProgress(progress) {
   } catch (err) {
     console.warn("Could not save progress to localStorage", err);
   }
+}
+
+function createVerseMemorySaveData() {
+  const progress = loadProgress();
+
+  return {
+    app: "Verse Memory / BibloPet Zoo",
+    saveType: "verse-memory-save",
+    saveVersion: 1,
+    exportedAt: new Date().toISOString(),
+    progressVersion: PROGRESS_VERSION,
+    progress
+  };
+}
+
+function refreshCurrentProgressState() {
+  if (VERSE_ID) {
+    const verseProgress = getVerseProgress(VERSE_ID);
+    State.hasLearnedVerse = !!verseProgress.learnCompleted;
+  }
+
+  titleZooPetVerseId = "";
+}
+
+function exportSaveData() {
+  try {
+    const saveData = createVerseMemorySaveData();
+    const json = JSON.stringify(saveData, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const dateStamp = new Date().toISOString().slice(0, 10);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `verse-memory-save-${dateStamp}.json`;
+    a.style.display = "none";
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+
+    showDialog({
+      title: "Save Data Exported",
+      body: "Your progress backup file was created. Keep it somewhere safe so you can restore it later.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  } catch (err) {
+    console.warn("Could not export save data", err);
+
+    showDialog({
+      title: "Export Failed",
+      body: "Something went wrong while creating the backup file.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  }
+}
+
+function openImportSaveDataPicker() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.style.display = "none";
+
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    input.remove();
+
+    if (!file) return;
+
+    importSaveDataFromFile(file);
+  };
+
+  document.body.appendChild(input);
+  input.click();
+}
+
+function importSaveDataFromFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const raw = String(reader.result || "");
+      const parsed = JSON.parse(raw);
+
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("Invalid save file.");
+      }
+
+      if (parsed.saveType !== "verse-memory-save") {
+        throw new Error("This does not look like a Verse Memory save file.");
+      }
+
+      if (!parsed.progress || typeof parsed.progress !== "object") {
+        throw new Error("The save file does not contain progress data.");
+      }
+
+      if (!parsed.progress.verses || typeof parsed.progress.verses !== "object") {
+        throw new Error("The save file progress data is missing verses.");
+      }
+
+      const importedProgress = parsed.progress;
+
+      if (!importedProgress.version) {
+        importedProgress.version = PROGRESS_VERSION;
+      }
+
+      migrateTrafficProgress(importedProgress);
+
+      openRestoreProgressDialog(importedProgress, parsed);
+    } catch (err) {
+      console.warn("Could not import save data", err);
+
+      showDialog({
+        title: "Import Failed",
+        body: String(err.message || "This save file could not be imported."),
+        actions: [dlgBtn("OK", { onClick: closeDialog })]
+      });
+    }
+  };
+
+  reader.onerror = () => {
+    showDialog({
+      title: "Import Failed",
+      body: "The save file could not be read.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  };
+
+  reader.readAsText(file);
+}
+
+function openRestoreProgressDialog(importedProgress, saveData) {
+  const exportedAt = saveData?.exportedAt
+    ? new Date(saveData.exportedAt).toLocaleString()
+    : "Unknown";
+
+  showDialog({
+    title: "Restore Progress?",
+    body: `This will replace the progress currently saved on this device. Backup date: ${exportedAt}`,
+    actions: [
+      dlgBtn("Cancel", {
+        secondary: true,
+        onClick: closeDialog
+      }),
+      dlgBtn("Restore", {
+        onClick: () => {
+          saveProgress(importedProgress);
+          refreshCurrentProgressState();
+          closeDialog();
+          render();
+
+          showDialog({
+            title: "Progress Restored",
+            body: "Your saved progress has been restored on this device.",
+            actions: [dlgBtn("OK", { onClick: closeDialog })]
+          });
+        }
+      })
+    ]
+  });
+}
+
+function generateResetMathQuestion() {
+  const a = Math.floor(Math.random() * 8) + 4;
+  const b = Math.floor(Math.random() * 8) + 4;
+
+  return {
+    question: `${a} + ${b}`,
+    answer: a + b
+  };
+}
+
+function resetAllProgressData() {
+  try {
+    localStorage.removeItem(PROGRESS_STORAGE_KEY);
+  } catch (err) {
+    console.warn("Could not reset progress", err);
+  }
+
+  try {
+    clearGameMixState();
+  } catch (err) { }
+
+  State.pendingPetUnlockVerseId = null;
+  State.activeTodo = null;
+  State.pendingZooTodoGameId = "";
+  State.hasLearnedVerse = false;
+
+  titleZooPetVerseId = "";
+
+  refreshCurrentProgressState();
+  render();
+}
+
+function openResetProgressDialog() {
+  const challenge = generateResetMathQuestion();
+
+  const resetBtn = dlgBtn("Reset", {
+    onClick: () => {
+      resetAllProgressData();
+      closeDialog();
+
+      showDialog({
+        title: "Progress Reset",
+        body: "All saved progress on this device has been reset.",
+        actions: [dlgBtn("OK", { onClick: closeDialog })]
+      });
+    }
+  });
+
+  resetBtn.classList.add("danger");
+  resetBtn.disabled = true;
+
+  showDialog({
+    title: "Reset All Progress?",
+    bodyHtml: `
+      <div class="settings-reset-dialog">
+        <p>
+          This will erase saved progress, medals, BibloPets, pet names, and backgrounds on this device.
+        </p>
+
+        <p>
+          To confirm, answer this question:
+        </p>
+
+        <label class="settings-reset-label" for="settingsResetAnswer">
+          ${escapeHtml(challenge.question)} =
+        </label>
+
+        <input
+          class="settings-reset-input"
+          id="settingsResetAnswer"
+          type="number"
+          inputmode="numeric"
+          autocomplete="off"
+          aria-label="Reset confirmation answer"
+        >
+
+        <div class="settings-reset-hint">
+          The Reset button will unlock when the answer is correct.
+        </div>
+      </div>
+    `,
+    actions: [
+      dlgBtn("Cancel", {
+        secondary: true,
+        onClick: closeDialog
+      }),
+      resetBtn
+    ]
+  });
+
+  const input = document.getElementById("settingsResetAnswer");
+
+  if (input) {
+    input.focus();
+
+    input.addEventListener("input", () => {
+      const value = Number(String(input.value || "").trim());
+      resetBtn.disabled = value !== challenge.answer;
+    });
+  }
+}
+
+function openPrivacyPolicy() {
+  showDialog({
+    title: "Privacy Policy",
+    body: "This will open the full privacy policy page. Replace the placeholder URL before release.",
+    actions: [
+      dlgBtn("Cancel", {
+        secondary: true,
+        onClick: closeDialog
+      }),
+      dlgBtn("Open", {
+        onClick: () => {
+          closeDialog();
+
+          try {
+            window.open(PRIVACY_POLICY_URL, "_blank", "noopener,noreferrer");
+          } catch (err) {
+            window.location.href = PRIVACY_POLICY_URL;
+          }
+        }
+      })
+    ]
+  });
+}
+
+function showStoredDataDialog() {
+  showDialog({
+    title: "What Data Is Stored?",
+    bodyHtml: `
+      <div class="settings-info-dialog">
+        <p>
+          Verse Memory stores progress only on this device.
+        </p>
+
+        <ul>
+          <li>Learned verses</li>
+          <li>Game medals and progress</li>
+          <li>BibloPet unlocks and pet names</li>
+          <li>BibloPet backgrounds</li>
+          <li>Recent practice timestamps</li>
+        </ul>
+
+        <p>
+          The app does not require an account, does not show ads, and does not use analytics in this version.
+        </p>
+      </div>
+    `,
+    actions: [dlgBtn("OK", { onClick: closeDialog })]
+  });
+}
+
+function showCreditsDialog() {
+  showDialog({
+    title: "Credits",
+    bodyHtml: `
+      <div class="settings-info-dialog">
+        <p>
+          <strong>Bible translation credits:</strong><br>
+          Add required Bible translation attribution text here before release.
+        </p>
+
+        <p>
+          <strong>Fonts:</strong><br>
+          Baloo 2. Add font license attribution here.
+        </p>
+
+        <p>
+          <strong>Images, sounds, and artwork:</strong><br>
+          Add additional credits here before release.
+        </p>
+      </div>
+    `,
+    actions: [dlgBtn("OK", { onClick: closeDialog })]
+  });
+}
+
+function showContactSupportDialog() {
+  showDialog({
+    title: "Contact Support",
+    body: `For help, contact: ${SUPPORT_EMAIL}`,
+    actions: [
+      dlgBtn("Cancel", {
+        secondary: true,
+        onClick: closeDialog
+      }),
+      dlgBtn("Email", {
+        onClick: () => {
+          closeDialog();
+          window.location.href = `mailto:${SUPPORT_EMAIL}`;
+        }
+      })
+    ]
+  });
 }
 
 function isTrackedGameCompleted(gameId, gameProgress) {
@@ -2889,6 +3254,7 @@ const Screen = {
   INTRO: "intro",
   TITLE_SEQUENCE: "title_sequence",
   TITLE: "title",
+  SETTINGS: "settings",
   TODO: "todo",
   TODO_DEV: "todo_dev",
   NEW_VERSE_PICKER: "new_verse_picker",
@@ -3786,6 +4152,7 @@ function screenToIndex(screen) {
     Screen.INTRO,
     Screen.TITLE_SEQUENCE,
     Screen.TITLE,
+    Screen.SETTINGS,
     Screen.TODO,
     Screen.TODO_DEV,
     Screen.NEW_VERSE_PICKER,
@@ -5412,8 +5779,25 @@ function screenTitle(idx) {
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
     
-      <div class="title-picker">
-        <select id="versePicker" class="title-picker-select"></select>
+      <div class="title-picker-tools">
+        <div class="title-picker">
+          <select id="versePicker" class="title-picker-select"></select>
+        </div>
+
+        <button
+          class="title-settings-btn no-zoom"
+          id="titleSettingsBtn"
+          type="button"
+          aria-label="Open Settings"
+        >
+          <img
+            class="title-settings-icon"
+            src="${SETTINGS_GEAR_ICON}"
+            alt=""
+            draggable="false"
+            onerror="this.style.display='none'"
+          >
+        </button>
       </div>
 
       <button
@@ -5473,6 +5857,14 @@ function screenTitle(idx) {
     titleTodoBtn.onclick = (e) => {
       e.stopPropagation();
       go(Screen.TODO_DEV);
+    };
+  }
+
+  const titleSettingsBtn = wrap.querySelector("#titleSettingsBtn");
+  if (titleSettingsBtn) {
+    titleSettingsBtn.onclick = (e) => {
+      e.stopPropagation();
+      go(Screen.SETTINGS);
     };
   }
 
@@ -5615,6 +6007,129 @@ function screenTitle(idx) {
   }
 
 
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+}
+
+function screenSettings(idx) {
+  const wrap = document.createElement("div");
+  wrap.className = "settings-screen";
+
+  wrap.innerHTML = `
+    ${homePillHtml("Back to Home")}
+
+    <div class="settings-page">
+      <div class="settings-shell">
+        <h1 class="settings-heading">Settings</h1>
+
+        <section class="settings-card">
+          <div class="settings-card-title">Backup &amp; Restore</div>
+          <div class="settings-card-text">
+            Save a backup before changing devices or deleting the app.
+          </div>
+
+          <div class="settings-action-list">
+            <button class="settings-action no-zoom" type="button" data-settings-action="export">
+              Export Save Data
+            </button>
+
+            <button class="settings-action no-zoom" type="button" data-settings-action="import">
+              Import Save Data
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <div class="settings-card-title">Privacy &amp; Info</div>
+
+          <div class="settings-action-list">
+            <button class="settings-action no-zoom" type="button" data-settings-action="privacy">
+              Privacy Policy
+            </button>
+
+            <button class="settings-action no-zoom" type="button" data-settings-action="stored-data">
+              What Data Is Stored?
+            </button>
+
+            <button class="settings-action no-zoom" type="button" data-settings-action="credits">
+              Credits
+            </button>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <div class="settings-card-title">Support</div>
+
+          <div class="settings-action-list">
+            <button class="settings-action no-zoom" type="button" data-settings-action="contact">
+              Contact Support
+            </button>
+          </div>
+
+          <div class="settings-version">
+            Version ${escapeHtml(APP_VERSION)}
+          </div>
+        </section>
+
+        <section class="settings-card settings-card-danger">
+          <div class="settings-card-title">Reset</div>
+          <div class="settings-card-text">
+            Reset saved progress on this device.
+          </div>
+
+          <div class="settings-action-list">
+            <button class="settings-action settings-action-danger no-zoom" type="button" data-settings-action="reset">
+              Reset All Progress
+            </button>
+          </div>
+        </section>
+      </div>
+    </div>
+  `;
+
+  bindHomePill(wrap);
+
+  wrap.querySelectorAll("[data-settings-action]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+
+      const action = btn.getAttribute("data-settings-action");
+
+      if (action === "export") {
+        exportSaveData();
+        return;
+      }
+
+      if (action === "import") {
+        openImportSaveDataPicker();
+        return;
+      }
+
+      if (action === "privacy") {
+        openPrivacyPolicy();
+        return;
+      }
+
+      if (action === "stored-data") {
+        showStoredDataDialog();
+        return;
+      }
+
+      if (action === "credits") {
+        showCreditsDialog();
+        return;
+      }
+
+      if (action === "contact") {
+        showContactSupportDialog();
+        return;
+      }
+
+      if (action === "reset") {
+        openResetProgressDialog();
+      }
+    };
+  });
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
@@ -7875,11 +8390,12 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title_sequence", "title", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "title", "settings", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
+    if (screen === Screen.SETTINGS) slide = screenSettings(idx);
     if (screen === Screen.TODO) slide = screenTodo(idx);
     if (screen === Screen.TODO_DEV) slide = screenTodoDev(idx);
     if (screen === Screen.NEW_VERSE_PICKER) slide = screenNewVersePicker(idx);
@@ -8072,6 +8588,8 @@ function setupAppUiTapSounds() {
     setScreen(Screen.TODO_DEV);
   } else if (requestedScreen === "new_verse_picker") {
     setScreen(Screen.NEW_VERSE_PICKER);
+  } else if (requestedScreen === "settings") {
+    setScreen(Screen.SETTINGS);
   } else if (requestedScreen === "title") {
     setScreen(Screen.TITLE);
   } else {
