@@ -1865,7 +1865,7 @@ Game Mix Finished Screen
   padding: 7px;
   background: #66529e;
   color: #ffffff;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.24);
+  box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1873,8 +1873,8 @@ Game Mix Finished Screen
 }
 
 .title-settings-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.24);
+  transform: scale(0.97);
+  box-shadow: none;
 }
 
 .title-settings-icon {
