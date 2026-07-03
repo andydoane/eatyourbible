@@ -2008,14 +2008,14 @@ Settings Screen
   font-size: clamp(18px, 4.6vw, 24px);
   font-weight: 900;
   line-height: 1;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+  box-shadow: none;
   cursor: pointer;
   text-align: center;
 }
 
 .settings-action:active {
   transform: translateY(4px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+  box-shadow: none;
 }
 
 .settings-action-danger {
