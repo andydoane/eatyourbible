@@ -1517,7 +1517,7 @@ function openResetProgressDialog() {
     bodyHtml: `
       <div class="settings-reset-dialog">
         <p>
-          This will erase saved progress, medals, BibloPets, pet names, and backgrounds on this device.
+          This will erase learned verses, medals, BibloPets, pet names, and backgrounds on this device.
         </p>
 
         <p>
@@ -6128,10 +6128,6 @@ function screenSettings(idx) {
 
         <section class="settings-card settings-card-danger">
           <div class="settings-card-title">Reset</div>
-          <div class="settings-card-text">
-            Reset saved progress on this device.
-          </div>
-
           <div class="settings-action-list">
             <button class="settings-action settings-action-danger no-zoom" type="button" data-settings-action="reset">
               Reset All Progress

@@ -2016,6 +2016,7 @@ Settings Screen
 .settings-action:active {
   transform: translateY(4px);
   box-shadow: none;
+  background: #6c57a8;
 }
 
 .settings-action-danger {
