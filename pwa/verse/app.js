@@ -5903,9 +5903,7 @@ function screenTitle(idx) {
 
       ${titleZooVisitButtonHtml()}
 
-      <div class="title-attribution" style="max-width: 60ch;">
-        ${ATTRIBUTION ? ATTRIBUTION : ""}
-      </div>
+
     </div>
   `;
 
