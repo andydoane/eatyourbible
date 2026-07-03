@@ -1605,7 +1605,7 @@ function openResetProgressDialog() {
       // The typed digits must match the answer from left to right.
       // Example: answer 53 allows "5", then "53". Anything else resets.
       if (!answerText.startsWith(digitsOnly)) {
-        setNewResetChallenge("That digit was not right, so the question changed.");
+        setNewResetChallenge("Type the answer exactly.");
         return;
       }
 
@@ -1624,7 +1624,7 @@ function openResetProgressDialog() {
 function openPrivacyPolicy() {
   showDialog({
     title: "Privacy Policy",
-    body: "This will open the full privacy policy page. Replace the placeholder URL before release.",
+    body: "This will open the full privacy policy page.",
     actions: [
       dlgBtn("Cancel", {
         secondary: true,
@@ -1678,18 +1678,14 @@ function showCreditsDialog() {
       <div class="settings-info-dialog">
         <p>
           <strong>Bible translation credits:</strong><br>
-          Add required Bible translation attribution text here before release.
+          Scripture quotations are from the ESV® Bible (The Holy Bible, English Standard Version®), copyright © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.
         </p>
 
         <p>
           <strong>Fonts:</strong><br>
-          Baloo 2. Add font license attribution here.
+          Typography features Baloo 2, designed by Ek Type and distributed via Google Fonts.
         </p>
 
-        <p>
-          <strong>Images, sounds, and artwork:</strong><br>
-          Add additional credits here before release.
-        </p>
       </div>
     `,
     actions: [dlgBtn("OK", { onClick: closeDialog })]
@@ -5482,6 +5478,7 @@ function renderNav() {
     State.screen !== Screen.INTRO &&
     State.screen !== Screen.TITLE_SEQUENCE &&
     State.screen !== Screen.TITLE &&
+    State.screen !== Screen.SETTINGS &&
     State.screen !== Screen.TODO &&
     State.screen !== Screen.TODO_DEV &&
     State.screen !== Screen.NEW_VERSE_PICKER &&
