@@ -1961,11 +1961,13 @@ Settings Screen
 }
 
 .settings-card {
+  --settings-card-pad: clamp(16px, 4vw, 26px);
+
   width: 100%;
   border-radius: clamp(22px, 5vw, 34px);
   background: #fbf8f6;
   color: #333333;
-  padding: clamp(16px, 4vw, 26px);
+  padding: var(--settings-card-pad);
   box-shadow: 0 7px 0 rgba(0, 0, 0, 0.24);
   text-align: left;
 }
@@ -1975,7 +1977,7 @@ Settings Screen
   font-size: clamp(24px, 5.8vw, 34px);
   font-weight: 900;
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: var(--settings-card-pad);
   text-align: center;
 }
 
@@ -1985,6 +1987,7 @@ Settings Screen
   font-weight: 800;
   line-height: 1.15;
   margin-bottom: 14px;
+  text-align: center;
 }
 
 .settings-action-list {
