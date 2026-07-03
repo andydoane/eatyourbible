@@ -6793,10 +6793,9 @@ function screenPetUnlock(idx) {
     if (packageOpened) return;
     packageOpened = true;
 
-    // The package sound uses regular HTMLAudioElement playback because this tap
-    // is a direct user gesture. The UI pop Web Audio system remains unchanged.
+    // Use the click user gesture for the package MP3.
+    // Do not prime Web Audio here; the package sound uses HTMLAudioElement.
     playPetUnlockPackageSound({ allowFallback: true });
-    primeAppAudioFromGesture({ playFeedback: false });
 
     wrap.classList.add("is-opening");
     if (boxBtn) boxBtn.disabled = true;
@@ -6825,8 +6824,6 @@ function screenPetUnlock(idx) {
   };
 
   if (boxBtn) {
-    boxBtn.addEventListener("touchstart", openPackage, { passive: true });
-    boxBtn.addEventListener("pointerdown", openPackage, { passive: true });
     boxBtn.onclick = openPackage;
   }
 
@@ -7973,6 +7970,7 @@ function setupAppUiTapSounds() {
     lastUiTapGestureAt = now;
 
     const tapTarget = getUiTapSoundTarget(event.target);
+    if (!tapTarget) return;
 
     // Start/resume the context immediately inside the gesture.
     const ctx = getAppAudioContext();
@@ -7983,8 +7981,6 @@ function setupAppUiTapSounds() {
     // Still unlock/prime the shared app audio path.
     unlockAppAudio();
     preloadUiTapSoundBuffers();
-
-    if (!tapTarget) return;
 
     // If the MP3 pop buffers are ready, use the real shared pop sounds.
     // Otherwise, play a generated pop immediately inside this same gesture.
