@@ -626,8 +626,7 @@ let lastUiTapSoundAt = 0;
 let lastUiTapGestureAt = 0;
 let lastUiTapFallbackAt = 0;
 
-let petUnlockSoundBuffer = null;
-let petUnlockSoundPromise = null;
+let petUnlockAudioEl = null;
 let lastPetUnlockSoundAt = 0;
 
 function getAppAudioContext() {
@@ -788,35 +787,27 @@ function decodeAudioDataCompat(ctx, arrayBuffer) {
   });
 }
 
+function ensurePetUnlockAudio() {
+  if (petUnlockAudioEl) return petUnlockAudioEl;
+
+  petUnlockAudioEl = new Audio(UI_PET_UNLOCK_SOUND_FILE);
+  petUnlockAudioEl.preload = "auto";
+  petUnlockAudioEl.loop = false;
+  petUnlockAudioEl.volume = UI_PET_UNLOCK_VOLUME;
+  petUnlockAudioEl.setAttribute("playsinline", "");
+  petUnlockAudioEl.setAttribute("webkit-playsinline", "");
+
+  return petUnlockAudioEl;
+}
+
 function preloadPetUnlockSoundBuffer() {
-  if (petUnlockSoundBuffer) return Promise.resolve(petUnlockSoundBuffer);
-  if (petUnlockSoundPromise) return petUnlockSoundPromise;
+  const audio = ensurePetUnlockAudio();
 
-  petUnlockSoundPromise = (async () => {
-    const ctx = getAppAudioContext();
+  try {
+    audio.load();
+  } catch (err) { }
 
-    if (!ctx) return null;
-
-    try {
-      const res = await fetch(UI_PET_UNLOCK_SOUND_FILE, { cache: "force-cache" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const arrayBuffer = await res.arrayBuffer();
-      const buffer = await decodeAudioDataCompat(ctx, arrayBuffer);
-
-      petUnlockSoundBuffer = buffer;
-      return petUnlockSoundBuffer;
-    } catch (err) {
-      console.warn("Could not preload BibloPet unlock sound", UI_PET_UNLOCK_SOUND_FILE, err);
-      return null;
-    } finally {
-      if (!petUnlockSoundBuffer) {
-        petUnlockSoundPromise = null;
-      }
-    }
-  })();
-
-  return petUnlockSoundPromise;
+  return Promise.resolve(audio);
 }
 
 function playPetUnlockPackageSound({ allowFallback = true } = {}) {
@@ -828,36 +819,31 @@ function playPetUnlockPackageSound({ allowFallback = true } = {}) {
   if (nowMs - lastPetUnlockSoundAt < 180) return;
   lastPetUnlockSoundAt = nowMs;
 
-  const ctx = getAppAudioContext();
-  if (!ctx) return;
+  const audio = ensurePetUnlockAudio();
 
   try {
-    if (ctx.state === "suspended" && typeof ctx.resume === "function") {
-      ctx.resume().catch(() => { });
+    audio.muted = false;
+    audio.volume = UI_PET_UNLOCK_VOLUME;
+    audio.pause();
+    audio.currentTime = 0;
+
+    const playPromise = audio.play();
+
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch((err) => {
+        console.warn("Could not play BibloPet unlock sound", err);
+
+        if (allowFallback) {
+          playUiTapFallbackNow();
+        }
+      });
     }
-
-    if (!petUnlockSoundBuffer) {
-      preloadPetUnlockSoundBuffer();
-
-      // If the MP3 is not decoded yet, give iOS immediate gesture-timed feedback.
-      if (allowFallback) {
-        playUiTapFallbackNow();
-      }
-
-      return;
-    }
-
-    const source = ctx.createBufferSource();
-    const gain = ctx.createGain();
-
-    source.buffer = petUnlockSoundBuffer;
-    gain.gain.value = UI_PET_UNLOCK_VOLUME;
-
-    source.connect(gain);
-    gain.connect(ctx.destination);
-    source.start(0);
   } catch (err) {
     console.warn("Could not play BibloPet unlock sound", err);
+
+    if (allowFallback) {
+      playUiTapFallbackNow();
+    }
   }
 }
 
@@ -6807,8 +6793,10 @@ function screenPetUnlock(idx) {
     if (packageOpened) return;
     packageOpened = true;
 
-    primeAppAudioFromGesture({ playFeedback: false });
+    // The package sound uses regular HTMLAudioElement playback because this tap
+    // is a direct user gesture. The UI pop Web Audio system remains unchanged.
     playPetUnlockPackageSound({ allowFallback: true });
+    primeAppAudioFromGesture({ playFeedback: false });
 
     wrap.classList.add("is-opening");
     if (boxBtn) boxBtn.disabled = true;
