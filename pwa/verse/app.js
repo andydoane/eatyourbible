@@ -2094,6 +2094,10 @@ function markStandardGameCompleted(verseId, gameId, mode) {
   const verseProgress = progress.verses[verseId];
   const wasUnlocked = isBibloPetUnlocked(verseProgress);
 
+  const tutorialBeforeGame = normalizeTutorialProgress(progress.tutorial, progress);
+  const tutorialWasActive = !tutorialBeforeGame.completed;
+  const tutorialSelectedVerseId = tutorialBeforeGame.selectedVerseId || "";
+
   if (!verseProgress.games[gameId]) {
     verseProgress.games[gameId] = {
       easyCompleted: false,
@@ -2131,6 +2135,23 @@ function markStandardGameCompleted(verseId, gameId, mode) {
   if (!wasUnlocked && isUnlockedNow && !verseProgress.petUnlockShown) {
     verseProgress.petUnlockShown = true;
     State.pendingPetUnlockVerseId = verseId;
+  }
+
+  if (
+    tutorialWasActive &&
+    tutorialSelectedVerseId &&
+    verseId === tutorialSelectedVerseId &&
+    !wasUnlocked &&
+    isUnlockedNow
+  ) {
+    progress.tutorial = createDefaultTutorialProgress({
+      completed: true,
+      step: TUTORIAL_STEPS.COMPLETED,
+      selectedVerseId: tutorialSelectedVerseId
+    });
+
+    State.tutorialPracticeMode = false;
+    State.todoTutorialJustFinishedLearn = false;
   }
 
   saveProgress(progress);
@@ -6054,7 +6075,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.31</div>
+    <div class="hint">Version 1.4</div>
   `;
 
   let introStarted = false;
