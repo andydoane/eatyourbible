@@ -4813,7 +4813,32 @@ For a 16:9 background, 42.1875cqw = 75% of the background height. */
 }
 
 .pet-emoji-locked {
-  opacity: 0.78;
+  opacity: 0.92;
+}
+
+.lock-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  vertical-align: middle;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.lock-icon-progress {
+  width: clamp(46px, 11vw, 78px);
+  height: clamp(46px, 11vw, 78px);
+}
+
+.lock-icon-pet {
+  width: 0.72em;
+  height: 0.72em;
+}
+
+.lock-icon-status {
+  width: clamp(42px, 8vw, 58px);
+  height: clamp(42px, 8vw, 58px);
 }
 
 .pet-locked-text {

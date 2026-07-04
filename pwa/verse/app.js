@@ -25,6 +25,7 @@ const DATA_DIR = "verse_data/";
 const IMG_DIR = "verse_images/";
 const PET_IMG_DIR = "pet_images/";
 const SETTINGS_GEAR_ICON = IMG_DIR + "settings_gear.png";
+const LOCK_ICON = IMG_DIR + "lock.png";
 
 const APP_VERSION = "1.0.0";
 const SUPPORT_EMAIL = "BibloZooApp@gmail.com";
@@ -161,6 +162,20 @@ function preloadBibloPetImageForVerseId(verseId) {
 
     img.src = src;
   });
+}
+
+function lockIconHtml(className = "") {
+  const safeClassName = className ? ` ${escapeHtml(className)}` : "";
+
+  return `
+    <img
+      class="lock-icon${safeClassName}"
+      src="${escapeHtml(LOCK_ICON)}"
+      alt=""
+      draggable="false"
+      onerror="this.style.display='none'"
+    >
+  `;
 }
 
 function bibloPetVisualHtml(verseId, emoji) {
@@ -6118,7 +6133,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.7b</div>
+    <div class="hint">Version 1.8b</div>
   `;
 
   let introStarted = false;
@@ -7696,10 +7711,10 @@ function screenProgress(idx) {
   const rowsHtml = VERSE_LIST.map(item => {
     const verseProgress = getVerseProgress(item.id);
     const unlocked = isBibloPetUnlocked(verseProgress);
-    const petEmoji = unlocked ? getBibloPetEmojiForListItem(item) : "🔒";
+    const petEmoji = unlocked ? getBibloPetEmojiForListItem(item) : "";
     const petVisual = unlocked
       ? bibloPetVisualHtml(item.id, petEmoji)
-      : escapeHtml(petEmoji);
+      : lockIconHtml("lock-icon-progress");
     const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "";
 
     return `
@@ -7859,10 +7874,10 @@ function screenVerseDetail(idx) {
 
   const unlocked = isBibloPetUnlocked(verseProgress);
   const mastered = isVerseMastered(verseProgress);
-  const petEmoji = unlocked ? getBibloPetEmojiForVerseId(verseId) : "🔒";
+  const petEmoji = unlocked ? getBibloPetEmojiForVerseId(verseId) : "";
   const petDisplayName = unlocked ? getBibloPetDisplayNameForVerseId(verseId) : "";
   const petNameButtonText = hasCustomPetNameForVerseId(verseId) ? "Rename Pet" : "Name Pet";
-  const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "🔒";
+  const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : lockIconHtml("lock-icon-status");
   const statusText = getBibloPetStatusText(verseProgress);
   const petStatus = getBibloPetStatus(verseProgress);
   const petAnimationClass = unlocked ? getBibloPetAnimationClass(verseId, verseProgress) : "";
@@ -7926,7 +7941,9 @@ function screenVerseDetail(idx) {
               `
       : `
                 <div class="pet-stage">
-                  <div class="pet-emoji pet-emoji-locked">🔒</div>
+                  <div class="pet-emoji pet-emoji-locked">
+                    ${lockIconHtml("lock-icon-pet")}
+                  </div>
                   <div class="pet-locked-text">Practice more to unlock your BibloPet.</div>
                 </div>
               `
