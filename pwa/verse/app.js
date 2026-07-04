@@ -530,6 +530,66 @@ function bindNewVersePickerHomePill(rootEl) {
   };
 }
 
+function returnToZooTodoTutorialPracticeStep() {
+  try {
+    audioEl.pause();
+    audioEl.currentTime = 0;
+  } catch (e) { }
+
+  State.pendingPetUnlockVerseId = null;
+  State.activeTodo = null;
+  State.tutorialPracticeMode = false;
+  State.todoTutorialJustFinishedLearn = false;
+
+  go(Screen.TODO_DEV);
+}
+
+function bindTutorialPracticeHomePill(rootEl) {
+  const btn = rootEl?.querySelector?.("[data-home-pill]");
+  if (!btn) return;
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    returnToZooTodoTutorialPracticeStep();
+  };
+}
+
+async function startTutorialPracticeMode() {
+  const verseId = getTutorialSelectedVerseId() || VERSE_ID || State.selectedVerseId;
+
+  if (!verseId) {
+    State.tutorialPracticeMode = true;
+    go(Screen.PRACTICE_HUB);
+    return;
+  }
+
+  try {
+    State.selectedVerseId = verseId;
+    State.activeTodo = null;
+    State.todoTutorialJustFinishedLearn = false;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", verseId);
+    history.replaceState(null, "", url.toString());
+
+    if (verseId !== VERSE_ID) {
+      await loadVerse(verseId);
+    } else {
+      HAS_VERSE_SELECTION = true;
+    }
+
+    State.tutorialPracticeMode = true;
+    go(Screen.PRACTICE_HUB);
+  } catch (err) {
+    console.error(err);
+    showDialog({
+      title: "Could not open practice",
+      body: String(err.message || err),
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  }
+}
+
 function ensureLearnMenuOverlay() {
   if (document.getElementById("learnMenuOverlay")) return;
 
@@ -3635,6 +3695,7 @@ const State = {
   pendingZooTodoGameId: "",
   todoTutorialPage: 1,
   todoTutorialJustFinishedLearn: false,
+  tutorialPracticeMode: false,
   petAnimationVerseId: null,
   petAnimationStatus: "",
   petAnimationClass: "",
@@ -4692,7 +4753,13 @@ function getReturnToScreenUrl(screenName = "practice") {
 }
 
 function getReturnToPracticeUrl() {
-  return getReturnToScreenUrl("practice");
+  const url = new URL(getReturnToScreenUrl("practice"));
+
+  if (State.tutorialPracticeMode && isTutorialActive()) {
+    url.searchParams.set("tutorialPractice", "1");
+  }
+
+  return url.href;
 }
 
 function getReturnToPlaygroundUrl() {
@@ -5987,7 +6054,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.2</div>
+    <div class="hint">Version 1.3</div>
   `;
 
   let introStarted = false;
@@ -6812,7 +6879,8 @@ function bindZooTodoTutorial(rootEl) {
       }
 
       if (action === "practice-verse") {
-        go(Screen.PRACTICE_HUB);
+        await startTutorialPracticeMode();
+        return;
       }
     };
   });
@@ -7157,6 +7225,10 @@ function bindZooTodoRows(rootEl) {
 }
 
 function practiceHubHeaderHtml() {
+  if (State.tutorialPracticeMode && isTutorialActive()) {
+    return `<h2 id="practiceHubTitle">Practice Your Verse</h2>`;
+  }
+
   const activeTodo = State.activeTodo;
 
   if (
@@ -8756,27 +8828,41 @@ function screenPracticeHub(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen practice-screen";
 
-  const cardsHtml = `
-    ${renderPracticeHubCard({
-    id: "games",
-    title: "Games",
-    icon: "🎮",
-    iconImage: IMG_DIR + "app_icon_controller.png",
-    iconAlt: "Games",
-    cardColor: "#7f66c6",
-    cardTextColor: "#ffffff"
-  })}
+  const tutorialPracticeMode = State.tutorialPracticeMode && isTutorialActive();
 
-    ${renderPracticeHubCard({
-    id: "playground",
-    title: "Playground",
-    icon: "🛝",
-    iconImage: IMG_DIR + "app_icon_slide.png",
-    iconAlt: "Playground",
-    cardColor: "#a7cb6f",
-    cardTextColor: "#ffffff"
-  })}
-  `;
+  const cardsHtml = tutorialPracticeMode
+    ? `
+      ${renderPracticeHubCard({
+      id: "games",
+      title: "Games",
+      icon: "🎮",
+      iconImage: IMG_DIR + "app_icon_controller.png",
+      iconAlt: "Games",
+      cardColor: "#7f66c6",
+      cardTextColor: "#ffffff"
+    })}
+    `
+    : `
+      ${renderPracticeHubCard({
+      id: "games",
+      title: "Games",
+      icon: "🎮",
+      iconImage: IMG_DIR + "app_icon_controller.png",
+      iconAlt: "Games",
+      cardColor: "#7f66c6",
+      cardTextColor: "#ffffff"
+    })}
+
+      ${renderPracticeHubCard({
+      id: "playground",
+      title: "Playground",
+      icon: "🛝",
+      iconImage: IMG_DIR + "app_icon_slide.png",
+      iconAlt: "Playground",
+      cardColor: "#a7cb6f",
+      cardTextColor: "#ffffff"
+    })}
+    `;
 
   const headerHtml = practiceHubHeaderHtml();
 
@@ -8798,7 +8884,11 @@ function screenPracticeHub(idx) {
     <div class="practice-scroll-vignette" aria-hidden="true"></div>
   `;
 
-  bindHomePill(wrap);
+  if (tutorialPracticeMode) {
+    bindTutorialPracticeHomePill(wrap);
+  } else {
+    bindHomePill(wrap);
+  }
 
   wrap.querySelectorAll("[data-practice-hub-choice]").forEach((btn) => {
     btn.onclick = (e) => {
@@ -8826,10 +8916,12 @@ function screenPractice(idx) {
 
   const practiceGames = getPracticeGames();
   const verseProgress = getVerseProgress(VERSE_ID);
+  const tutorialPracticeMode = State.tutorialPracticeMode && isTutorialActive();
+  const gameMixHtml = tutorialPracticeMode ? "" : renderGameMixCard();
 
   const cardsHtml = practiceGames.length
     ? `
-      ${renderGameMixCard()}
+      ${gameMixHtml}
 
       <div class="practice-pick-heading">
         Pick a Game
@@ -8848,7 +8940,7 @@ function screenPractice(idx) {
     <div class="title-content practice-content">
       <div class="practice-title-row">
         ${practiceBackPillHtml()}
-        <h2 id="practiceTitle">Practice Games</h2>
+        <h2 id="practiceTitle">${tutorialPracticeMode ? "Practice Your Verse" : "Practice Games"}</h2>
         <div class="practice-title-spacer" aria-hidden="true"></div>
       </div>
 
@@ -9204,6 +9296,10 @@ function setupAppUiTapSounds() {
   const params = new URLSearchParams(window.location.search);
   const requestedScreen = params.get("screen");
   const petUnlockVerseId = params.get("petUnlock");
+
+  if (params.get("tutorialPractice") === "1" && isTutorialActive()) {
+    State.tutorialPracticeMode = true;
+  }
 
   if (params.get("mixNext") === "1" && HAS_VERSE_SELECTION) {
     const handled = handleGameMixNextFromUrl(params);
