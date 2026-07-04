@@ -1,4 +1,10 @@
 (function(){
+  const MEDAL_ICON_PATHS = Object.freeze({
+    easy: "../../verse_images/bronze_medal.png",
+    medium: "../../verse_images/silver_medal.png",
+    hard: "../../verse_images/gold_medal.png"
+  });
+
   function escapeHtml(value){
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -43,6 +49,83 @@
       fallbackIcon,
       alt
     );
+  }
+
+  function getModeMedalIconSrc(mode) {
+    return MEDAL_ICON_PATHS[String(mode || "").trim()] || "";
+  }
+
+  function getModeMedalFallback(mode) {
+    if (mode === "easy") return "🥉";
+    if (mode === "medium") return "🥈";
+    if (mode === "hard") return "🥇";
+    return "🏅";
+  }
+
+  function medalIconHtml(mode, className = "") {
+    const src = getModeMedalIconSrc(mode);
+    const fallback = getModeMedalFallback(mode);
+    const safeClassName = className ? ` ${escapeHtml(className)}` : "";
+
+    if (!src) {
+      return `<span class="vm-medal-icon-fallback${safeClassName}" aria-hidden="true">${escapeHtml(fallback)}</span>`;
+    }
+
+    return `
+      <img
+        class="vm-medal-icon${safeClassName}"
+        src="${escapeHtml(src)}"
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+        onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+      >
+      <span class="vm-medal-icon-fallback${safeClassName}" hidden aria-hidden="true">${escapeHtml(fallback)}</span>
+    `;
+  }
+
+  function medalSetIconHtml(className = "") {
+    const safeClassName = className ? ` ${escapeHtml(className)}` : "";
+
+    return `
+      <span class="vm-medal-set${safeClassName}" aria-hidden="true">
+        ${medalIconHtml("easy", "vm-medal-set-img")}
+        ${medalIconHtml("medium", "vm-medal-set-img")}
+        ${medalIconHtml("hard", "vm-medal-set-img")}
+      </span>
+    `;
+  }
+
+  function modeSelectIconHtml(icon = "", iconHtml = "") {
+    if (iconHtml) return iconHtml;
+
+    const rawIcon = String(icon || "").trim();
+
+    if (
+      !rawIcon ||
+      rawIcon.includes("🥉") ||
+      rawIcon.includes("🥈") ||
+      rawIcon.includes("🥇") ||
+      rawIcon.includes("🏅")
+    ) {
+      return medalSetIconHtml("vm-mode-select-medal-set");
+    }
+
+    return escapeHtml(rawIcon);
+  }
+
+  function modeButtonContentHtml(mode = {}) {
+    const modeId = String(mode?.id || "").trim();
+    const rawLabel = String(mode?.label || getModeLabel(modeId));
+
+    const cleanLabel = rawLabel
+      .replace(/[🥉🥈🥇🏅]/g, "")
+      .trim() || getModeLabel(modeId);
+
+    return `
+      ${medalIconHtml(modeId, "vm-mode-btn-medal")}
+      <span class="vm-mode-btn-label">${escapeHtml(cleanLabel)}</span>
+    `;
   }
 
   function styleVarsHtml(options = {}){
@@ -1477,9 +1560,9 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
     backLabel = "Back to title",
     theme = {},
     modes = [
-      { id: "easy", label: "🥉 Easy" },
-      { id: "medium", label: "🥈 Medium" },
-      { id: "hard", label: "🥇 Hard" }
+      { id: "easy", label: "Easy" },
+      { id: "medium", label: "Medium" },
+      { id: "hard", label: "Hard" }
     ],
     onBack,
     onSelect
@@ -1506,7 +1589,7 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
     
     const modeButtons = modes.map((mode) => `
       <button class="vm-btn" data-game-shell-mode="${escapeHtml(mode.id)}" type="button">
-        ${escapeHtml(mode.label)}
+        ${modeButtonContentHtml(mode)}
       </button>
     `).join("");
 
@@ -1519,7 +1602,7 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
         <div class="vm-game-stage">
           <div class="vm-game-center">
             <div class="vm-game-difficulty-icon" aria-hidden="true">
-              ${iconHtml || escapeHtml(icon)}
+              ${modeSelectIconHtml(icon, iconHtml)}
             </div>
 
             <div class="vm-game-title">${escapeHtml(title)}</div>
@@ -1565,9 +1648,9 @@ function getModeLabel(mode){
 
 function renderCompleteMedalPill(status = {}, currentMode = ""){
   const medals = [
-    { mode: "easy", emoji: "🥉" },
-    { mode: "medium", emoji: "🥈" },
-    { mode: "hard", emoji: "🥇" }
+    { mode: "easy" },
+    { mode: "medium" },
+    { mode: "hard" }
   ];
 
   return `
@@ -1575,7 +1658,15 @@ function renderCompleteMedalPill(status = {}, currentMode = ""){
       ${medals.map((item) => {
         const earned = !!status[item.mode];
         const current = item.mode === currentMode;
-        return `<span class="vm-complete-medal ${earned ? "is-earned" : "is-unearned"} ${current ? "is-current" : ""}" aria-hidden="true">${item.emoji}</span>`;
+
+        return `
+          <span
+            class="vm-complete-medal ${earned ? "is-earned" : "is-unearned"} ${current ? "is-current" : ""}"
+            aria-hidden="true"
+          >
+            ${medalIconHtml(item.mode, "vm-complete-medal-img")}
+          </span>
+        `;
       }).join("")}
     </div>
   `;
@@ -1659,6 +1750,14 @@ function renderCompleteScreen({
   const zooTodoIconHtml = zooTodoComplete
     ? getZooTodoCompleteIconHtml(verseId)
     : "";
+
+  const completeIconMarkup = zooTodoComplete
+    ? zooTodoIconHtml
+    : iconHtml && !petUnlocked
+      ? iconHtml
+      : !petUnlocked && !alreadyCompleted
+        ? medalIconHtml(normalizedMode, "vm-complete-large-medal")
+        : escapeHtml(displayIcon);
 
   const iconButtonAttrs = petUnlocked
     ? `button type="button" id="gameShellPetUnlockBtn" aria-label="Open BibloPet box"`
@@ -1792,7 +1891,7 @@ function renderCompleteScreen({
       <div class="vm-game-stage">
         <div class="vm-game-center vm-complete-center">
           <${iconButtonAttrs} class="vm-game-icon vm-complete-icon ${petUnlocked ? "is-pet-box" : (alreadyCompleted || zooTodoComplete) ? "is-repeat" : "is-new-medal"}">
-            ${zooTodoComplete ? zooTodoIconHtml : iconHtml && !petUnlocked ? iconHtml : escapeHtml(displayIcon)}
+            ${completeIconMarkup}
           </${iconButtonClose}>
 
           ${titleMarkup}
@@ -2143,6 +2242,8 @@ function renderCompleteScreen({
     wireGameMenu,
     gameIconImageHtml,
     gameIconImageHtmlForId,
+    medalIconHtml,
+    medalSetIconHtml,
     renderTitleScreen,
     renderModeSelect,
     renderCompleteScreen
