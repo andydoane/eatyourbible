@@ -6075,7 +6075,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.4</div>
+    <div class="hint">Version 1.41</div>
   `;
 
   let introStarted = false;
