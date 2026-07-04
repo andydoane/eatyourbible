@@ -6039,6 +6039,7 @@ function screenTitleSequence(idx) {
 function screenTitle(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen";
+  const tutorialActive = isTutorialActive();
   const opt = TITLE_OPTIONS[State.titleOptionIndex];
   const buttonLabel =
     opt.id === "learn" && State.hasLearnedVerse
@@ -6084,7 +6085,8 @@ function screenTitle(idx) {
     label: State.hasLearnedVerse ? "Review" : "Learn",
     image: "button_learn.png",
     color: "#ffc751",
-    textColor: "#333333"
+    textColor: "#333333",
+    disabled: tutorialActive
   })}
 
         ${renderTitleActionButton({
@@ -6093,7 +6095,7 @@ function screenTitle(idx) {
     image: "button_practice.png",
     color: "#ff5a51",
     textColor: "#ffffff",
-    disabled: HAS_VERSE_SELECTION && !State.hasLearnedVerse
+    disabled: tutorialActive || (HAS_VERSE_SELECTION && !State.hasLearnedVerse)
   })}
 
         ${renderTitleActionButton({
@@ -6101,12 +6103,13 @@ function screenTitle(idx) {
     label: "Pets",
     image: "button_pets.png",
     color: "#a7cb6f",
-    textColor: "#ffffff"
+    textColor: "#ffffff",
+    disabled: tutorialActive
   })}
       </div>
 
       <button
-        class="title-todo-btn no-zoom"
+        class="title-todo-btn no-zoom${tutorialActive ? " is-tutorial-prompt" : ""}"
         id="titleTodoBtn"
         type="button"
         aria-label="Open Zoo To-Do"
@@ -6256,6 +6259,9 @@ function screenTitle(idx) {
 
       versePicker.appendChild(opt);
     }
+
+    versePicker.disabled = tutorialActive;
+    versePicker.setAttribute("aria-disabled", tutorialActive ? "true" : "false");
 
     versePicker.onchange = async () => {
       const nextVerseId = versePicker.value;

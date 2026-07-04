@@ -874,6 +874,45 @@ nav#navBar {
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.24);
 }
 
+.title-todo-btn.is-tutorial-prompt {
+  transform-origin: center;
+  animation: titleTodoTutorialPrompt 1600ms ease-in-out infinite;
+}
+
+@keyframes titleTodoTutorialPrompt {
+
+  0%,
+  62%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    box-shadow: 0 7px 0 rgba(0, 0, 0, 0.24);
+  }
+
+  68% {
+    transform: translateY(-2px) rotate(-1.5deg) scale(1.025);
+    box-shadow: 0 9px 0 rgba(0, 0, 0, 0.22);
+  }
+
+  74% {
+    transform: translateY(-2px) rotate(1.5deg) scale(1.025);
+    box-shadow: 0 9px 0 rgba(0, 0, 0, 0.22);
+  }
+
+  80% {
+    transform: translateY(-1px) rotate(-0.75deg) scale(1.015);
+  }
+
+  86% {
+    transform: translateY(-1px) rotate(0.75deg) scale(1.015);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-todo-btn.is-tutorial-prompt {
+    animation: none;
+  }
+}
+
 .title-todo-img {
   width: min(100%, 470px);
   height: auto;
@@ -1838,6 +1877,12 @@ Game Mix Finished Screen
   font-weight: 800;
   background: rgba(255, 255, 255, 0.95);
   color: #111;
+}
+
+.title-picker-select:disabled {
+  opacity: 0.52;
+  filter: grayscale(0.35) saturate(0.7);
+  cursor: default;
 }
 
 .title-picker-tools {
