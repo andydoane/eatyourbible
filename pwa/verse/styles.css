@@ -1448,12 +1448,12 @@ Zoo To-Do Clipboard Prototype
   color: var(--todo-row-text, #ffffff);
   border-radius: clamp(20px, 5vw, 34px);
   padding: clamp(8px, 2vw, 14px) clamp(10px, 2.8vw, 18px);
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18);
+  box-shadow: none;
 }
 
 .todo-dev-row.has-row-color:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+  transform: scale(0.985);
+  box-shadow: none;
 }
 
 .todo-dev-row.has-row-color .todo-dev-row-icon {
