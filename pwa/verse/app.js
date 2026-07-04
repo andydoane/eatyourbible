@@ -500,6 +500,7 @@ function bindHomePill(rootEl) {
 
     State.pendingPetUnlockVerseId = null;
     State.activeTodo = null;
+    State.todoInfoPage = "";
     go(Screen.TITLE);
   };
 }
@@ -1324,6 +1325,42 @@ const TUTORIAL_PAGE_AUDIO = Object.freeze({
   4: AUDIO_DIR + "tutorial_page_4.mp3"
 });
 
+function normalizeTutorialAudioPlayedPages(rawPages) {
+  const pages = {};
+
+  if (!rawPages || typeof rawPages !== "object") {
+    return pages;
+  }
+
+  Object.keys(TUTORIAL_PAGE_AUDIO).forEach((pageNumber) => {
+    if (rawPages[pageNumber] === true) {
+      pages[pageNumber] = true;
+    }
+  });
+
+  return pages;
+}
+
+function hasPlayedZooTodoTutorialPageAudio(pageNumber) {
+  const tutorial = getTutorialProgress();
+  const pageKey = String(pageNumber);
+
+  return tutorial?.audioPlayedPages?.[pageKey] === true;
+}
+
+function markZooTodoTutorialPageAudioPlayed(pageNumber) {
+  const pageKey = String(pageNumber);
+
+  if (!TUTORIAL_PAGE_AUDIO[pageNumber]) {
+    return getTutorialProgress();
+  }
+
+  return updateTutorialProgress((tutorial) => {
+    tutorial.audioPlayedPages = normalizeTutorialAudioPlayedPages(tutorial.audioPlayedPages);
+    tutorial.audioPlayedPages[pageKey] = true;
+  });
+}
+
 function createEmptyProgress() {
   return {
     version: PROGRESS_VERSION,
@@ -1336,7 +1373,8 @@ function createDefaultTutorialProgress(overrides = {}) {
   return {
     completed: !!overrides.completed,
     step: overrides.step || TUTORIAL_STEPS.INTRO,
-    selectedVerseId: String(overrides.selectedVerseId || "")
+    selectedVerseId: String(overrides.selectedVerseId || ""),
+    audioPlayedPages: normalizeTutorialAudioPlayedPages(overrides.audioPlayedPages)
   };
 }
 
@@ -1397,13 +1435,16 @@ function normalizeTutorialProgress(rawTutorial, progress) {
     ? raw.step
     : TUTORIAL_STEPS.INTRO;
 
+  const audioPlayedPages = normalizeTutorialAudioPlayedPages(raw.audioPlayedPages);
+
   const hasUnlockedPet = progressHasUnlockedBibloPetForTutorial(progress);
 
   if (raw.completed === true || hasUnlockedPet || step === TUTORIAL_STEPS.COMPLETED) {
     return createDefaultTutorialProgress({
       completed: true,
       step: TUTORIAL_STEPS.COMPLETED,
-      selectedVerseId
+      selectedVerseId,
+      audioPlayedPages
     });
   }
 
@@ -1431,7 +1472,8 @@ function normalizeTutorialProgress(rawTutorial, progress) {
   return createDefaultTutorialProgress({
     completed: false,
     step,
-    selectedVerseId
+    selectedVerseId,
+    audioPlayedPages
   });
 }
 
@@ -3717,6 +3759,7 @@ const State = {
   todoTutorialPage: 1,
   todoTutorialJustFinishedLearn: false,
   tutorialPracticeMode: false,
+  todoInfoPage: "",
   petAnimationVerseId: null,
   petAnimationStatus: "",
   petAnimationClass: "",
@@ -6075,7 +6118,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.42</div>
+    <div class="hint">Version 1.5</div>
   `;
 
   let introStarted = false;
@@ -6601,8 +6644,59 @@ function todoDevRowHtml(todo = {}, index = 0) {
   `;
 }
 
+function renderZooTodoCareInfoHtml() {
+  return `
+    <div class="todo-tutorial-note" data-todo-info-page="care">
+      <div class="todo-tutorial-heading">
+        Caring for BibloPets
+      </div>
+
+      <div class="todo-tutorial-body">
+        <p>
+          BibloPets love practice!
+        </p>
+
+        <p>
+          If a pet is hungry, practice its verse to feed it.
+        </p>
+
+        <p>
+          If a pet is sleeping, practice its verse to wake it up.
+        </p>
+
+        <p>
+          Keep practicing to keep your zoo healthy and happy.
+        </p>
+      </div>
+
+      <div class="todo-tutorial-actions">
+        <button
+          class="todo-tutorial-next-btn no-zoom"
+          type="button"
+          data-todo-care-back
+        >
+          Back to Zoo To-Do
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 function renderNormalZooTodoListHtml() {
-  const rowsHtml = generateZooTodos()
+  if (State.todoInfoPage === "care") {
+    return renderZooTodoCareInfoHtml();
+  }
+
+  const rows = [
+    {
+      type: "care_info",
+      emoji: "🐾",
+      text: "Caring for BibloPets"
+    },
+    ...generateZooTodos()
+  ];
+
+  const rowsHtml = rows
     .map(todoDevRowHtml)
     .join("");
 
@@ -6735,7 +6829,7 @@ function renderZooTodoTutorialHtml() {
     return `
       <div class="todo-tutorial-note" data-tutorial-page="3">
         <div class="todo-tutorial-heading">
-          ${isReturning ? "Welcome back, BibloZookeeper!" : "Let's get started!"}
+          ${isReturning ? "Welcome back, Biblo-Zookeeper!" : "Let's get started!"}
         </div>
 
         <div class="todo-tutorial-body">
@@ -6775,7 +6869,7 @@ function renderZooTodoTutorialHtml() {
     return `
       <div class="todo-tutorial-note" data-tutorial-page="4">
         <div class="todo-tutorial-heading">
-          ${isReturning ? "Welcome back, BibloZookeeper!" : "Great job, BibloZookeeper!"}
+          ${isReturning ? "Welcome back, Biblo-Zookeeper!" : "Great job, Biblo-Zookeeper!"}
         </div>
 
         <div class="todo-tutorial-body">
@@ -6819,7 +6913,10 @@ function renderZooTodoTutorialHtml() {
 
 function playZooTodoTutorialPageAudio(pageNumber) {
   const src = TUTORIAL_PAGE_AUDIO[pageNumber];
-  if (!src || muted) return;
+
+  if (!src || muted || hasPlayedZooTodoTutorialPageAudio(pageNumber)) {
+    return;
+  }
 
   try {
     audioEl.pause();
@@ -6833,10 +6930,16 @@ function playZooTodoTutorialPageAudio(pageNumber) {
 
     const playPromise = audioEl.play();
 
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch((err) => {
-        console.warn("Could not play Zoo To-Do tutorial audio", err);
-      });
+    if (playPromise && typeof playPromise.then === "function") {
+      playPromise
+        .then(() => {
+          markZooTodoTutorialPageAudioPlayed(pageNumber);
+        })
+        .catch((err) => {
+          console.warn("Could not play Zoo To-Do tutorial audio", err);
+        });
+    } else {
+      markZooTodoTutorialPageAudioPlayed(pageNumber);
     }
   } catch (err) {
     console.warn("Could not play Zoo To-Do tutorial audio", err);
@@ -7167,6 +7270,12 @@ async function startZooMedalTodo(verseId, gameId) {
 }
 
 async function startZooTodo(todoType, verseId) {
+  if (todoType === "care_info") {
+    State.todoInfoPage = "care";
+    render();
+    return;
+  }
+
   if (todoType === "learn_new_verse") {
     State.activeTodo = {
       type: "learn_new_verse",
@@ -7220,6 +7329,18 @@ async function startZooTodo(todoType, verseId) {
       actions: [dlgBtn("OK", { onClick: closeDialog })]
     });
   }
+}
+
+function bindZooTodoCareInfo(rootEl) {
+  const btn = rootEl?.querySelector?.("[data-todo-care-back]");
+  if (!btn) return;
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+
+    State.todoInfoPage = "";
+    render();
+  };
 }
 
 function bindZooTodoRows(rootEl) {
@@ -7478,6 +7599,7 @@ function screenTodoDev(idx) {
     }
   } else {
     bindZooTodoRows(wrap);
+    bindZooTodoCareInfo(wrap);
   }
 
   if (
