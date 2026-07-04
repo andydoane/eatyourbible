@@ -26,6 +26,9 @@ const IMG_DIR = "verse_images/";
 const PET_IMG_DIR = "pet_images/";
 const SETTINGS_GEAR_ICON = IMG_DIR + "settings_gear.png";
 const LOCK_ICON = IMG_DIR + "lock.png";
+const BRONZE_MEDAL_ICON = IMG_DIR + "bronze_medal.png";
+const SILVER_MEDAL_ICON = IMG_DIR + "silver_medal.png";
+const GOLD_MEDAL_ICON = IMG_DIR + "gold_medal.png";
 
 const APP_VERSION = "1.0.0";
 const SUPPORT_EMAIL = "BibloZooApp@gmail.com";
@@ -172,6 +175,40 @@ function lockIconHtml(className = "") {
       class="lock-icon${safeClassName}"
       src="${escapeHtml(LOCK_ICON)}"
       alt=""
+      draggable="false"
+      onerror="this.style.display='none'"
+    >
+  `;
+}
+
+function getMedalIconSrcForMode(mode) {
+  if (mode === "easy") return BRONZE_MEDAL_ICON;
+  if (mode === "medium") return SILVER_MEDAL_ICON;
+  if (mode === "hard") return GOLD_MEDAL_ICON;
+  return "";
+}
+
+function getMedalLabelForMode(mode) {
+  if (mode === "easy") return "Bronze";
+  if (mode === "medium") return "Silver";
+  if (mode === "hard") return "Gold";
+  return "Medal";
+}
+
+function medalIconHtml(mode, className = "") {
+  const src = getMedalIconSrcForMode(mode);
+  const safeClassName = className ? ` ${escapeHtml(className)}` : "";
+
+  if (!src) {
+    return `<span class="medal-icon-fallback${safeClassName}" aria-hidden="true">🏅</span>`;
+  }
+
+  return `
+    <img
+      class="medal-icon${safeClassName}"
+      src="${escapeHtml(src)}"
+      alt=""
+      aria-hidden="true"
       draggable="false"
       onerror="this.style.display='none'"
     >
@@ -2291,11 +2328,28 @@ function starsToString(stars) {
 }
 
 function getStandardGameMedals(gameProgress) {
-  return [
-    gameProgress?.easyCompleted ? "🥉" : "🔒",
-    gameProgress?.mediumCompleted ? "🥈" : "🔒",
-    gameProgress?.hardCompleted ? "🥇" : "🔒"
-  ].join(" ");
+  const medals = [
+    { mode: "easy", earned: !!gameProgress?.easyCompleted },
+    { mode: "medium", earned: !!gameProgress?.mediumCompleted },
+    { mode: "hard", earned: !!gameProgress?.hardCompleted }
+  ];
+
+  return medals.map((medal) => {
+    const label = getMedalLabelForMode(medal.mode);
+
+    return `
+      <span
+        class="detail-medal-slot ${medal.earned ? "earned" : "unearned"}"
+        aria-label="${label} medal ${medal.earned ? "earned" : "not earned"}"
+        title="${label} medal ${medal.earned ? "earned" : "not earned"}"
+      >
+        ${medal.earned
+          ? medalIconHtml(medal.mode, "detail-medal-img")
+          : lockIconHtml("lock-icon-medal-lock")
+        }
+      </span>
+    `;
+  }).join("");
 }
 
 function getVerseCompletedMedalCount(verseProgress) {
@@ -4388,9 +4442,9 @@ function renderPracticeIconStrip(practiceGames, currentIndex) {
 
 function renderPracticeGameMedals(gameProgress) {
   const medals = [
-    { mode: "easy", label: "Easy", icon: "🥉", earned: !!gameProgress?.easyCompleted },
-    { mode: "medium", label: "Medium", icon: "🥈", earned: !!gameProgress?.mediumCompleted },
-    { mode: "hard", label: "Hard", icon: "🥇", earned: !!gameProgress?.hardCompleted }
+    { mode: "easy", label: "Easy", earned: !!gameProgress?.easyCompleted },
+    { mode: "medium", label: "Medium", earned: !!gameProgress?.mediumCompleted },
+    { mode: "hard", label: "Hard", earned: !!gameProgress?.hardCompleted }
   ];
 
   return medals.map(medal => `
@@ -4399,7 +4453,7 @@ function renderPracticeGameMedals(gameProgress) {
       aria-label="${medal.label} medal ${medal.earned ? "earned" : "not earned"}"
       title="${medal.label} medal ${medal.earned ? "earned" : "not earned"}"
     >
-      ${medal.icon}
+      ${medalIconHtml(medal.mode, "practice-card-medal-img")}
     </span>
   `).join("");
 }
@@ -6133,7 +6187,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.8c</div>
+    <div class="hint">Version 1.9</div>
   `;
 
   let introStarted = false;
