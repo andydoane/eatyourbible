@@ -6118,7 +6118,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.6b</div>
+    <div class="hint">Version 1.7b</div>
   `;
 
   let introStarted = false;
@@ -6615,10 +6615,14 @@ function todoDevRowHtml(todo = {}, index = 0) {
     verseId = "",
     gameId = "",
     petEmoji = "",
+    rowColor = "",
+    rowTextColor = "",
+    iconColor = "",
     disabled = false
   } = todo;
 
   const hasSubtext = !!String(subtext || "").trim();
+  const hasRowColor = !!String(rowColor || "").trim();
 
   let iconHtml = "";
 
@@ -6638,24 +6642,30 @@ function todoDevRowHtml(todo = {}, index = 0) {
     iconHtml = `<span class="todo-dev-row-emoji" aria-hidden="true">${escapeHtml(emoji || "✅")}</span>`;
   }
 
-  const iconColor = getTodoRowIconColor(index);
+  const finalIconColor = iconColor || getTodoRowIconColor(index);
+  const finalRowTextColor = rowTextColor || "#ffffff";
+  const rowStyle = hasRowColor
+    ? ` style="--todo-row-bg:${escapeHtml(rowColor)}; --todo-row-text:${escapeHtml(finalRowTextColor)};"`
+    : "";
+
   const ariaLabel = hasSubtext
     ? `${text}, ${subtext}`
     : text;
 
   return `
     <button
-      class="todo-dev-row no-zoom${disabled ? " is-disabled" : ""}${hasSubtext ? " has-subtext" : ""}"
+      class="todo-dev-row no-zoom${disabled ? " is-disabled" : ""}${hasSubtext ? " has-subtext" : ""}${hasRowColor ? " has-row-color" : ""}"
       type="button"
       data-todo-type="${escapeHtml(type)}"
       data-verse-id="${escapeHtml(verseId)}"
       data-game-id="${escapeHtml(gameId)}"
       aria-label="${escapeHtml(ariaLabel)}"
+      ${rowStyle}
       ${disabled ? "disabled" : ""}
     >
       <span
         class="todo-dev-row-icon"
-        style="--todo-row-icon-bg:${escapeHtml(iconColor)};"
+        style="--todo-row-icon-bg:${escapeHtml(finalIconColor)};"
       >
         ${iconHtml}
       </span>
@@ -7168,6 +7178,8 @@ function getMedalSuggestionTodos(progress, verseId) {
         emoji: game.icon || "🏅",
         text: `Earn a medal in ${getZooTodoGameTitle(game)}`,
         subtext: verseRef,
+        rowColor: game.cardColor || "#7f66c6",
+        rowTextColor: game.cardTextColor || "#ffffff",
         medalStars: stars,
         timesPlayed,
         gameTitle: getZooTodoGameTitle(game)
