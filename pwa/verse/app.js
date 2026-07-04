@@ -5831,11 +5831,7 @@ function screenTitle(idx) {
           draggable="false"
           onerror="this.style.display='none'">
       </div>
-    <h2>
-      ${HAS_VERSE_SELECTION ? `${VERSE_REF}` : "Biblo-Zoo"}
-      ${DEBUG_MODE ? " (DEBUG)" : ""}
-    </h2>
-    
+
       <div class="title-picker-tools">
         <div class="title-picker">
           <select id="versePicker" class="title-picker-select"></select>
