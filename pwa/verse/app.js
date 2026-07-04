@@ -5953,7 +5953,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.0</div>
+    <div class="hint">Version 1.1</div>
   `;
 
   let introStarted = false;
@@ -7315,7 +7315,10 @@ function screenTodoDev(idx) {
 
   if (tutorialActive) {
     bindZooTodoTutorial(wrap);
-    playZooTodoTutorialPageAudio(tutorialPageNumber);
+
+    if (State.screen === Screen.TODO_DEV) {
+      playZooTodoTutorialPageAudio(tutorialPageNumber);
+    }
   } else {
     bindZooTodoRows(wrap);
   }
