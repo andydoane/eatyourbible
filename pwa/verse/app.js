@@ -5857,21 +5857,6 @@ function screenTitle(idx) {
         </button>
       </div>
 
-      <button
-        class="title-todo-btn no-zoom"
-        id="titleTodoBtn"
-        type="button"
-        aria-label="Open Zoo To-Do"
-      >
-        <img
-          class="title-todo-img"
-          src="${IMG_DIR}button_todo.png"
-          alt="Zoo To-Do"
-          draggable="false"
-          onerror="this.style.display='none'"
-        >
-      </button>
-
       <div class="title-action-row" aria-label="Main actions">
         ${renderTitleActionButton({
     id: "learn",
@@ -5898,6 +5883,21 @@ function screenTitle(idx) {
     textColor: "#ffffff"
   })}
       </div>
+
+      <button
+        class="title-todo-btn no-zoom"
+        id="titleTodoBtn"
+        type="button"
+        aria-label="Open Zoo To-Do"
+      >
+        <img
+          class="title-todo-img"
+          src="${IMG_DIR}button_todo.png"
+          alt="Zoo To-Do"
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+      </button>
 
       ${titleZooStripHtml()}
 
