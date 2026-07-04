@@ -436,7 +436,7 @@
     shell.renderModeSelect({
       app,
       title: "Choose Your Difficulty",
-      icon: "🥉🥈🥇",
+      iconHtml: shell.medalSetIconHtml("vm-mode-select-medal-set"),
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
