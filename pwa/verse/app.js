@@ -6118,7 +6118,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.5</div>
+    <div class="hint">Version 1.6</div>
   `;
 
   let introStarted = false;
@@ -6589,17 +6589,36 @@ function getTodoRowIconColor(index = 0) {
   return TODO_ROW_ICON_COLORS[safeIndex % TODO_ROW_ICON_COLORS.length];
 }
 
+function getZooTodoVerseRef(verseId) {
+  const item = getVerseListItemById(verseId);
+
+  if (item?.ref) {
+    return String(item.ref).trim();
+  }
+
+  if (cfg?.verseId === verseId && VERSE_REF) {
+    return String(VERSE_REF)
+      .replace(/\s*\([^)]*\)\s*$/, "")
+      .trim();
+  }
+
+  return verseId ? verseIdToRef(verseId, "") : "";
+}
+
 function todoDevRowHtml(todo = {}, index = 0) {
   const {
     type = "",
     image = "",
     emoji = "",
     text = "",
+    subtext = "",
     verseId = "",
     gameId = "",
     petEmoji = "",
     disabled = false
   } = todo;
+
+  const hasSubtext = !!String(subtext || "").trim();
 
   let iconHtml = "";
 
@@ -6620,14 +6639,18 @@ function todoDevRowHtml(todo = {}, index = 0) {
   }
 
   const iconColor = getTodoRowIconColor(index);
+  const ariaLabel = hasSubtext
+    ? `${text}, ${subtext}`
+    : text;
 
   return `
     <button
-      class="todo-dev-row no-zoom ${disabled ? "is-disabled" : ""}"
+      class="todo-dev-row no-zoom${disabled ? " is-disabled" : ""}${hasSubtext ? " has-subtext" : ""}"
       type="button"
       data-todo-type="${escapeHtml(type)}"
       data-verse-id="${escapeHtml(verseId)}"
       data-game-id="${escapeHtml(gameId)}"
+      aria-label="${escapeHtml(ariaLabel)}"
       ${disabled ? "disabled" : ""}
     >
       <span
@@ -6638,7 +6661,18 @@ function todoDevRowHtml(todo = {}, index = 0) {
       </span>
 
       <span class="todo-dev-row-text">
-        ${escapeHtml(text)}
+        <span class="todo-dev-row-title">
+          ${escapeHtml(text)}
+        </span>
+
+        ${hasSubtext
+      ? `
+            <span class="todo-dev-row-subtext">
+              ${escapeHtml(subtext)}
+            </span>
+          `
+      : ""
+    }
       </span>
     </button>
   `;
@@ -7118,6 +7152,8 @@ function getMedalSuggestionTodos(progress, verseId) {
   const verseProgress = progress?.verses?.[verseId];
   if (!verseProgress?.learnCompleted) return [];
 
+  const verseRef = getZooTodoVerseRef(verseId);
+
   return getPracticeGames()
     .filter((game) => game && game.id && game.source === "external" && game.manifest)
     .map((game) => {
@@ -7128,8 +7164,10 @@ function getMedalSuggestionTodos(progress, verseId) {
         type: "earn_medal",
         verseId,
         gameId: game.id,
+        image: game.iconImage || "",
         emoji: game.icon || "🏅",
         text: `Earn a medal in ${getZooTodoGameTitle(game)}`,
+        subtext: verseRef,
         medalStars: stars,
         timesPlayed,
         gameTitle: getZooTodoGameTitle(game)
@@ -7177,12 +7215,14 @@ function generateZooTodos() {
 
     const petName = getBibloPetDisplayNameForVerseId(verseId);
     const petEmoji = getBibloPetEmojiForVerseId(verseId);
+    const verseRef = getZooTodoVerseRef(verseId);
 
     const todo = {
       type: status === "sleeping" ? "wake_pet" : "feed_pet",
       verseId,
       petEmoji,
       lastPracticedAt: Number(verseProgress?.lastPracticedAt || 0),
+      subtext: verseRef,
       text: status === "sleeping"
         ? `Wake up ${petName}`
         : `Feed ${petName}`
