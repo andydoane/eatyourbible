@@ -3600,6 +3600,7 @@ const State = {
   pendingPetUnlockVerseId: null,
   activeTodo: null,
   pendingZooTodoGameId: "",
+  todoTutorialPage: 1,
   petAnimationVerseId: null,
   petAnimationStatus: "",
   petAnimationClass: "",
@@ -6477,6 +6478,282 @@ function todoDevRowHtml(todo = {}, index = 0) {
   `;
 }
 
+function renderNormalZooTodoListHtml() {
+  const rowsHtml = generateZooTodos()
+    .map(todoDevRowHtml)
+    .join("");
+
+  return `
+    <div class="todo-dev-list">
+      ${rowsHtml}
+    </div>
+  `;
+}
+
+function getZooTodoTutorialPageNumber() {
+  const tutorial = getTutorialProgress();
+
+  if (tutorial.completed) return 0;
+
+  if (tutorial.step === TUTORIAL_STEPS.LEARN_DONE) {
+    return 4;
+  }
+
+  if (
+    tutorial.step === TUTORIAL_STEPS.CHOOSE_VERSE ||
+    tutorial.step === TUTORIAL_STEPS.LEARN_IN_PROGRESS
+  ) {
+    return 3;
+  }
+
+  return State.todoTutorialPage === 2 ? 2 : 1;
+}
+
+function renderZooTodoTutorialMissionRow({
+  action = "",
+  image = "",
+  emoji = "",
+  text = "",
+  iconColor = "#40b9c5"
+} = {}) {
+  const iconHtml = image
+    ? `
+      <img
+        class="todo-dev-row-img"
+        src="${escapeHtml(image)}"
+        alt=""
+        draggable="false"
+        onerror="this.style.display='none'"
+      >
+    `
+    : `<span class="todo-dev-row-emoji" aria-hidden="true">${escapeHtml(emoji || "✅")}</span>`;
+
+  return `
+    <button
+      class="todo-dev-row todo-tutorial-mission-row no-zoom"
+      type="button"
+      data-tutorial-action="${escapeHtml(action)}"
+    >
+      <span
+        class="todo-dev-row-icon"
+        style="--todo-row-icon-bg:${escapeHtml(iconColor)};"
+      >
+        ${iconHtml}
+      </span>
+
+      <span class="todo-dev-row-text">
+        ${escapeHtml(text)}
+      </span>
+    </button>
+  `;
+}
+
+function renderZooTodoTutorialHtml() {
+  const pageNumber = getZooTodoTutorialPageNumber();
+  const tutorial = getTutorialProgress();
+
+  if (pageNumber === 1) {
+    return `
+      <div class="todo-tutorial-note" data-tutorial-page="1">
+        <div class="todo-tutorial-heading">
+          Welcome, new BibloZookeeper!
+        </div>
+
+        <div class="todo-tutorial-body">
+          <p>
+            Your job at the BibloZoo is to find new BibloPets for our zoo,
+            then keep them healthy and happy.
+          </p>
+        </div>
+
+        <div class="todo-tutorial-actions">
+          <button
+            class="todo-tutorial-next-btn no-zoom"
+            type="button"
+            data-tutorial-next="2"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (pageNumber === 2) {
+    return `
+      <div class="todo-tutorial-note" data-tutorial-page="2">
+        <div class="todo-tutorial-heading">
+          Find and care for BibloPets
+        </div>
+
+        <div class="todo-tutorial-body">
+          <p>
+            There are three simple steps to find and care for a BibloPet.
+          </p>
+
+          <ol>
+            <li>Learn a new verse.</li>
+            <li>Play a practice game to unlock a new pet.</li>
+            <li>Keep practicing that verse to keep your new pet healthy and happy.</li>
+          </ol>
+        </div>
+
+        <div class="todo-tutorial-actions">
+          <button
+            class="todo-tutorial-next-btn no-zoom"
+            type="button"
+            data-tutorial-next="3"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  if (pageNumber === 3) {
+    const isReturning = tutorial.step === TUTORIAL_STEPS.LEARN_IN_PROGRESS;
+
+    return `
+      <div class="todo-tutorial-note" data-tutorial-page="3">
+        <div class="todo-tutorial-heading">
+          ${isReturning ? "Welcome back, BibloZookeeper!" : "Let's get started!"}
+        </div>
+
+        <div class="todo-tutorial-body">
+          <p>
+            ${isReturning
+        ? "Finish learning your verse to keep looking for your first BibloPet."
+        : "First step: pick a verse to learn."
+      }
+          </p>
+        </div>
+
+        <div class="todo-tutorial-mission-list">
+          ${renderZooTodoTutorialMissionRow({
+        action: "learn-new-verse",
+        image: `${IMG_DIR}clipboard_bible.png`,
+        text: isReturning ? "Continue Learning" : "Learn a New Verse",
+        iconColor: "#40b9c5"
+      })}
+
+          ${isReturning
+        ? renderZooTodoTutorialMissionRow({
+          action: "pick-different-verse",
+          image: `${IMG_DIR}clipboard_bible.png`,
+          text: "Pick a Different Verse",
+          iconColor: "#a7cb6f"
+        })
+        : ""
+      }
+        </div>
+      </div>
+    `;
+  }
+
+  if (pageNumber === 4) {
+    return `
+      <div class="todo-tutorial-note" data-tutorial-page="4">
+        <div class="todo-tutorial-heading">
+          Great job, BibloZookeeper!
+        </div>
+
+        <div class="todo-tutorial-body">
+          <p>
+            You learned your first verse!
+          </p>
+
+          <p>
+            Now, practice this verse to find your first BibloPet!
+          </p>
+        </div>
+
+        <div class="todo-tutorial-mission-list">
+          ${renderZooTodoTutorialMissionRow({
+      action: "practice-verse",
+      image: `${IMG_DIR}app_icon_controller.png`,
+      text: "Practice the Verse",
+      iconColor: "#40b9c5"
+    })}
+        </div>
+      </div>
+    `;
+  }
+
+  return renderNormalZooTodoListHtml();
+}
+
+function playZooTodoTutorialPageAudio(pageNumber) {
+  const src = TUTORIAL_PAGE_AUDIO[pageNumber];
+  if (!src || muted) return;
+
+  try {
+    audioEl.pause();
+    audioEl.currentTime = 0;
+  } catch (err) { }
+
+  try {
+    setAudioSrc(src);
+    audioEl.currentTime = 0;
+    applyMute();
+
+    const playPromise = audioEl.play();
+
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch((err) => {
+        console.warn("Could not play Zoo To-Do tutorial audio", err);
+      });
+    }
+  } catch (err) {
+    console.warn("Could not play Zoo To-Do tutorial audio", err);
+  }
+}
+
+function bindZooTodoTutorial(rootEl) {
+  rootEl.querySelectorAll("[data-tutorial-next]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+
+      const nextPage = Number(btn.getAttribute("data-tutorial-next") || 1);
+
+      if (nextPage === 2) {
+        State.todoTutorialPage = 2;
+        render();
+        return;
+      }
+
+      if (nextPage === 3) {
+        State.todoTutorialPage = 3;
+        markTutorialStep(TUTORIAL_STEPS.CHOOSE_VERSE);
+        render();
+      }
+    };
+  });
+
+  rootEl.querySelectorAll("[data-tutorial-action]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+
+      const action = btn.getAttribute("data-tutorial-action") || "";
+
+      try {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+      } catch (err) { }
+
+      if (action === "learn-new-verse" || action === "pick-different-verse") {
+        markTutorialStep(TUTORIAL_STEPS.CHOOSE_VERSE);
+        go(Screen.NEW_VERSE_PICKER);
+        return;
+      }
+
+      if (action === "practice-verse") {
+        go(Screen.PRACTICE_HUB);
+      }
+    };
+  });
+}
+
 function getKnownZooTodoVerseIds(progress) {
   if (!Array.isArray(VERSE_LIST)) return [];
 
@@ -6998,15 +7275,18 @@ function screenTodoDev(idx) {
   const wrap = document.createElement("div");
   wrap.className = "todo-dev-screen";
 
-  const rowsHtml = generateZooTodos()
-    .map(todoDevRowHtml)
-    .join("");
+  const tutorialActive = isTutorialActive();
+  const tutorialPageNumber = tutorialActive ? getZooTodoTutorialPageNumber() : 0;
+
+  const paperBodyHtml = tutorialActive
+    ? renderZooTodoTutorialHtml()
+    : renderNormalZooTodoListHtml();
 
   wrap.innerHTML = `
     ${homePillHtml("Home")}
 
     <main class="todo-dev-page">
-      <section class="todo-dev-clipboard" aria-label="Zoo To-Do prototype">
+      <section class="todo-dev-clipboard" aria-label="Zoo To-Do">
         <img
           class="todo-dev-clip"
           src="${IMG_DIR}clipboard_clip.png"
@@ -7024,16 +7304,20 @@ function screenTodoDev(idx) {
             onerror="this.style.display='none'"
           >
 
-          <div class="todo-dev-list">
-            ${rowsHtml}
-          </div>
+          ${paperBodyHtml}
         </div>
       </section>
     </main>
   `;
 
   bindHomePill(wrap);
-  bindZooTodoRows(wrap);
+
+  if (tutorialActive) {
+    bindZooTodoTutorial(wrap);
+    playZooTodoTutorialPageAudio(tutorialPageNumber);
+  } else {
+    bindZooTodoRows(wrap);
+  }
 
   return makeSlide({ idx, bg: "#a7cb6f", navHidden: true, inner: wrap });
 }
