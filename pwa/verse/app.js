@@ -1213,14 +1213,209 @@ let HAS_VERSE_SELECTION = false;
    Progress Storage
    ========================= */
 const PROGRESS_STORAGE_KEY = "verseMemoryProgress";
-const PROGRESS_VERSION = 1;
+const PROGRESS_VERSION = 2;
 const TRAFFIC_PROGRESS_MIGRATION_VERSION = 1;
+
+const TUTORIAL_STEPS = Object.freeze({
+  INTRO: "intro",
+  CHOOSE_VERSE: "choose_verse",
+  LEARN_IN_PROGRESS: "learn_in_progress",
+  LEARN_DONE: "learn_done",
+  COMPLETED: "completed"
+});
+
+const TUTORIAL_PAGE_AUDIO = Object.freeze({
+  1: AUDIO_DIR + "tutorial_page_1.mp3",
+  2: AUDIO_DIR + "tutorial_page_2.mp3",
+  3: AUDIO_DIR + "tutorial_page_3.mp3",
+  4: AUDIO_DIR + "tutorial_page_4.mp3"
+});
 
 function createEmptyProgress() {
   return {
     version: PROGRESS_VERSION,
-    verses: {}
+    verses: {},
+    tutorial: createDefaultTutorialProgress()
   };
+}
+
+function createDefaultTutorialProgress(overrides = {}) {
+  return {
+    completed: !!overrides.completed,
+    step: overrides.step || TUTORIAL_STEPS.INTRO,
+    selectedVerseId: String(overrides.selectedVerseId || "")
+  };
+}
+
+function isValidTutorialStep(step) {
+  return Object.values(TUTORIAL_STEPS).includes(step);
+}
+
+function hasCompletedGameMarkerForTutorial(gameProgress) {
+  if (!gameProgress || typeof gameProgress !== "object") return false;
+
+  return !!(
+    gameProgress.easyCompleted ||
+    gameProgress.mediumCompleted ||
+    gameProgress.hardCompleted ||
+    gameProgress.roadCompleted ||
+    gameProgress.trailCompleted ||
+    gameProgress.riverCompleted
+  );
+}
+
+function verseProgressHasUnlockedPetForTutorial(verseProgress) {
+  if (!verseProgress || typeof verseProgress !== "object") return false;
+  if (!verseProgress.learnCompleted) return false;
+
+  const games = verseProgress.games;
+  if (!games || typeof games !== "object") return false;
+
+  return Object.values(games).some(hasCompletedGameMarkerForTutorial);
+}
+
+function progressHasUnlockedBibloPetForTutorial(progress) {
+  if (!progress || typeof progress !== "object") return false;
+  if (!progress.verses || typeof progress.verses !== "object") return false;
+
+  return Object.values(progress.verses).some(verseProgressHasUnlockedPetForTutorial);
+}
+
+function getFirstLearnedVerseIdForTutorial(progress) {
+  if (!progress || typeof progress !== "object") return "";
+  if (!progress.verses || typeof progress.verses !== "object") return "";
+
+  for (const [verseId, verseProgress] of Object.entries(progress.verses)) {
+    if (verseProgress?.learnCompleted) {
+      return verseId;
+    }
+  }
+
+  return "";
+}
+
+function normalizeTutorialProgress(rawTutorial, progress) {
+  const raw = rawTutorial && typeof rawTutorial === "object"
+    ? rawTutorial
+    : {};
+
+  let selectedVerseId = String(raw.selectedVerseId || "");
+  let step = isValidTutorialStep(raw.step)
+    ? raw.step
+    : TUTORIAL_STEPS.INTRO;
+
+  const hasUnlockedPet = progressHasUnlockedBibloPetForTutorial(progress);
+
+  if (raw.completed === true || hasUnlockedPet || step === TUTORIAL_STEPS.COMPLETED) {
+    return createDefaultTutorialProgress({
+      completed: true,
+      step: TUTORIAL_STEPS.COMPLETED,
+      selectedVerseId
+    });
+  }
+
+  if (!selectedVerseId) {
+    selectedVerseId = getFirstLearnedVerseIdForTutorial(progress);
+  }
+
+  if (selectedVerseId) {
+    const verseProgress = progress?.verses?.[selectedVerseId];
+
+    if (verseProgress?.learnCompleted) {
+      step = TUTORIAL_STEPS.LEARN_DONE;
+    } else if (step === TUTORIAL_STEPS.INTRO || step === TUTORIAL_STEPS.CHOOSE_VERSE) {
+      step = TUTORIAL_STEPS.LEARN_IN_PROGRESS;
+    }
+  }
+
+  if (!selectedVerseId && (
+    step === TUTORIAL_STEPS.LEARN_IN_PROGRESS ||
+    step === TUTORIAL_STEPS.LEARN_DONE
+  )) {
+    step = TUTORIAL_STEPS.CHOOSE_VERSE;
+  }
+
+  return createDefaultTutorialProgress({
+    completed: false,
+    step,
+    selectedVerseId
+  });
+}
+
+function migrateTutorialProgress(progress) {
+  if (!progress || typeof progress !== "object") return false;
+
+  const before = JSON.stringify(progress.tutorial || null);
+  const normalized = normalizeTutorialProgress(progress.tutorial, progress);
+  const after = JSON.stringify(normalized);
+
+  if (before === after) return false;
+
+  progress.tutorial = normalized;
+  return true;
+}
+
+function getTutorialProgress() {
+  const progress = loadProgress();
+  return progress.tutorial || createDefaultTutorialProgress();
+}
+
+function updateTutorialProgress(updater) {
+  const progress = loadProgress();
+  const tutorial = normalizeTutorialProgress(progress.tutorial, progress);
+
+  if (typeof updater === "function") {
+    updater(tutorial, progress);
+  }
+
+  progress.tutorial = normalizeTutorialProgress(tutorial, progress);
+  saveProgress(progress);
+
+  return progress.tutorial;
+}
+
+function markTutorialStep(step, extra = {}) {
+  if (!isValidTutorialStep(step)) {
+    console.warn("Invalid tutorial step:", step);
+    return getTutorialProgress();
+  }
+
+  return updateTutorialProgress((tutorial) => {
+    tutorial.step = step;
+    tutorial.completed = step === TUTORIAL_STEPS.COMPLETED;
+
+    if (Object.prototype.hasOwnProperty.call(extra, "selectedVerseId")) {
+      tutorial.selectedVerseId = String(extra.selectedVerseId || "");
+    }
+  });
+}
+
+function markTutorialVerseSelected(verseId) {
+  return markTutorialStep(TUTORIAL_STEPS.LEARN_IN_PROGRESS, {
+    selectedVerseId: verseId
+  });
+}
+
+function markTutorialLearnDone(verseId = VERSE_ID) {
+  return markTutorialStep(TUTORIAL_STEPS.LEARN_DONE, {
+    selectedVerseId: verseId || getTutorialSelectedVerseId()
+  });
+}
+
+function completeTutorial() {
+  return markTutorialStep(TUTORIAL_STEPS.COMPLETED);
+}
+
+function isTutorialComplete() {
+  return !!getTutorialProgress().completed;
+}
+
+function isTutorialActive() {
+  return !isTutorialComplete();
+}
+
+function getTutorialSelectedVerseId() {
+  return getTutorialProgress().selectedVerseId || "";
 }
 
 function migrateTrafficProgress(progress) {
@@ -1273,9 +1468,23 @@ function loadProgress() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return createEmptyProgress();
     if (!parsed.verses || typeof parsed.verses !== "object") parsed.verses = {};
-    if (!parsed.version) parsed.version = PROGRESS_VERSION;
 
-    const changed = migrateTrafficProgress(parsed);
+    let changed = false;
+    const currentVersion = Number(parsed.version || 0);
+
+    if (!Number.isFinite(currentVersion) || currentVersion < PROGRESS_VERSION) {
+      parsed.version = PROGRESS_VERSION;
+      changed = true;
+    }
+
+    if (migrateTrafficProgress(parsed)) {
+      changed = true;
+    }
+
+    if (migrateTutorialProgress(parsed)) {
+      changed = true;
+    }
+
     if (changed) {
       saveProgress(parsed);
     }
@@ -1323,11 +1532,23 @@ function exportSaveData() {
     const json = JSON.stringify(saveData, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const dateStamp = new Date().toISOString().slice(0, 10);
+
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, "0");
+
+    const dateStamp = [
+      now.getFullYear(),
+      pad(now.getMonth() + 1),
+      pad(now.getDate())
+    ].join("-") + "-" + [
+      pad(now.getHours()),
+      pad(now.getMinutes()),
+      pad(now.getSeconds())
+    ].join("-");
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `verse-memory-save-${dateStamp}.json`;
+    a.download = `biblozoo-save-${dateStamp}.json`;
     a.style.display = "none";
 
     document.body.appendChild(a);
@@ -1399,11 +1620,14 @@ function importSaveDataFromFile(file) {
 
       const importedProgress = parsed.progress;
 
-      if (!importedProgress.version) {
+      const importedVersion = Number(importedProgress.version || 0);
+
+      if (!Number.isFinite(importedVersion) || importedVersion < PROGRESS_VERSION) {
         importedProgress.version = PROGRESS_VERSION;
       }
 
       migrateTrafficProgress(importedProgress);
+      migrateTutorialProgress(importedProgress);
 
       openRestoreProgressDialog(importedProgress, parsed);
     } catch (err) {
@@ -5832,6 +6056,7 @@ function screenTitle(idx) {
           onerror="this.style.display='none'">
       </div>
 
+    
       <div class="title-picker-tools">
         <div class="title-picker">
           <select id="versePicker" class="title-picker-select"></select>
