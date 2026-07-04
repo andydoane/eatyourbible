@@ -6075,7 +6075,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.41</div>
+    <div class="hint">Version 1.4</div>
   `;
 
   let introStarted = false;
@@ -6678,11 +6678,10 @@ function renderZooTodoTutorialHtml() {
   if (pageNumber === 1) {
     return `
       <div class="todo-tutorial-note" data-tutorial-page="1">
-        <div class="todo-tutorial-heading">
-          Welcome, new BibloZookeeper!
-        </div>
-
         <div class="todo-tutorial-body">
+          <p>
+            Welcome, new Biblo Zookeeper! 
+          </p>
           <p>
             Your job at the BibloZoo is to find new BibloPets for our zoo,
             then keep them healthy and happy.
@@ -6705,10 +6704,6 @@ function renderZooTodoTutorialHtml() {
   if (pageNumber === 2) {
     return `
       <div class="todo-tutorial-note" data-tutorial-page="2">
-        <div class="todo-tutorial-heading">
-          Find and care for BibloPets
-        </div>
-
         <div class="todo-tutorial-body">
           <p>
             There are three simple steps to find and care for a BibloPet.
