@@ -504,6 +504,32 @@ function bindHomePill(rootEl) {
   };
 }
 
+function bindNewVersePickerHomePill(rootEl) {
+  const btn = rootEl?.querySelector?.("[data-home-pill]");
+  if (!btn) return;
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+
+    try {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    } catch (e) { }
+
+    State.pendingPetUnlockVerseId = null;
+    State.activeTodo = null;
+
+    if (isTutorialActive()) {
+      State.todoTutorialPage = 3;
+      State.todoTutorialJustFinishedLearn = false;
+      go(Screen.TODO_DEV);
+      return;
+    }
+
+    go(Screen.TITLE);
+  };
+}
+
 function ensureLearnMenuOverlay() {
   if (document.getElementById("learnMenuOverlay")) return;
 
@@ -1188,6 +1214,13 @@ function continueLearnInstruction() {
 
     if (VERSE_ID) {
       markLearnCompleted(VERSE_ID);
+    }
+
+    if (isTutorialActive()) {
+      State.todoTutorialJustFinishedLearn = true;
+      markTutorialLearnDone(VERSE_ID);
+      go(Screen.TODO_DEV);
+      return;
     }
 
     go(Screen.PRACTICE_HUB);
@@ -3601,6 +3634,7 @@ const State = {
   activeTodo: null,
   pendingZooTodoGameId: "",
   todoTutorialPage: 1,
+  todoTutorialJustFinishedLearn: false,
   petAnimationVerseId: null,
   petAnimationStatus: "",
   petAnimationClass: "",
@@ -5953,7 +5987,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.1</div>
+    <div class="hint">Version 1.2</div>
   `;
 
   let introStarted = false;
@@ -6653,20 +6687,36 @@ function renderZooTodoTutorialHtml() {
   }
 
   if (pageNumber === 4) {
+    const isReturning = !State.todoTutorialJustFinishedLearn;
+
     return `
       <div class="todo-tutorial-note" data-tutorial-page="4">
         <div class="todo-tutorial-heading">
-          Great job, BibloZookeeper!
+          ${isReturning ? "Welcome back, BibloZookeeper!" : "Great job, BibloZookeeper!"}
         </div>
 
         <div class="todo-tutorial-body">
-          <p>
-            You learned your first verse!
-          </p>
+          ${
+            isReturning
+              ? `
+                <p>
+                  You already learned your verse.
+                </p>
 
-          <p>
-            Now, practice this verse to find your first BibloPet!
-          </p>
+                <p>
+                  Now practice it to find your first BibloPet!
+                </p>
+              `
+              : `
+                <p>
+                  You learned your first verse!
+                </p>
+
+                <p>
+                  Now, practice this verse to find your first BibloPet!
+                </p>
+              `
+          }
         </div>
 
         <div class="todo-tutorial-mission-list">
@@ -6732,7 +6782,7 @@ function bindZooTodoTutorial(rootEl) {
   });
 
   rootEl.querySelectorAll("[data-tutorial-action]").forEach((btn) => {
-    btn.onclick = (e) => {
+    btn.onclick = async (e) => {
       e.stopPropagation();
 
       const action = btn.getAttribute("data-tutorial-action") || "";
@@ -6742,7 +6792,20 @@ function bindZooTodoTutorial(rootEl) {
         audioEl.currentTime = 0;
       } catch (err) { }
 
-      if (action === "learn-new-verse" || action === "pick-different-verse") {
+      if (action === "learn-new-verse") {
+        const selectedVerseId = getTutorialSelectedVerseId();
+
+        if (selectedVerseId) {
+          await startLearningNewVerse(selectedVerseId);
+          return;
+        }
+
+        markTutorialStep(TUTORIAL_STEPS.CHOOSE_VERSE);
+        go(Screen.NEW_VERSE_PICKER);
+        return;
+      }
+
+      if (action === "pick-different-verse") {
         markTutorialStep(TUTORIAL_STEPS.CHOOSE_VERSE);
         go(Screen.NEW_VERSE_PICKER);
         return;
@@ -7156,6 +7219,12 @@ function newVersePickerCardHtml(item) {
 async function startLearningNewVerse(verseId) {
   if (!verseId) return;
 
+  if (isTutorialActive()) {
+    State.todoTutorialPage = 3;
+    State.todoTutorialJustFinishedLearn = false;
+    markTutorialVerseSelected(verseId);
+  }
+
   State.activeTodo = null;
   State.selectedVerseId = verseId;
   State.learnLevel = "not_at_all";
@@ -7223,7 +7292,7 @@ function screenNewVersePicker(idx) {
     <div class="practice-scroll-vignette" aria-hidden="true"></div>
   `;
 
-  bindHomePill(wrap);
+  bindNewVersePickerHomePill(wrap);
 
   wrap.querySelectorAll("[data-new-verse-id]").forEach((btn) => {
     btn.onclick = async (e) => {
@@ -7321,6 +7390,14 @@ function screenTodoDev(idx) {
     }
   } else {
     bindZooTodoRows(wrap);
+  }
+
+  if (
+    tutorialActive &&
+    tutorialPageNumber === 4 &&
+    State.screen === Screen.TODO_DEV
+  ) {
+    State.todoTutorialJustFinishedLearn = false;
   }
 
   return makeSlide({ idx, bg: "#a7cb6f", navHidden: true, inner: wrap });
