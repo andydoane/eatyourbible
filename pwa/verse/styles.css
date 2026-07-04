@@ -1316,7 +1316,7 @@ Zoo To-Do Clipboard Prototype
 }
 
 .todo-tutorial-heading {
-  color: #7f66c6;
+  color: #333333;
   font-size: clamp(32px, 7.8vw, 56px);
   font-weight: 900;
   line-height: 0.95;
