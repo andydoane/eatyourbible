@@ -51,6 +51,9 @@
   const MAX_UNIT = 116;
   const MAX_UNIT_BY_HEIGHT = 0.19;
   const DECOY_CLOUD_HITBOX_SCALE = 0.80;
+  const WORD_CLOUD_BASE_HEIGHT_U = 0.85;
+  const WORD_CLOUD_RENDER_HEIGHT_U = 1.00;
+  const WORD_CLOUD_FONT_RATIO = 0.48;
   const LIGHTNING_PARTICLE_IMAGE = "versey_bird_lightning.svg";
   const PARTICLE_COLORS = {
     rainbow: [
@@ -96,21 +99,21 @@
     compact: {
       image: "versey_bird_cloud_compact.svg",
       aspect: 290 / 225,
-      heightU: 0.85,
+      heightU: WORD_CLOUD_RENDER_HEIGHT_U,
       textX: 50.0,
       textY: 54.8
     },
     normal: {
       image: "versey_bird_cloud_normal.svg",
       aspect: 380 / 225,
-      heightU: 0.85,
+      heightU: WORD_CLOUD_RENDER_HEIGHT_U,
       textX: 49.7,
       textY: 52.1
     },
     long: {
       image: "versey_bird_cloud_long.svg",
       aspect: 560 / 225,
-      heightU: 0.85,
+      heightU: WORD_CLOUD_RENDER_HEIGHT_U,
       textX: 49.5,
       textY: 55.4
     }
@@ -2163,7 +2166,8 @@
   }
 
   function getWordFontSize(cloud){
-    return clamp(cloud.h * 0.48, 16, 31);
+    const unit = state.layout?.unit || cloud.h / WORD_CLOUD_RENDER_HEIGHT_U;
+    return clamp(unit * WORD_CLOUD_BASE_HEIGHT_U * WORD_CLOUD_FONT_RATIO, 16, 31);
   }
 
   function addFlapTrail(){
