@@ -2341,7 +2341,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
     const roadOrder = shuffle([0, 1]);
     for (const road of roadOrder) {
-      if (!laneHasSpawnRoom(road, 182)) continue;
+      if (!laneHasSpawnRoom(road)) continue;
       spawnMainItem(road, now, delayUsed);
       break;
     }
@@ -2411,15 +2411,21 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     };
   }
 
-  function laneHasSpawnRoom(road, minGap) {
+  function laneHasSpawnRoom(road, minGap = mainSpawnGap()) {
     const dir = road === 0 ? -1 : 1;
     const sampleWidth = estimateItemWidth(currentTargetLabel() || "word");
     const spawnX = dir < 0 ? state.fieldWidth + sampleWidth + 40 : -(sampleWidth + 40);
+    const gap = Number.isFinite(minGap) ? minGap : mainSpawnGap();
+
     for (const item of state.mainItems) {
       if (item.road !== road || item.crashing) continue;
+
+      const itemWidth = item.width || 150;
       const dist = Math.abs(item.x - spawnX);
-      if (dist < Math.max(minGap, (item.width || 150) + 24)) return false;
+
+      if (dist < itemWidth + gap) return false;
     }
+
     return true;
   }
 
@@ -2757,6 +2763,14 @@ In the bonus round, tap as many of the target vehicle as you can.`;
   function estimateItemWidth(label) {
     return getItemMetrics(label).width;
   }
+
+  function mainSpawnGap() {
+    const metrics = getItemMetrics(currentTargetLabel() || "car");
+    const visualCarWidth = metrics.carSize * 2.25;
+
+    return Math.round(visualCarWidth * 0.65);
+  }
+
 
   function parseVerseMeta(verseId, fallbackRef) {
     return window.VerseGameShell.parseReferenceParts(
