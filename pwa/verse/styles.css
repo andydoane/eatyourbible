@@ -4003,132 +4003,38 @@ Game Mix Loading Screen
   color: #111111;
 }
 
-.learn-hide-poof-card {
+.learn-hide-transition-card {
   position: relative;
   overflow: hidden;
 }
 
-.learn-hide-poof-overlay {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  border-radius: inherit;
+.learn-hide-transition-card.is-transitioning-out .smart-learn-text-remove {
+  animation: learnHideVerseFadeOut 180ms ease-in both;
+}
+
+.learn-hide-transition-card.is-transitioning-in .learn-token {
   opacity: 0;
-  transform: scale(0.94);
-  background:
-    radial-gradient(circle at 50% 48%,
-      rgba(255, 255, 255, 0.94) 0%,
-      rgba(255, 255, 255, 0.82) 18%,
-      rgba(127, 102, 198, 0.34) 42%,
-      rgba(127, 102, 198, 0) 72%),
-    radial-gradient(circle at 28% 38%,
-      rgba(255, 199, 81, 0.34) 0%,
-      rgba(255, 199, 81, 0) 34%),
-    radial-gradient(circle at 72% 62%,
-      rgba(64, 185, 197, 0.26) 0%,
-      rgba(64, 185, 197, 0) 36%);
+  animation: learnHideTokenFadeIn 260ms ease-out forwards;
+  animation-delay: calc(var(--token-index, 0) * 24ms);
 }
 
-.learn-hide-poof-card.is-poofing .learn-hide-poof-overlay {
-  animation: learnHidePoof 560ms ease-out both;
-}
-
-.learn-hide-poof-card.is-poofing .smart-learn-text-remove {
-  animation: none;
-}
-
-.learn-hide-poof-sparkle {
-  position: absolute;
-  color: #ffc751;
-  font-size: clamp(22px, 5vw, 42px);
-  line-height: 1;
-  opacity: 0;
-  text-shadow: 0 2px 8px rgba(127, 102, 198, 0.28);
-}
-
-.learn-hide-poof-sparkle.sparkle-one {
-  top: 24%;
-  left: 30%;
-}
-
-.learn-hide-poof-sparkle.sparkle-two {
-  top: 50%;
-  right: 24%;
-  font-size: clamp(18px, 4vw, 34px);
-}
-
-.learn-hide-poof-sparkle.sparkle-three {
-  left: 52%;
-  bottom: 20%;
-  font-size: clamp(16px, 3.6vw, 30px);
-}
-
-.learn-hide-poof-card.is-poofing .learn-hide-poof-sparkle {
-  animation: learnHideSparkle 560ms ease-out both;
-}
-
-.learn-hide-poof-card.is-poofing .sparkle-two {
-  animation-delay: 60ms;
-}
-
-.learn-hide-poof-card.is-poofing .sparkle-three {
-  animation-delay: 110ms;
-}
-
-@keyframes learnHidePoof {
-  0% {
-    opacity: 0;
-    transform: scale(0.86);
-    filter: blur(8px);
-  }
-
-  28% {
-    opacity: 1;
-    transform: scale(1.04);
-    filter: blur(2px);
-  }
-
-  64% {
-    opacity: 0.88;
-    transform: scale(1.12);
-    filter: blur(5px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.22);
-    filter: blur(12px);
-  }
-}
-
-@keyframes learnHideTextMasked {
-
-  0%,
-  100% {
+@keyframes learnHideVerseFadeOut {
+  from {
     opacity: 1;
   }
 
-  22%,
-  58% {
-    opacity: 0.18;
+  to {
+    opacity: 0;
   }
 }
 
-@keyframes learnHideSparkle {
-  0% {
+@keyframes learnHideTokenFadeIn {
+  from {
     opacity: 0;
-    transform: translateY(8px) scale(0.55) rotate(0deg);
   }
 
-  34% {
+  to {
     opacity: 1;
-    transform: translateY(0) scale(1.08) rotate(12deg);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-18px) scale(0.75) rotate(28deg);
   }
 }
 

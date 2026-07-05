@@ -3861,6 +3861,7 @@ const State = {
   hideAutoStarting: false,
   hideAutoFallbackReady: false,
   hidePoofActive: false,
+  hideTransitionPhase: "",
   sayVerseActive: false,
   sayVerseStartedAt: 0,
   sayVerseDurationMs: 0,
@@ -4621,6 +4622,7 @@ function resetLearn(goTitle = false) {
   State.hideAutoStarting = false;
   State.hideAutoFallbackReady = false;
   State.hidePoofActive = false;
+  State.hideTransitionPhase = "";
   State.sayVerseActive = false;
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
@@ -5003,50 +5005,60 @@ function hideInfoForToken(tokenIdx) {
 function verseNode() {
   const p = document.createElement("p");
   p.className = "verse";
+
+  let tokenAnimationIndex = 0;
+
+  function makeLearnTokenSpan(text, className = "") {
+    const span = document.createElement("span");
+    span.className = `learn-token${className ? " " + className : ""}`;
+    span.style.setProperty("--token-index", String(tokenAnimationIndex));
+    span.textContent = text;
+    tokenAnimationIndex += 1;
+    return span;
+  }
+
   for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i];
+
     if (t.type === TokenType.SPACE) {
       p.appendChild(document.createTextNode(t.text));
       continue;
     }
+
     if (!isTokenHidden(i)) {
       if (State.revealedTokenIdx.has(i)) {
-        const span = document.createElement("span");
-        span.className = "revealed-word";
-        span.textContent = t.text;
-        p.appendChild(span);
+        p.appendChild(makeLearnTokenSpan(t.text, "revealed-word"));
       } else {
-        p.appendChild(document.createTextNode(t.text));
+        p.appendChild(makeLearnTokenSpan(t.text));
       }
+
       continue;
     }
+
     const info = hideInfoForToken(i);
-    const span = document.createElement("span");
-    span.className = "hintable no-zoom " + (info?.type === "emoji" ? "emoji" : "underscore");
-    span.textContent = info?.type === "emoji"
-      ? (info.emoji || "❓")
-      : underscoresForWord(t.text);
+    const span = makeLearnTokenSpan(
+      info?.type === "emoji"
+        ? (info.emoji || "❓")
+        : underscoresForWord(t.text),
+      "hintable no-zoom " + (info?.type === "emoji" ? "emoji" : "underscore")
+    );
 
     span.onclick = () => {
-
-      // mark revealed in state
       State.revealedTokenIdx.add(i);
 
-      // create yellow revealed word element
       const revealed = document.createElement("span");
-      revealed.className = "revealed-word";
+      revealed.className = "learn-token revealed-word";
+      revealed.style.setProperty("--token-index", span.style.getPropertyValue("--token-index") || "0");
       revealed.textContent = t.text;
 
-      // replace the blank directly without re-rendering the screen
       span.replaceWith(revealed);
 
       scheduleSmartLearnTextFit(document);
-
     };
-
 
     p.appendChild(span);
   }
+
   return p;
 }
 
@@ -5530,25 +5542,39 @@ function goToFinalRecallAndStart() {
   }, 1600);
 }
 
-function clearHidePoofAfterAnimation() {
+function waitMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function clearHideTransitionAfterAnimation() {
   setTimeout(() => {
-    State.hidePoofActive = false;
+    State.hideTransitionPhase = "";
 
     if (State.screen === Screen.HIDE) {
       render();
     }
-  }, 520);
+  }, 900);
 }
 
-async function startHideRoundWithPoof() {
+async function startHideRoundWithTransition() {
   if (State.sayVerseActive) return;
   if (State.hideReadyForFinal) return;
 
-  State.hidePoofActive = true;
-  clearHidePoofAfterAnimation();
+  State.hideTransitionPhase = "out";
+  render();
+
+  await waitMs(180);
+
+  if (State.screen !== Screen.HIDE) {
+    State.hideTransitionPhase = "";
+    return;
+  }
+
+  State.hideTransitionPhase = "in";
+  clearHideTransitionAfterAnimation();
 
   startHideRound().catch((err) => {
-    State.hidePoofActive = false;
+    State.hideTransitionPhase = "";
     console.warn("Could not start hide round", err);
 
     if (State.screen === Screen.HIDE) {
@@ -6188,7 +6214,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.10</div>
+    <div class="hint">Version 1.11</div>
   `;
 
   let introStarted = false;
@@ -8805,6 +8831,10 @@ function screenHide(idx) {
     buttonLabel = removeAnotherLabel;
   }
 
+  const hideTransitionClass = State.hideTransitionPhase
+    ? ` is-transitioning-${State.hideTransitionPhase}`
+    : "";
+
   const hideBottomHtml = State.sayVerseActive
     ? `
       <div class="learn-progress-action-slot">
@@ -8841,7 +8871,7 @@ function screenHide(idx) {
         ${learnInstructionLineHtml("Say the verse before more words disappear.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme learn-hide-poof-card ${State.hidePoofActive ? "is-poofing" : ""} ${getVerseFitClass(VERSE_TEXT)}">
+      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme learn-hide-transition-card${hideTransitionClass} ${getVerseFitClass(VERSE_TEXT)}">
         <div
           class="smart-learn-text smart-learn-text-remove"
           data-smart-learn-text
@@ -8851,11 +8881,7 @@ function screenHide(idx) {
           <div class="smart-learn-body" id="verseStage"></div>
         </div>
 
-        <div class="learn-hide-poof-overlay" aria-hidden="true">
-          <span class="learn-hide-poof-sparkle sparkle-one">✦</span>
-          <span class="learn-hide-poof-sparkle sparkle-two">✦</span>
-          <span class="learn-hide-poof-sparkle sparkle-three">✦</span>
-        </div>
+
       </div>
 
       <div class="learn-coach learn-bottom-zone learn-progress-bottom-zone">
@@ -8876,7 +8902,7 @@ function screenHide(idx) {
         return;
       }
 
-      await startHideRoundWithPoof();
+      await startHideRoundWithTransition();
     };
   }
 
