@@ -77,6 +77,36 @@
     wheels: "./traffic_tap_images/car_truck_wheels.svg"
   };
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   function vehicleLabel(vehicle) {
     if (typeof vehicle === "string") return vehicle;
     return vehicle?.label || "vehicle";
@@ -647,7 +677,6 @@
 
   function soundRainbowJackpot(t) {
     playTune("rainbowJackpot", "rainbowJackpot", t);
-    playNoise("rainbowJackpot", t, 0.42, 0.08, 1600, "bandpass");
   }
 
   function soundTruckIntro(t) {
@@ -891,10 +920,14 @@
     window.clearTimeout(endScreenUnlockTimer);
     endScreenUnlockTimer = 0;
 
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,

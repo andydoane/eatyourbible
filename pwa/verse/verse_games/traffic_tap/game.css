@@ -135,6 +135,10 @@ body{
   padding:12px var(--tt-side) 10px;
 }
 
+.tt-build {
+  --vm-build-meta: #a7cb6f;
+}
+
 .tt-build.is-shake{ animation:ttShake 280ms ease; }
 .tt-build.is-pop{ animation:ttPop 200ms ease; }
 
