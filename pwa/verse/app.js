@@ -6214,7 +6214,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.13</div>
+    <div class="hint">Version 1.14</div>
   `;
 
   let introStarted = false;
@@ -8745,11 +8745,14 @@ function screenChunks(idx) {
 
   const learnParts = getLearnAudioParts();
   const chunkText = learnParts[State.chunkIndex]?.text || VERSE_TEXT;
+  const isChunkSlideExiting = State.screen !== Screen.CHUNKS;
 
   let coachText = "Listen carefully as each chunk plays.";
   let buttonLabel = "▶ Start";
 
-  if (State.instructionPlaying && State.instructionKey === "chunks1") {
+  if (isChunkSlideExiting) {
+    coachText = "Listen carefully as each chunk plays.";
+  } else if (State.instructionPlaying && State.instructionKey === "chunks1") {
     coachText = "Let's break the verse down into bite sized chunks.";
   } else if (State.instructionPlaying && State.instructionKey === "chunks2") {
     coachText = "Let's do that one more time.";
@@ -8784,6 +8787,7 @@ function screenChunks(idx) {
 
         <div class="coach-actions">
           ${(
+      isChunkSlideExiting ||
       State.chunkRunning ||
       State.instructionPlaying ||
       (State.chunkAutoStarting && !State.chunkAutoFallbackReady)
