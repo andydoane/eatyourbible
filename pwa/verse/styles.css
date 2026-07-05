@@ -1315,6 +1315,21 @@ Zoo To-Do Clipboard Prototype
   text-align: center;
 }
 
+.todo-tutorial-note[data-tutorial-page="1"],
+.todo-tutorial-note[data-tutorial-page="2"],
+.todo-tutorial-note[data-tutorial-page="3"] {
+  min-height: var(--todo-tutorial-note-min-height, 0px);
+}
+
+.todo-tutorial-measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: -1;
+  height: auto;
+  overflow: visible;
+}
+
 .todo-tutorial-heading {
   color: #333333;
   font-size: clamp(32px, 7.8vw, 56px);

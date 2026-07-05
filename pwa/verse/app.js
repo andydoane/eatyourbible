@@ -6214,7 +6214,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.12</div>
+    <div class="hint">Version 1.13</div>
   `;
 
   let introStarted = false;
@@ -6905,8 +6905,11 @@ function renderZooTodoTutorialMissionRow({
   `;
 }
 
-function renderZooTodoTutorialHtml() {
-  const pageNumber = getZooTodoTutorialPageNumber();
+function renderZooTodoTutorialHtml(pageOverride = null, options = {}) {
+  const pageNumber = pageOverride === null || pageOverride === undefined
+    ? getZooTodoTutorialPageNumber()
+    : Number(pageOverride);
+
   const tutorial = getTutorialProgress();
 
   if (pageNumber === 1) {
@@ -6964,7 +6967,9 @@ function renderZooTodoTutorialHtml() {
   }
 
   if (pageNumber === 3) {
-    const isReturning = tutorial.step === TUTORIAL_STEPS.LEARN_IN_PROGRESS;
+    const isReturning = typeof options.forceReturning === "boolean"
+      ? options.forceReturning
+      : tutorial.step === TUTORIAL_STEPS.LEARN_IN_PROGRESS;
 
     return `
       <div class="todo-tutorial-note" data-tutorial-page="3">
@@ -7049,6 +7054,60 @@ function renderZooTodoTutorialHtml() {
   }
 
   return renderNormalZooTodoListHtml();
+}
+
+function equalizeZooTodoTutorialClipboardPages(rootEl = document) {
+  const papers = Array.from(rootEl.querySelectorAll(".todo-dev-paper"));
+
+  papers.forEach((paper) => {
+    const currentNote = paper.querySelector(".todo-tutorial-note[data-tutorial-page]");
+    const currentPage = currentNote?.getAttribute("data-tutorial-page") || "";
+
+    if (!["1", "2", "3"].includes(currentPage)) {
+      paper.style.removeProperty("--todo-tutorial-note-min-height");
+      return;
+    }
+
+    paper.style.removeProperty("--todo-tutorial-note-min-height");
+
+    const paperStyles = window.getComputedStyle(paper);
+    const paddingLeft = parseFloat(paperStyles.paddingLeft) || 0;
+    const paddingRight = parseFloat(paperStyles.paddingRight) || 0;
+    const paddingTop = parseFloat(paperStyles.paddingTop) || 0;
+    const contentWidth = Math.max(0, paper.clientWidth - paddingLeft - paddingRight);
+
+    if (!contentWidth) return;
+
+    const measure = document.createElement("div");
+    measure.className = "todo-tutorial-measure";
+    measure.setAttribute("aria-hidden", "true");
+
+    measure.style.left = `${paddingLeft}px`;
+    measure.style.top = `${paddingTop}px`;
+    measure.style.width = `${contentWidth}px`;
+
+    // Measure page 2 plus page 3's taller "returning" version.
+    // Page 4 is intentionally ignored because it does not immediately transition
+    // to another clipboard tutorial page.
+    measure.innerHTML = [
+      renderZooTodoTutorialHtml(2),
+      renderZooTodoTutorialHtml(3, { forceReturning: true })
+    ].join("");
+
+    paper.appendChild(measure);
+
+    const heights = Array.from(measure.querySelectorAll(".todo-tutorial-note"))
+      .map((note) => Math.ceil(note.getBoundingClientRect().height))
+      .filter((height) => height > 0);
+
+    measure.remove();
+
+    const minHeight = Math.max(...heights, 0);
+
+    if (minHeight > 0) {
+      paper.style.setProperty("--todo-tutorial-note-min-height", `${minHeight}px`);
+    }
+  });
 }
 
 function playZooTodoTutorialPageAudio(pageNumber) {
@@ -9447,6 +9506,14 @@ function render() {
   updateSlideTransforms();
 
   renderNav();
+
+  if (State.screen === Screen.TODO_DEV) {
+    requestAnimationFrame(() => {
+      if (State.screen === Screen.TODO_DEV) {
+        equalizeZooTodoTutorialClipboardPages(document);
+      }
+    });
+  }
 
   if (State.screen === Screen.VERSE_DETAIL && savedDetailScrollTop > 0) {
     requestAnimationFrame(() => {
