@@ -5852,7 +5852,7 @@ BibloPet Image / Emoji Fallback
   opacity: 1;
 }
 
-.biblopet-img.is-loaded+.biblopet-emoji-fallback {
+.biblopet-img.is-loaded + .biblopet-emoji-fallback {
   display: none;
 }
 
@@ -5861,8 +5861,12 @@ BibloPet Image / Emoji Fallback
 }
 
 .biblopet-emoji-fallback {
-  display: block;
+  display: none;
   line-height: 1;
+}
+
+.biblopet-img.is-missing + .biblopet-emoji-fallback {
+  display: block;
 }
 
 .progress-row-pet .biblopet-visual,
