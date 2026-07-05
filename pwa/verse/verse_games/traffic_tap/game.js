@@ -2328,28 +2328,35 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
   function trafficSpawnTick(now) {
     if (!state.fieldWidth) return;
+
     if (!state.lastSpawnAt) {
       state.lastSpawnAt = now;
       state.nextSpawnDelay = randomSpawnDelay();
       return;
     }
+
     if (now - state.lastSpawnAt < state.nextSpawnDelay) return;
 
-    state.lastSpawnAt = now;
     const delayUsed = state.nextSpawnDelay;
-    state.nextSpawnDelay = randomSpawnDelay();
-
     const roadOrder = shuffle([0, 1]);
+    let spawned = false;
+
     for (const road of roadOrder) {
       if (!laneHasSpawnRoom(road)) continue;
-      spawnMainItem(road, now, delayUsed);
-      break;
+
+      spawned = spawnMainItem(road, now, delayUsed);
+      if (spawned) break;
     }
+
+    state.lastSpawnAt = now;
+    state.nextSpawnDelay = spawned
+      ? randomSpawnDelay()
+      : mainBlockedSpawnRetryDelay();
   }
 
   function spawnMainItem(road, now, delayUsed) {
     const correctLabel = currentTargetLabel();
-    if (!correctLabel) return;
+    if (!correctLabel) return false;
 
     const roadHasCorrect = state.mainItems.some(item => item.road === road && item.isCorrect && !item.crashing);
     const shouldTryCorrect = !roadHasCorrect && canSpawnCorrect(now);
@@ -2360,6 +2367,8 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     state.mainItems.push(item);
     state.totalSpawned += 1;
     if (spawnCorrect) state.lastCorrectSpawnAt = now;
+
+    return true;
   }
 
   function makeMainItem({ road, label, isCorrect, delayUsed }) {
@@ -2412,18 +2421,20 @@ In the bonus round, tap as many of the target vehicle as you can.`;
   }
 
   function laneHasSpawnRoom(road, minGap = mainSpawnGap()) {
-    const dir = road === 0 ? -1 : 1;
-    const sampleWidth = estimateItemWidth(currentTargetLabel() || "word");
-    const spawnX = dir < 0 ? state.fieldWidth + sampleWidth + 40 : -(sampleWidth + 40);
-    const gap = Number.isFinite(minGap) ? minGap : mainSpawnGap();
+    const direction = road === 0 ? -1 : 1;
+    const spawnMetrics = getItemMetrics(currentTargetLabel() || "word");
+    const spawnRect = visibleCarRectForSpawn(road, spawnMetrics);
+    const requiredGap = Number.isFinite(minGap) ? minGap : mainSpawnGap();
 
     for (const item of state.mainItems) {
-      if (item.road !== road || item.crashing) continue;
+      if (item.road !== road || item.crashing || item.removeAt) continue;
 
-      const itemWidth = item.width || 150;
-      const dist = Math.abs(item.x - spawnX);
+      const itemRect = visibleCarRectForItem(item);
+      const visualGap = direction < 0
+        ? spawnRect.left - itemRect.right
+        : itemRect.left - spawnRect.right;
 
-      if (dist < itemWidth + gap) return false;
+      if (visualGap < requiredGap) return false;
     }
 
     return true;
@@ -2437,36 +2448,54 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
   function updateItemSpeed(item, dt) {
     const accelPerSec = 62;
-    const closeGap = 56;
-    const followGap = 98;
-    const releaseGap = 138;
+    const desiredGap = mainSpawnGap();
+    const closeGap = desiredGap * 0.6;
+    const followGap = desiredGap;
+    const releaseGap = desiredGap * 1.5;
+    const itemRect = visibleCarRectForItem(item);
     const others = state.mainItems.filter(other => other.road === item.road && other.id !== item.id && !other.crashing);
     let leader = null;
     let bestGap = Infinity;
 
     for (const other of others) {
+      const otherRect = visibleCarRectForItem(other);
+      let gap = Infinity;
+
       if (item.direction < 0) {
-        if (other.x >= item.x) continue;
-        const gap = item.x - other.x - (other.width || 150);
-        if (gap < bestGap) { bestGap = gap; leader = other; }
+        if (otherRect.centerX >= itemRect.centerX) continue;
+        gap = itemRect.left - otherRect.right;
       } else {
-        if (other.x <= item.x) continue;
-        const gap = other.x - item.x - (item.width || 150);
-        if (gap < bestGap) { bestGap = gap; leader = other; }
+        if (otherRect.centerX <= itemRect.centerX) continue;
+        gap = otherRect.left - itemRect.right;
+      }
+
+      if (gap < bestGap) {
+        bestGap = gap;
+        leader = other;
       }
     }
 
     let targetSpeed = item.targetSpeed || item.baseSpeed;
+
     if (leader) {
-      const leaderSpeed = leader.speed || leader.baseSpeed || targetSpeed;
-      if (bestGap < closeGap) targetSpeed = Math.min(targetSpeed, Math.max(leaderSpeed - 14, 52));
-      else if (bestGap < followGap) targetSpeed = Math.min(targetSpeed, leaderSpeed);
-      else if (bestGap < releaseGap) targetSpeed = Math.min(targetSpeed, leaderSpeed + 10);
+      const leaderSpeed = leader.speed || leader.targetSpeed || leader.baseSpeed || targetSpeed;
+
+      if (bestGap < closeGap) {
+        targetSpeed = Math.min(targetSpeed, Math.max(leaderSpeed - 14, 52));
+      } else if (bestGap < followGap) {
+        targetSpeed = Math.min(targetSpeed, leaderSpeed);
+      } else if (bestGap < releaseGap) {
+        targetSpeed = Math.min(targetSpeed, leaderSpeed + 10);
+      }
     }
 
     const maxStep = accelPerSec * (dt / 1000);
-    if (item.speed < targetSpeed) item.speed = Math.min(targetSpeed, item.speed + maxStep);
-    else if (item.speed > targetSpeed) item.speed = Math.max(targetSpeed, item.speed - maxStep * 1.45);
+
+    if (item.speed < targetSpeed) {
+      item.speed = Math.min(targetSpeed, item.speed + maxStep);
+    } else if (item.speed > targetSpeed) {
+      item.speed = Math.max(targetSpeed, item.speed - maxStep * 1.45);
+    }
   }
 
   function chooseMainItem(itemId, tappedEl) {
@@ -2693,8 +2722,17 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       : 1.45;
   }
 
+  function mainSpeedMultiplierForSpacing() {
+    return Math.max(1, trafficSpeedMultiplier());
+  }
+
   function randomSpawnDelay() {
-    return 720 + Math.random() * 420;
+    const baseDelay = 720 + Math.random() * 420;
+    return baseDelay / mainSpeedMultiplierForSpacing();
+  }
+
+  function mainBlockedSpawnRetryDelay() {
+    return clamp(90 / mainSpeedMultiplierForSpacing(), 50, 90);
   }
 
   function roadTopY(road) {
@@ -2760,15 +2798,46 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight, carCenterY, wordCenterY };
   }
 
-  function estimateItemWidth(label) {
-    return getItemMetrics(label).width;
+  function visibleCarWidthFromMetrics(metrics) {
+    return (metrics.carSize || 70) * 2.25;
+  }
+
+  function visibleCarWidthForItem(item) {
+    return (item.carSize || 70) * 2.25;
   }
 
   function mainSpawnGap() {
     const metrics = getItemMetrics(currentTargetLabel() || "car");
-    const visualCarWidth = metrics.carSize * 2.25;
+    return Math.round(visibleCarWidthFromMetrics(metrics) * 0.65);
+  }
 
-    return Math.round(visualCarWidth * 0.65);
+  function visibleCarRectForItem(item) {
+    const width = visibleCarWidthForItem(item);
+    const centerX = (item.x || 0) + ((item.width || width) / 2);
+
+    return {
+      left: centerX - (width / 2),
+      right: centerX + (width / 2),
+      centerX,
+      width
+    };
+  }
+
+  function visibleCarRectForSpawn(road, metrics) {
+    const direction = road === 0 ? -1 : 1;
+    const itemWidth = metrics.width || 190;
+    const x = direction < 0
+      ? state.fieldWidth + itemWidth + 40
+      : -(itemWidth + 40);
+    const width = visibleCarWidthFromMetrics(metrics);
+    const centerX = x + (itemWidth / 2);
+
+    return {
+      left: centerX - (width / 2),
+      right: centerX + (width / 2),
+      centerX,
+      width
+    };
   }
 
 
