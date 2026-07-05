@@ -160,6 +160,20 @@ select{ font:inherit; }
   pointer-events:none;
 }
 
+.vsn-bonus-active .vsn-target-note {
+  background: #333333;
+  color: #ffffff;
+  box-shadow:
+    0 8px 14px rgba(0, 0, 0, .16),
+    inset 0 -7px 12px rgba(0, 0, 0, .16),
+    inset 0 1px 0 rgba(255, 255, 255, .16);
+}
+
+.vsn-bonus-active .vsn-target-text {
+  color: #ffffff;
+  text-shadow: none;
+}
+
 .vsn-target-text{
   position:relative;
   z-index:1;

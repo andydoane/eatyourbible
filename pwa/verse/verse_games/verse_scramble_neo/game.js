@@ -168,9 +168,9 @@
   }
 
   function bonusBaseTimeMs() {
-    if (selectedMode === "easy") return 15000;
-    if (selectedMode === "medium") return 10000;
-    return 7500;
+    if (selectedMode === "easy") return 10000;
+    if (selectedMode === "medium") return 7500;
+    return 5000;
   }
 
   function bonusTimeWithWiggle() {
@@ -1009,7 +1009,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "VS 1.0",
+      debugBadge: "VS 1.1",
       icon: GAME_ICON,
       iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
@@ -1292,7 +1292,7 @@
 
   function renderBonusTargetHtml() {
     if (state.bonusStage !== "round") return "";
-    return `Find: <span class="vsn-bonus-target-letter" style="color:${state.bonusTargetColor}; text-shadow:0 .025em 0 rgba(255,255,255,.42), 0 .055em 0 ${state.bonusTargetShade}, 0 .12em .14em rgba(0,0,0,.20);">${escapeHtml(state.bonusTargetLetter)}</span>`;
+    return `Find: <span class="vsn-bonus-target-letter" style="color:${state.bonusTargetColor};">${escapeHtml(state.bonusTargetLetter)}</span>`;
   }
 
   function renderBonusPointerHtml() {
