@@ -1009,6 +1009,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
+      debugBadge: "VS 1.0",
       icon: GAME_ICON,
       iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
