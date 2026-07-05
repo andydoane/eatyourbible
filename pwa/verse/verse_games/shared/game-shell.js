@@ -1,4 +1,6 @@
 (function(){
+  let currentGameShellGameId = "";
+
   const MEDAL_ICON_PATHS = Object.freeze({
     easy: "../../verse_images/bronze_medal.png",
     medium: "../../verse_images/silver_medal.png",
@@ -39,6 +41,10 @@
 
   function gameIconImageHtmlForId(gameId = "", fallbackIcon = "🎮", alt = "") {
     const safeGameId = String(gameId || "").trim();
+
+    if (safeGameId) {
+      currentGameShellGameId = safeGameId;
+    }
 
     if (!safeGameId) {
       return gameIconImageHtml("", fallbackIcon, alt);
@@ -1497,6 +1503,7 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
     const debugBadgeMarkup = debugBadge
       ? `<div class="vm-game-debug-badge">${escapeHtml(debugBadge)}</div>`
       : "";
+    const medalPillMarkup = renderShellMedalPill();
 
     if (isGameMixLaunch() && getGameMixMode() && typeof onStart === "function"){
       app.innerHTML = `
@@ -1517,6 +1524,7 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
     app.innerHTML = `
       <div class="vm-game-screen"${styleVarsHtml(theme)}>
         ${debugBadgeMarkup}
+        ${medalPillMarkup}
 
         <button class="vm-game-back-pill no-zoom" id="gameShellBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
           ◀
@@ -1587,6 +1595,8 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
       return;
     }
     
+    const medalPillMarkup = renderShellMedalPill();
+
     const modeButtons = modes.map((mode) => `
       <button class="vm-btn" data-game-shell-mode="${escapeHtml(mode.id)}" type="button">
         ${modeButtonContentHtml(mode)}
@@ -1595,6 +1605,8 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
 
     app.innerHTML = `
       <div class="vm-game-screen"${styleVarsHtml(theme)}>
+        ${medalPillMarkup}
+
         <button class="vm-game-back-pill no-zoom" id="gameShellModeBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
           ◀
         </button>
@@ -1690,6 +1702,22 @@ function getCompletionStatusFromBridge({ verseId = "", gameId = "" } = {}){
     hard: false
   };
 }
+
+  function renderShellMedalPill({ gameId = "", currentMode = "" } = {}) {
+    const params = getLaunchParams();
+    const safeVerseId = String(params.verseId || params.todoVerseId || "").trim();
+    const safeGameId = String(gameId || currentGameShellGameId || "").trim();
+
+    if (!safeVerseId || !safeGameId) return "";
+
+    const status = getCompletionStatusFromBridge({
+      verseId: safeVerseId,
+      gameId: safeGameId
+    });
+
+    return renderCompleteMedalPill(status, currentMode);
+  }
+
 
 function renderCompleteScreen({
   app,
