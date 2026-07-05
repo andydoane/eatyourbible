@@ -235,6 +235,36 @@
   const rand = (min, max) => min + Math.random() * (max - min);
   const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
   }
@@ -1387,7 +1417,7 @@
     const launcherMarkup = state.bonusReady
       ? `
         <div class="vl-bonus-launch-wrap">
-          <button class="vl-star-launch-btn no-zoom" data-choice-id="bonus_launch" type="button">⭐ LAUNCH</button>
+          <button class="vl-star-launch-btn no-zoom" data-choice-id="bonus_launch" type="button">LAUNCH</button>
         </div>`
       : renderConveyor();
 
@@ -1504,20 +1534,17 @@
   }
 
   function renderEnd() {
-    const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
-
-    let gameMessage = `Time: ${timeSecs}s`;
-
-    if (state.bonusOutcome === "success") {
-      gameMessage = `You reached the moon! Time: ${timeSecs}s`;
-    } else if (state.bonusOutcome === "crash") {
-      gameMessage = `Rocket crashed, but the verse was built. Time: ${timeSecs}s`;
-    }
+    const earnedMedalIconHtml = state.completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(state.mode)
+      : "";
+    const starsCollected = Number(state.astroStarCount) || 0;
+    const starWord = starsCollected === 1 ? "star" : "stars";
+    const gameMessage = `${starsCollected} ${starWord} collected.`;
 
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: state.mode,
       verseId: ctx.verseId,

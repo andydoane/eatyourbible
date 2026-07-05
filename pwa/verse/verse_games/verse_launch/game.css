@@ -1,4 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&display=swap');
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Orbitron";
+  src: url("./verse_launch_fonts/Orbitron.ttf") format("truetype");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --vl-purple: #7f66c6;
@@ -18,6 +32,7 @@
   --vl-starfield-main: url("./verse_launch_images/verse_launch_starfield.svg");
   --vl-starfield-bonus: url("./verse_launch_images/verse_launch_starfield_bonus.svg");
   --vl-stage-max: 840px;
+  --vl-display-font: "Orbitron", system-ui, sans-serif;
 }
 
 * {
@@ -600,7 +615,7 @@ select {
   background: #333333;
   color: #3dfd3d;
   border-radius: 0;
-  font-family: "Orbitron", system-ui, sans-serif;
+  font-family: var(--vl-display-font);
   font-size: clamp(44px, 9vw, 88px);
   font-weight: 900;
   line-height: 1;
@@ -639,7 +654,7 @@ select {
   background: #333333;
   color: #3dfd3d;
   border-radius: 0;
-  font-family: "Orbitron", system-ui, sans-serif;
+  font-family: var(--vl-display-font);
   font-size: clamp(28px, 7vw, 58px);
   font-weight: 900;
   line-height: 1;
@@ -1343,9 +1358,11 @@ select {
   border-radius: 999px;
   background: #fff;
   color: var(--vl-purple);
+  font-family: var(--vl-display-font);
   font-size: clamp(22px, 4.6vw, 34px);
   font-weight: 900;
   line-height: 1;
+  letter-spacing: 0.08em;
   box-shadow: 0 8px 0 rgba(0, 0, 0, .24);
   cursor: pointer;
 }
