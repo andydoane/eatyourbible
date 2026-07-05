@@ -6214,7 +6214,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.14</div>
+    <div class="hint">Version 1.15</div>
   `;
 
   let introStarted = false;
@@ -8622,9 +8622,13 @@ function screenListen(idx) {
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
+  const isListenSlideExiting = State.screen !== Screen.LISTEN;
+
   const hasHeardVerse =
+    State.listenAutoStarting ||
     State.listenPlaying ||
     State.listenDone ||
+    isListenSlideExiting ||
     (State.instructionPlaying && State.instructionKey === "meaning");
 
   const listenDisplayText =
@@ -8652,6 +8656,7 @@ function screenListen(idx) {
       <div class="learn-coach learn-bottom-zone">
         <div class="coach-actions">
           ${(
+      isListenSlideExiting ||
       State.listenPlaying ||
       State.instructionPlaying ||
       (State.listenAutoStarting && !State.listenAutoFallbackReady)
