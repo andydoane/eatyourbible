@@ -141,6 +141,36 @@
 
   const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   let selectedMode = null;
   let muted = false;
   let audioCtx = null;
@@ -157,6 +187,8 @@
   let alreadyCompletedForMode = false;
   let completionResult = null;
   let resizeBound = false;
+  let foodSliceZoomLockBound = false;
+  let lastFoodSliceTouchEnd = 0;
   let endScreenUnlockTimer = 0;
 
   const state = {
@@ -352,10 +384,14 @@
     window.clearTimeout(endScreenUnlockTimer);
     endScreenUnlockTimer = 0;
 
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
@@ -449,7 +485,44 @@
     });
   }
 
+  function bindFoodSliceZoomLock() {
+    if (foodSliceZoomLockBound) return;
+
+    foodSliceZoomLockBound = true;
+
+    const preventGesture = (e) => {
+      if (e.cancelable) e.preventDefault();
+    };
+
+    ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+      document.addEventListener(eventName, preventGesture, { passive: false });
+    });
+
+    document.addEventListener("touchmove", (e) => {
+      if (e.touches && e.touches.length > 1 && e.cancelable) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    document.addEventListener("touchend", (e) => {
+      const field = document.getElementById("fsField");
+
+      if (!field || !field.contains(e.target)) return;
+
+      const now = Date.now();
+
+      if (now - lastFoodSliceTouchEnd <= 320 && e.cancelable) {
+        e.preventDefault();
+      }
+
+      lastFoodSliceTouchEnd = now;
+    }, { passive: false });
+  }
+
+
   function wireGameInput() {
+    bindFoodSliceZoomLock();
+
     if (!resizeBound) {
       window.addEventListener("resize", recalcField);
       resizeBound = true;
