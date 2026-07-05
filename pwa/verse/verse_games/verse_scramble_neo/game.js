@@ -760,7 +760,7 @@
   function isPlayableChar(ch, kind){
     if (!ch) return false;
     if (kind === "reference") return /[0-9]/.test(ch);
-    if (kind === "book") return /[A-Za-z0-9]/.test(ch);
+    if (kind === "book" || kind === "book-reference") return /[A-Za-z0-9]/.test(ch);
     return /[A-Za-z]/.test(ch);
   }
 
@@ -814,6 +814,21 @@
       const phase = currentPhase(index);
 
       if (phase !== "words") {
+        const nextIndex = index + 1;
+        const nextPhase = nextIndex < state.segments.length
+          ? currentPhase(nextIndex)
+          : "";
+
+        if (phase === "book" && nextPhase === "reference") {
+          groups.push({
+            startIndex: index,
+            segmentCount: 2,
+            kind: "book-reference"
+          });
+          index += 2;
+          continue;
+        }
+
         groups.push({ startIndex: index, segmentCount: 1 });
         index += 1;
         continue;
@@ -853,7 +868,7 @@
     };
 
     const phase = currentPhase(group.startIndex);
-    const kind = targetKindForPhase(phase);
+    const kind = group.kind || targetKindForPhase(phase);
     const displayText = displayTextForSegments(group.startIndex, group.segmentCount);
     const playableText = getPlayableText(displayText, kind);
 
@@ -869,7 +884,14 @@
 
   function allowedDecoyPool(target){
     const targetChars = new Set(target.playableText.split(""));
-    const basePool = target.kind === "reference" ? DIGITS : LETTERS;
+    let basePool = LETTERS;
+
+    if (target.kind === "reference") {
+      basePool = DIGITS;
+    } else if (target.kind === "book-reference") {
+      basePool = LETTERS.concat(DIGITS);
+    }
+
     return basePool.filter(ch => !targetChars.has(ch));
   }
 
@@ -1040,7 +1062,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "VS 1.2",
+      debugBadge: "VS 1.3",
       icon: GAME_ICON,
       iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
