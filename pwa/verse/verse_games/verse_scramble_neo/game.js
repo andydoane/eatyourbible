@@ -119,6 +119,37 @@
     bonusResultKind: ""
   };
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
+
   function escapeHtml(str){
     return String(str)
       .replace(/&/g, "&amp;")
@@ -175,7 +206,7 @@
 
   function bonusTimeWithWiggle() {
     const base = bonusBaseTimeMs();
-    return Math.round(base + randomBetween(-1200, 1200));
+    return Math.round(base + randomBetween(-600, 600));
   }
 
 
@@ -1009,7 +1040,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "VS 1.1",
+      debugBadge: "VS 1.2",
       icon: GAME_ICON,
       iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
@@ -1535,10 +1566,14 @@
   }
 
   function renderEnd(){
+    const earnedMedalIconHtml = state.completionResult?.alreadyCompleted
+      ? ""
+      : medalIconHtmlForMode(selectedMode);
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
