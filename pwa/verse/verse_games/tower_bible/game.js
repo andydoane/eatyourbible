@@ -18,6 +18,36 @@
 
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   const ZONE_PERCENTAGES = {
     easy: [0.05, 0.15, 0.60, 0.15, 0.05],
     medium: [0.10, 0.20, 0.40, 0.20, 0.10],
@@ -350,6 +380,10 @@
     window.clearTimeout(endScreenUnlockTimer);
     endScreenUnlockTimer = 0;
 
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     const gameMessage = completionResult?.alreadyCompleted
       ? "Tower rebuilt!"
       : "Tower complete!";
@@ -357,7 +391,7 @@
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
@@ -1486,7 +1520,7 @@
       }
 
       state.hadWarning2BeforePlacement = prevWarningLevel >= 2;
-      updateWarnings(prevLeanScore);
+      updateWarnings(prevLeanScore, e.zone);
 
       if (!state.done) {
         state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
@@ -1924,7 +1958,7 @@
     return { x, rot };
   }
 
-  function updateWarnings(prevLeanScore = null) {
+  function updateWarnings(prevLeanScore = null, placedZone = null) {
     if (state.frenzyActive || state.done) {
       state.warningLevel = 0;
       state.warningOverlayLevel = 0;
@@ -1938,12 +1972,21 @@
     const mag = Math.abs(leanScore);
     const t = THRESHOLDS[selectedMode || "easy"];
     let level = 0;
+
     if (mag >= t.warn2) level = 2;
     else if (mag >= t.warn1) level = 1;
+
     state.warningLevel = level;
 
     if (level > 0 && level !== previousWarningLevel) {
-      playGameSound(level >= 2 ? "dangerWarning" : "warning");
+      const isWarningDowngradeImprovement =
+        previousWarningLevel >= 2 &&
+        level === 1;
+
+      if (!isWarningDowngradeImprovement) {
+        playGameSound(level >= 2 ? "dangerWarning" : "warning");
+      }
+
       showWarningOverlay(level);
     } else if (level === 0) {
       state.warningOverlayLevel = 0;
@@ -1953,12 +1996,21 @@
 
     const prevMag = Number.isFinite(prevLeanScore) ? Math.abs(prevLeanScore) : mag;
     const madeLeanWorseBy = mag - prevMag;
+    const placedZoneValue = Number(placedZone) || 0;
+    const previousLeanDirection = Number.isFinite(prevLeanScore)
+      ? Math.sign(prevLeanScore)
+      : Math.sign(leanScore);
+    const placedBrickWorsenedExistingLean =
+      previousLeanDirection !== 0 &&
+      placedZoneValue !== 0 &&
+      Math.sign(placedZoneValue) === previousLeanDirection;
 
     if (
       selectedMode !== "easy" &&
       mag >= t.collapse &&
       state.hadWarning2BeforePlacement &&
       madeLeanWorseBy >= 1 &&
+      placedBrickWorsenedExistingLean &&
       !state.collapseTriggered
     ) {
       triggerCollapse();

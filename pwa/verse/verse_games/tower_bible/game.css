@@ -7,9 +7,9 @@
 }
 
 @font-face {
-  font-family: "Baloo2";
+  font-family: "Baloo 2";
   src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
-  font-weight: 400 800;
+  font-weight: 400 900;
   font-style: normal;
   font-display: block;
 }
@@ -24,7 +24,7 @@
   --tb-green: #a7cb6f;
   --tb-blue: #40b9c5;
   --tb-game-font: "TitanOne", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --tb-belt-font: "Baloo2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --tb-belt-font: "Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --tb-stage-max: 900px;
 }
 
@@ -37,6 +37,7 @@ body {
   margin: 0;
   background: var(--tb-bg);
   color: var(--tb-white);
+  font-family: var(--tb-belt-font);
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -113,7 +114,7 @@ body {
 .vm-btn {
   min-height: 58px;
   border: none;
-  border-radius: 20px;
+  border-radius: 999px;
   background: #fff;
   color: #333;
   font: inherit;
@@ -347,12 +348,12 @@ body {
   background: rgba(0, 0, 0, .45);
   border-radius: 22px;
   color: #ffc751;
-  font-weight: 900;
+  font-family: var(--tb-game-font);
+  font-weight: 400;
   font-size: clamp(30px, 7vw, 56px);
   line-height: .92;
-  letter-spacing: .02em;
+  letter-spacing: .035em;
   text-align: center;
-
   text-shadow:
     0 3px 0 rgba(0, 0, 0, .28),
     0 8px 18px rgba(0, 0, 0, .22);
@@ -413,7 +414,6 @@ body {
   color: #ffffff;
   font-family: var(--tb-belt-font);
   font-weight: 800;
-  text-transform: uppercase;
   letter-spacing: .015em;
   line-height: 1.05;
   box-shadow: none;
@@ -845,15 +845,16 @@ body {
   top: max(58px, 12%);
   transform: translate(-50%, -50%) scale(.4);
   color: #ffffff;
-  font-weight: 1000;
+  font-family: var(--tb-game-font);
+  font-weight: 400;
   letter-spacing: .035em;
   white-space: nowrap;
   text-align: center;
-  -webkit-text-stroke: 2px #111111;
+  -webkit-text-stroke: 1px #111111;
   text-shadow:
-    0 3px 0 #111111,
-    0 8px 16px rgba(0, 0, 0, .34),
-    0 0 18px rgba(255, 255, 255, .42);
+    0 2px 0 #111111,
+    0 7px 14px rgba(0, 0, 0, .30),
+    0 0 16px rgba(255, 255, 255, .40);
   opacity: 0;
   animation: tbStreakTextPop var(--tb-streak-duration) cubic-bezier(.18, 1.35, .28, 1) forwards;
   z-index: 3;
