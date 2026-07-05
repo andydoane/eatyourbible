@@ -41,6 +41,37 @@
     "./verse_snake_images/verse_snake_fruit_9.png",
     "./verse_snake_images/verse_snake_fruit_10.png"
   ];
+
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   const SNAKE_STYLE_DEFS = [
     {
       id: "default",
@@ -337,6 +368,7 @@
   let muted = false;
   let completed = false;
   let completionResult = null;
+  let verseSnakeGestureGuardBound = false;
 
   const state = {
     rafId: 0,
@@ -757,7 +789,43 @@
     });
   }
 
+  function isVerseSnakeGestureTarget(target) {
+    const field = document.getElementById("vslField");
+    return !!field && field.contains(target);
+  }
+
+  function preventVerseSnakeGesture(e) {
+    if (!isVerseSnakeGestureTarget(e.target)) return;
+    if (e.cancelable) e.preventDefault();
+  }
+
+  function preventVerseSnakeMultiTouch(e) {
+    if (!isVerseSnakeGestureTarget(e.target)) return;
+
+    if (e.touches && e.touches.length > 1 && e.cancelable) {
+      e.preventDefault();
+    }
+  }
+
+  function bindVerseSnakeGestureGuard() {
+    if (verseSnakeGestureGuardBound) return;
+
+    verseSnakeGestureGuardBound = true;
+
+    ["gesturestart", "gesturechange", "gestureend"].forEach((eventName) => {
+      document.addEventListener(eventName, preventVerseSnakeGesture, { passive: false });
+    });
+
+    document.addEventListener("touchmove", preventVerseSnakeMultiTouch, { passive: false });
+    document.addEventListener("selectstart", preventVerseSnakeGesture, { passive: false });
+    document.addEventListener("contextmenu", preventVerseSnakeGesture, { passive: false });
+    document.addEventListener("dragstart", preventVerseSnakeGesture, { passive: false });
+  }
+
+
   function wireGameControls(){
+    bindVerseSnakeGestureGuard();
+
     const field = document.getElementById("vslField");
     const menuPill = document.getElementById("vslMenuPill");
 
@@ -788,8 +856,9 @@
       field.addEventListener("pointermove", (e) => {
         if (state.paused) return;
         if (e.pointerType !== "mouse" && !e.isPrimary) return;
+        if (e.cancelable) e.preventDefault();
         updatePointer(e.clientX, e.clientY);
-      });
+      }, { passive: false });
 
       field.addEventListener("pointerup", (e) => {
         field.releasePointerCapture?.(e.pointerId);
@@ -2228,21 +2297,66 @@
     }
   }
 
+  function getFruitSpawnCandidate(attempt = 0) {
+    const targetPoint = state.encounter ? state.encounter.center : state.head;
+    const dx = targetPoint.x - state.head.x;
+    const dy = targetPoint.y - state.head.y;
+    const angle = Math.atan2(dy, dx);
+    const along = 0.25 + Math.random() * 0.60;
+    const sideSpread =
+      Math.min(state.fieldWidth, state.fieldHeight) *
+      (0.26 + Math.min(attempt, 8) * 0.035) *
+      getWorldDistanceMultiplier();
+    const side = (Math.random() * 2 - 1) * sideSpread;
+
+    return {
+      x: state.head.x + dx * along + Math.cos(angle + Math.PI / 2) * side,
+      y: state.head.y + dy * along + Math.sin(angle + Math.PI / 2) * side
+    };
+  }
+
+  function isFruitClearOfWordTargets(candidate, fruitRadius) {
+    const activeTargets = state.targets.filter((target) => target && !target.hit);
+
+    if (!activeTargets.length) return true;
+
+    const clearanceBuffer = getSnakeHeadSize() * 0.95;
+
+    return activeTargets.every((target) => {
+      const targetRadius =
+        Number(target.r) ||
+        estimateTargetRadius(target.word) ||
+        getSnakeHeadSize();
+
+      const distance = Math.hypot(candidate.x - target.x, candidate.y - target.y);
+
+      return distance >= fruitRadius + targetRadius + clearanceBuffer;
+    });
+  }
+
   function maybeSpawnFruit(force){
     if (state.fruit) return;
     if (!force && Math.random() > SLITHER_TUNING.fruitChance) return;
 
-    const targetPoint = state.encounter ? state.encounter.center : state.head;
-    const along = 0.35 + Math.random() * 0.45;
-    const side = (Math.random() * 2 - 1) * Math.min(state.fieldWidth, state.fieldHeight) * 0.30 * getWorldDistanceMultiplier();
-    const dx = targetPoint.x - state.head.x;
-    const dy = targetPoint.y - state.head.y;
-    const angle = Math.atan2(dy, dx);
+    const fruitRadius = getFruitRadius();
+    const attempts = force ? 24 : 14;
+    let candidate = null;
+
+    for (let i = 0; i < attempts; i += 1) {
+      const nextCandidate = getFruitSpawnCandidate(i);
+
+      if (isFruitClearOfWordTargets(nextCandidate, fruitRadius)) {
+        candidate = nextCandidate;
+        break;
+      }
+    }
+
+    if (!candidate) return;
 
     state.fruit = {
-      x: state.head.x + dx * along + Math.cos(angle + Math.PI / 2) * side,
-      y: state.head.y + dy * along + Math.sin(angle + Math.PI / 2) * side,
-      r: getFruitRadius(),
+      x: candidate.x,
+      y: candidate.y,
+      r: fruitRadius,
       image: FRUIT_IMAGES[Math.floor(Math.random() * FRUIT_IMAGES.length)],
       phase: Math.random() * Math.PI * 2
     };
@@ -2443,10 +2557,14 @@
     stopLoop();
     playGameSound("verseComplete");
 
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
