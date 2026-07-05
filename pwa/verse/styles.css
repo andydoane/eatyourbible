@@ -4035,7 +4035,7 @@ Game Mix Loading Screen
 }
 
 .learn-hide-poof-card.is-poofing .smart-learn-text-remove {
-  animation: learnHideTextMasked 560ms ease-out both;
+  animation: none;
 }
 
 .learn-hide-poof-sparkle {

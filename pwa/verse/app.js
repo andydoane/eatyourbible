@@ -5530,23 +5530,7 @@ function goToFinalRecallAndStart() {
   }, 1600);
 }
 
-function waitMs(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function startHideRoundWithPoof() {
-  if (State.sayVerseActive) return;
-  if (State.hideReadyForFinal) return;
-
-  State.hidePoofActive = true;
-  render();
-
-  await waitMs(120);
-
-  startHideRound().catch((err) => {
-    console.warn("Could not start hide round", err);
-  });
-
+function clearHidePoofAfterAnimation() {
   setTimeout(() => {
     State.hidePoofActive = false;
 
@@ -5554,6 +5538,23 @@ async function startHideRoundWithPoof() {
       render();
     }
   }, 520);
+}
+
+async function startHideRoundWithPoof() {
+  if (State.sayVerseActive) return;
+  if (State.hideReadyForFinal) return;
+
+  State.hidePoofActive = true;
+  clearHidePoofAfterAnimation();
+
+  startHideRound().catch((err) => {
+    State.hidePoofActive = false;
+    console.warn("Could not start hide round", err);
+
+    if (State.screen === Screen.HIDE) {
+      render();
+    }
+  });
 }
 
 async function startHideRound() {
@@ -6187,7 +6188,7 @@ function screenIntro(idx) {
     <div class="presented">Presented by</div>
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start.</div>
-    <div class="hint">Version 1.9</div>
+    <div class="hint">Version 1.10</div>
   `;
 
   let introStarted = false;
