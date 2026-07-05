@@ -924,10 +924,15 @@
       if (!note || !text) return;
 
       text.style.fontSize = "";
-      const maxPx = Number(getComputedStyle(text).fontSize.replace("px", "")) || 42;
+      const textStyles = getComputedStyle(text);
+      const noteStyles = getComputedStyle(note);
+      const maxPx = Number(textStyles.fontSize.replace("px", "")) || 42;
       const minPx = 18;
       let size = maxPx;
-      const maxWidth = note.clientWidth - 28;
+      const horizontalPadding =
+        (parseFloat(noteStyles.paddingLeft) || 0) +
+        (parseFloat(noteStyles.paddingRight) || 0);
+      const maxWidth = Math.max(24, note.clientWidth - horizontalPadding);
       while (size > minPx && text.scrollWidth > maxWidth){
         size -= 1;
         text.style.fontSize = `${size}px`;
