@@ -1766,13 +1766,18 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     };
   }
 
+  function bonusSpawnGap() {
+    return Math.round(getItemMetrics("car").width * 0.96);
+  }
+
+
   function spawnRainbowBus(now) {
     if (state.rainbowBusSpawned || state.bonusStopSpawn) return;
 
     const progress = 1 - (state.bonusTimeLeft / state.bonusRoundDuration);
     const speedBase = 165 + progress * 95;
     const rawSpeed = speedBase + Math.random() * 45;
-    const spawnGap = Math.round(getItemMetrics("car").width * 0.82);
+    const spawnGap = bonusSpawnGap();
 
     let chosenRoad = Math.random() < 0.5 ? 0 : 1;
     let chosenSlot = Math.random() < 0.5 ? "upper" : "lower";
@@ -1812,21 +1817,43 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
     const progress = 1 - (state.bonusTimeLeft / state.bonusRoundDuration);
     const speedBase = 170 + progress * 135;
-    const burstCount = Math.random() < 0.5 ? 2 : 3;
+    const burstCount = Math.random() < 0.72 ? 1 : 2;
+    const spawnGap = bonusSpawnGap();
+    const usedLaneKeys = new Set();
 
     for (let i = 0; i < burstCount; i += 1) {
-      const road = Math.random() < 0.5 ? 0 : 1;
-      const slot = Math.random() < 0.58 ? "upper" : "lower";
-      const vehicle = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
-      const rawSpeed = speedBase + Math.random() * 90;
-      const speed = cappedBonusSpeed(road, slot, rawSpeed);
+      let chosenRoad = null;
+      let chosenSlot = "";
 
-      if (bonusLaneHasSpawnRoom(road, slot, 150)) {
-        state.bonusItems.push(makeBonusItem({ road, slot, vehicle, speed }));
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const road = Math.random() < 0.5 ? 0 : 1;
+        const slot = Math.random() < 0.58 ? "upper" : "lower";
+        const laneKey = `${road}:${slot}`;
+
+        if (usedLaneKeys.has(laneKey)) continue;
+        if (!bonusLaneHasSpawnRoom(road, slot, spawnGap)) continue;
+
+        chosenRoad = road;
+        chosenSlot = slot;
+        usedLaneKeys.add(laneKey);
+        break;
       }
+
+      if (chosenRoad === null) continue;
+
+      const vehicle = Math.random() < 0.38 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
+      const rawSpeed = speedBase + Math.random() * 90;
+      const speed = cappedBonusSpeed(chosenRoad, chosenSlot, rawSpeed);
+
+      state.bonusItems.push(makeBonusItem({
+        road: chosenRoad,
+        slot: chosenSlot,
+        vehicle,
+        speed
+      }));
     }
 
-    state.bonusNextSpawnAt = now + (220 - progress * 70) + Math.random() * 120;
+    state.bonusNextSpawnAt = now + (280 - progress * 35) + Math.random() * 130;
   }
 
   function bonusLaneHasSpawnRoom(road, slot, minGap) {
@@ -1949,7 +1976,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
   function preventBonusHorizontalOverlap() {
     const lanes = new Map();
-    const minGap = Math.round(getItemMetrics("car").width * 0.82);
+    const minGap = bonusSpawnGap();
 
 
     for (const item of state.bonusItems) {
