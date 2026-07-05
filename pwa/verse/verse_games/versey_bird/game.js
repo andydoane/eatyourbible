@@ -441,9 +441,9 @@
 
   function introHelpHtml(){
     return `
-      Tap or click to flap.<br><br>
-      During the verse flight, collect the correct word clouds and avoid decoys.<br><br>
-      After the verse, book, and reference are collected, try the bonus flight. Don't hit the pipes!
+      Tap to flap.<br><br>
+      Collect the next correct word. Avoid wrong words, bees, and boulders.<br><br>
+      When the verse is finished, see how long you can fly through the pipes.
     `;
   }
 
@@ -1342,7 +1342,9 @@
       }
     }
 
-    if (cloud.x < layout.cloudOffscreenX){
+    const cloudRightEdge = cloud.x + cloud.w * 0.5;
+
+    if (cloudRightEdge <= 0){
       if (!cloud.collected && cloud.correct){
         missCorrectCloud(ts);
       }
@@ -2161,52 +2163,7 @@
   }
 
   function getWordFontSize(cloud){
-    const label = String(cloud.label || "");
-    const targetSize = clamp(cloud.h * 0.48, 16, 31);
-    const textSafeWidth = getCloudTextSafeWidth(cloud);
-    const visualWeight = getCloudTextVisualWeight(label);
-    const fittedSize = textSafeWidth / Math.max(1, visualWeight);
-
-    return clamp(Math.min(targetSize, fittedSize), 13, targetSize);
-  }
-
-  function getCloudTextSafeWidth(cloud){
-    if (cloud.shapeKey === "compact"){
-      return cloud.w * 0.78;
-    }
-
-    if (cloud.shapeKey === "normal"){
-      return cloud.w * 0.80;
-    }
-
-    return cloud.w * 0.82;
-  }
-
-  function getCloudTextVisualWeight(label){
-    const text = String(label || "").trim();
-    if (!text) return 1;
-
-    let weight = 0;
-
-    for (const char of text){
-      if (/[ilI1!'.,:;]/.test(char)){
-        weight += 0.34;
-      } else if (/[fjtJr]/.test(char)){
-        weight += 0.48;
-      } else if (/[mwMW@#]/.test(char)){
-        weight += 0.98;
-      } else if (/[A-Z]/.test(char)){
-        weight += 0.74;
-      } else if (/[0-9]/.test(char)){
-        weight += 0.64;
-      } else if (/\s/.test(char)){
-        weight += 0.34;
-      } else {
-        weight += 0.60;
-      }
-    }
-
-    return weight;
+    return clamp(cloud.h * 0.48, 16, 31);
   }
 
   function addFlapTrail(){
