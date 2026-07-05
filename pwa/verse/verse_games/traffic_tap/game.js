@@ -2808,7 +2808,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
   function mainSpawnGap() {
     const metrics = getItemMetrics(currentTargetLabel() || "car");
-    return Math.round(visibleCarWidthFromMetrics(metrics) * 0.65);
+    return Math.round(visibleCarWidthFromMetrics(metrics) * 0.45);
   }
 
   function visibleCarRectForItem(item) {
