@@ -775,6 +775,16 @@
     return state.segments.slice(startIndex, startIndex + count).join(" ");
   }
 
+  function displayTextForTargetGroup(group, kind){
+    if (kind === "book-reference") {
+      return `${state.bookLabel || ""} ${state.referenceLabel || ""}`
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    return displayTextForSegments(group.startIndex, group.segmentCount);
+  }
+
   function targetKindForPhase(phase){
     if (phase === "book") return "book";
     if (phase === "reference") return "reference";
@@ -869,7 +879,7 @@
 
     const phase = currentPhase(group.startIndex);
     const kind = group.kind || targetKindForPhase(phase);
-    const displayText = displayTextForSegments(group.startIndex, group.segmentCount);
+    const displayText = displayTextForTargetGroup(group, kind);
     const playableText = getPlayableText(displayText, kind);
 
     return {
@@ -1062,7 +1072,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
-      debugBadge: "VS 1.3",
+      debugBadge: "VS 1.4",
       icon: GAME_ICON,
       iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
