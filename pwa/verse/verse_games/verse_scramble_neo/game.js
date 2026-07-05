@@ -917,11 +917,39 @@
     });
   }
 
+  function positionTargetNote(){
+    const board = document.getElementById("vsnBoard");
+    const menu = document.getElementById("vsnMenuPill");
+    const note = document.getElementById("vsnTargetNote");
+
+    if (!board || !menu || !note) return;
+
+    const boardRect = board.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+
+    if (!boardRect.width) return;
+
+    const boardLeft = boardRect.left;
+    const menuRight = menuRect.right - boardLeft;
+    const boardRight = boardRect.width;
+
+    const gap = 10;
+    const spaceLeft = Math.min(boardRight - gap, menuRight + gap);
+    const spaceRight = boardRight - gap;
+    const availableWidth = Math.max(80, spaceRight - spaceLeft);
+    const centerX = spaceLeft + availableWidth / 2;
+
+    note.style.setProperty("--vsn-target-center-x", `${centerX}px`);
+    note.style.setProperty("--vsn-target-max-width", `${availableWidth}px`);
+  }
+
   function fitTargetText(){
     requestAnimationFrame(() => {
       const note = document.getElementById("vsnTargetNote");
       const text = document.getElementById("vsnTargetText");
       if (!note || !text) return;
+
+      positionTargetNote();
 
       text.style.fontSize = "";
       const textStyles = getComputedStyle(text);
@@ -1911,9 +1939,20 @@
 
   window.addEventListener("resize", () => {
     if (state.screen === "game"){
+      positionTargetNote();
       fitTargetText();
       layoutMagnets();
     }
+  });
+
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+      if (state.screen === "game"){
+        positionTargetNote();
+        fitTargetText();
+        layoutMagnets();
+      }
+    }, 120);
   });
 
   setScreen("intro");

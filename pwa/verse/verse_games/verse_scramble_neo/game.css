@@ -134,10 +134,10 @@ select{ font:inherit; }
   position:absolute;
   z-index:10;
   top:clamp(12px, 2.2vh, 20px);
-  left:50%;
+  left: var(--vsn-target-center-x, 50%);
   width:fit-content;
   min-width:clamp(96px, 18vw, 150px);
-  max-width:calc(100% - 150px);
+  max-width:var(--vsn-target-max-width, calc(100% - 150px));
   height:clamp(52px, 7.2vh, 74px);
   padding:clamp(2px, .55vh, 5px) clamp(12px, 2.4vw, 22px);
   transform:translateX(-50%) rotate(-.8deg);
@@ -569,7 +569,7 @@ select{ font:inherit; }
   .vsn-target-note{
     width:fit-content;
     min-width:clamp(86px, 22vw, 132px);
-    max-width:calc(100% - 112px);
+    max-width:var(--vsn-target-max-width, calc(100% - 112px));
     height:50px;
     padding-left:10px;
     padding-right:10px;
@@ -645,7 +645,7 @@ select{ font:inherit; }
   .vsn-target-note{
     width:fit-content;
     min-width:clamp(78px, 24vw, 118px);
-    max-width:calc(100% - 104px);
+    max-width:var(--vsn-target-max-width, calc(100% - 104px));
   }
   .vsn-magnet{
     width:clamp(50px, 13vw, 64px);
