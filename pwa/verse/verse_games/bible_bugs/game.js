@@ -152,6 +152,37 @@
 
   const shell = window.VerseGameShell;
   const GAME_ICON_HTML = shell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
+
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return shell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   const parsedRef = shell.parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
   const buildData = shell.buildVerseSegments({
     verseText: ctx.verseText || "",
@@ -1257,7 +1288,7 @@
       bug.poofAt = now;
     }
 
-    showOverlay("Poof!", 440);
+
 
     const timing = MODE_TIMING[selectedMode] || MODE_TIMING.medium;
     scheduleAction(timing.missDelay, () => {
@@ -1852,13 +1883,6 @@
     }
 
     if (state.bonusMode && now >= state.bonusEndsAt) {
-      for (const bug of state.bonusBugs) {
-        if (bug.status !== "poof") {
-          bug.status = "poof";
-          bug.poofAt = now;
-        }
-      }
-
       if (!state.bonusEating && state.bonusBugs.length === 0) {
         finishGame();
       }
@@ -2001,10 +2025,14 @@
   function renderEndScreen() {
     stopLoop();
 
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     shell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
@@ -2104,7 +2132,8 @@
     bonusIntro.setAttribute("aria-hidden", showBonusIntro ? "false" : "true");
 
     statusPill.classList.toggle("is-bonus-hud", state.bonusMode);
-    statusPill.innerHTML = state.bonusMode ? renderBonusHud() : escapeHtml(getStatusText(now));
+    statusPill.classList.toggle("is-verse-hidden", !state.bonusMode);
+    statusPill.innerHTML = state.bonusMode ? renderBonusHud() : "";
   }
 
   function renderOverlay(now, overlay) {
