@@ -15,6 +15,36 @@
   const SOUND_BASE_PATH = "./versey_bird_sounds/";
   const UI_SOUND_BASE_PATH = "../../ui_audio/";
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   const SOUND_FILES = {
     uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
     uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
@@ -52,7 +82,7 @@
   const MAX_UNIT_BY_HEIGHT = 0.19;
   const DECOY_CLOUD_HITBOX_SCALE = 0.80;
   const WORD_CLOUD_RENDER_HEIGHT_U = 1.00;
-  const WORD_CLOUD_TEXT_HEIGHT_RATIO = 0.28;
+  const WORD_CLOUD_TEXT_HEIGHT_RATIO = 0.30;
   const LIGHTNING_PARTICLE_IMAGE = "versey_bird_lightning.svg";
   const PARTICLE_COLORS = {
     rainbow: [
@@ -739,10 +769,14 @@
     stopLoop();
     cleanupResize();
 
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
@@ -881,7 +915,7 @@
     addFlapTrail();
     playRandomFlapSound();
 
-    if (state.phase === "verse" && state.streak >= 16){
+    if (getBirdTrailLevel() >= 4){
       cycleBirdColor();
     }
   }
@@ -1206,12 +1240,25 @@
     state.poofs = state.poofs.filter(poof => poof.age < poof.life);
   }
 
+  function getBirdTrailProgressCount() {
+    if (state.phase === "verse") {
+      return state.streak;
+    }
+
+    if (state.phase === "bonusIntro" || state.phase === "bonus" || state.phase === "bonusCrash") {
+      return state.pipesCleared;
+    }
+
+    return 0;
+  }
+
   function getBirdTrailLevel() {
-    if (state.phase !== "verse") return 0;
-    if (state.streak >= 16) return 4;
-    if (state.streak >= 12) return 3;
-    if (state.streak >= 8) return 2;
-    if (state.streak >= 4) return 1;
+    const count = getBirdTrailProgressCount();
+
+    if (count >= 13) return 4;
+    if (count >= 10) return 3;
+    if (count >= 7) return 2;
+    if (count >= 4) return 1;
     return 0;
   }
 
