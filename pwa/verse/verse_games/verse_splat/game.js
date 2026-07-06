@@ -51,6 +51,7 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   const BONUS_TIME_LIMIT_MS = 10000;
   const BONUS_BLOB_COUNT = 3;
   const BONUS_MASTERPIECE_PAUSE_MS = 2000;
+  const BONUS_RESPAWN_DELAY_MS = 1000;
   const CORRECT_TAP_LOCK_MS = 180;
   const MAX_STATIC_PAINT_SPLATS = 96;
 
@@ -406,6 +407,8 @@ const MODE_CONFIG = {
     bonusEnding: false,
     bonusAwaitingContinue: false,
     bonusColorQueue: [],
+    bonusLastShownSecond: 0,
+    bonusRespawnTimers: [],
 
     coverageResultPercent: 0,
     coverageResultBarPercent: 0,
@@ -487,6 +490,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.inputLockedUntil = 0;
     state.shakeKey = 0;
     state.flashKey = 0;
+    clearBonusRespawnTimers();
     state.bonusIntroVisible = false;
     state.bonusBlobs = [];
     state.nextBonusBlobId = 1;
@@ -496,6 +500,8 @@ const shuffle = window.VerseGameShell.shuffle;
     state.bonusEnding = false;
     state.bonusAwaitingContinue = false;
     state.bonusColorQueue = [];
+    state.bonusLastShownSecond = 0;
+    state.bonusRespawnTimers = [];
     state.coverageResultPercent = 0;
     state.coverageResultBarPercent = 0;
     state.coverageResultPhase = "bar";
@@ -1870,7 +1876,7 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     return clamp(Math.floor(60 / opportunities), 2, 5);
   }
 
-  function addStaticPaintSplats(blob, showScorePopup=true, updateCoverageScore=true) {
+  function addStaticPaintSplats(blob, showScorePopup = true, updateCoverageScore = true, bonusLight = false) {
     const layer = $("#vspPaintLayer");
     if (!layer || !blob) return;
 
@@ -1881,7 +1887,7 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     const svgShape = STATIC_PAINT_BLOB_SHAPES[Math.floor(Math.random() * STATIC_PAINT_BLOB_SHAPES.length)] || STATIC_PAINT_BLOB_SHAPES[0];
     const centerSize = Math.max(1, blob.height * 0.85);
     const baseAngle = rand(0, Math.PI * 2);
-    const circleCount = 6;
+    const circleCount = bonusLight ? 3 : 6;
     const spread = clamp(blob.height * 1.05 + boardMin * 0.045, 58, 150);
 
     function pushPaintMark({ x, y, w, h, shape, blobImg = null, opacity = 1, rot = 0 }) {
@@ -1925,6 +1931,10 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
         opacity: rand(0.85, 1.00),
         rot: 0
       });
+    }
+
+    if (state.paintSplats.length > MAX_STATIC_PAINT_SPLATS) {
+      state.paintSplats.splice(0, state.paintSplats.length - MAX_STATIC_PAINT_SPLATS);
     }
 
     renderStaticPaintSplats();
@@ -2472,6 +2482,34 @@ function spawnWrongFaceParticleBurst(){
     }
   }
 
+  function clearBonusRespawnTimers() {
+    for (const timer of state.bonusRespawnTimers || []) {
+      clearTimeout(timer);
+    }
+
+    state.bonusRespawnTimers = [];
+  }
+
+  function scheduleBonusBlobRespawn() {
+    const timer = window.setTimeout(() => {
+      state.bonusRespawnTimers = state.bonusRespawnTimers.filter(entry => entry !== timer);
+
+      if (state.screen !== "bonus" || state.bonusEnding) return;
+
+      state.bonusBlobs = state.bonusBlobs.filter(blob => blob.alive);
+
+      if (state.bonusBlobs.length >= BONUS_BLOB_COUNT) return;
+
+      const bounds = currentBounds();
+      const blob = makeBonusBlob();
+
+      state.bonusBlobs.push(blob);
+      appendBonusBlobNode(blob, bounds);
+    }, BONUS_RESPAWN_DELAY_MS);
+
+    state.bonusRespawnTimers.push(timer);
+  }
+
   function ensureBonusBlobCount() {
     if (state.bonusEnding) return;
 
@@ -2487,7 +2525,6 @@ function spawnWrongFaceParticleBurst(){
     }
 
     spawnedBlobs.forEach(blob => appendBonusBlobNode(blob, bounds));
-    playSpawnPopSoundForCount(spawnedBlobs.length);
   }
 
   function spawnBonusBlobs() {
@@ -2519,8 +2556,14 @@ function spawnWrongFaceParticleBurst(){
       updateBonusBlobDom(blob, bounds);
     });
 
-    const pill = $("#vspBonusTimerChip");
-    if (pill) pill.textContent = `Time ${Math.ceil(state.bonusRemainingMs / 1000)}`;
+    const shownSecond = Math.ceil(state.bonusRemainingMs / 1000);
+
+    if (shownSecond !== state.bonusLastShownSecond) {
+      state.bonusLastShownSecond = shownSecond;
+
+      const pill = $("#vspBonusTimerChip");
+      if (pill) pill.textContent = `Time ${shownSecond}`;
+    }
 
     if (state.bonusRemainingMs <= 0) {
       finishBonusRound();
@@ -2576,7 +2619,7 @@ function spawnWrongFaceParticleBurst(){
 
     const center = bonusBlobCenterPx(blob, "#vspBackEffectLayer");
 
-    addStaticPaintSplats(blob, false, false);
+    addStaticPaintSplats(blob, false, false, true);
     spawnSplatEffect(blob, center, "#vspBackEffectLayer");
     spawnParticleBurst(blob, center, "#vspBackEffectLayer");
 
@@ -2599,7 +2642,7 @@ function spawnWrongFaceParticleBurst(){
     playCorrectSound();
 
     splatBonusBlob(blob, false);
-    ensureBonusBlobCount();
+    scheduleBonusBlobRespawn();
   }
 
   async function completeMainGame(){
@@ -2667,6 +2710,7 @@ function spawnWrongFaceParticleBurst(){
     state.bonusEnding = true;
     state.bonusAwaitingContinue = true;
     stopBonusLoop();
+    clearBonusRespawnTimers();
 
     const liveBlobs = state.bonusBlobs.filter(blob => blob.alive);
 
