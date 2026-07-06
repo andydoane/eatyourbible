@@ -16,6 +16,36 @@
   const UI_SOUND_BASE_PATH = "../../ui_audio/";
   const SILENCE_PATH = "../../verse_audio/silence.mp3";
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   const SOUND_FILES = {
     collision: "dino_dash_collision.mp3",
     correct: "dino_dash_correct.mp3",
@@ -278,9 +308,9 @@
 
   function introHelpHtml(){
     return `
-      Tap, click, or press Space to jump.<br><br>
-      Tap again while airborne to double jump.<br><br>
-      Collect the correct stone tablets and avoid decoys, obstacles, flying enemies, and gaps.
+      Tap  to jump.<br><br>
+      Tap again in the air to double jump.<br><br>
+      Collect the correct stone tablets and avoid wrong words, obstacles, flying enemies, and gaps.
     `;
   }
 
@@ -2056,6 +2086,10 @@
     return clamp(elapsed / FLAG_FINISH_SECONDS, 0, 1);
   }
 
+  function getBonusCoursePercent() {
+    return Math.round(getBonusProgress() * 100);
+  }
+
   function updateBuildText(){
     const el = document.getElementById("dd2BuildText");
     if (!el) return;
@@ -2119,7 +2153,7 @@
     layer.innerHTML = `
       <div class="dd2-result-card" role="dialog" aria-live="polite" aria-label="Bonus result">
         <h2 class="dd2-result-title">${title}</h2>
-        <p class="dd2-result-stat">You ran ${state.feet} feet.</p>
+        <p class="dd2-result-stat">You finished ${getBonusCoursePercent()}% of the course.</p>
         <button class="dd2-result-button" id="dd2ContinueButton" type="button">Continue</button>
       </div>
     `;
@@ -2146,6 +2180,7 @@
         mode: selectedMode,
         stats: {
           bestStreak: state.bestStreak,
+          coursePercent: getBonusCoursePercent(),
           feet: state.feet,
           progressIndex: state.progressIndex
         }
@@ -2166,16 +2201,21 @@
   function renderComplete(){
     stopLoop();
     cleanupResize();
+
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       icon: GAME_ICON,
-      iconHtml: GAME_ICON_HTML,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
       completion: completionResult,
-      gameMessage: `Ran ${state.feet} feet after finishing ${ctx.verseRef || "the verse"}`,
+      gameMessage: `Finished ${getBonusCoursePercent()}% of the course after completing ${ctx.verseRef || "the verse"}.`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onPlayAgain: renderModeSelect,
