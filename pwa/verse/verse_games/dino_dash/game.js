@@ -2215,7 +2215,7 @@
       verseId: ctx.verseId,
       gameId: GAME_ID,
       completion: completionResult,
-      gameMessage: `Finished ${getBonusCoursePercent()}% of the course after completing ${ctx.verseRef || "the verse"}.`,
+      gameMessage: `Finished ${getBonusCoursePercent()}% of the course.`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onPlayAgain: renderModeSelect,
