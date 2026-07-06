@@ -9,8 +9,38 @@
   const GAME_ICON = "🫟";
   const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
 const GAME_THEME = {
-  bg: "#7f66c6",
+  bg: "#333333",
   accent: "#7f66c6"
 };
 
@@ -18,7 +48,7 @@ const BUILD_AREA = "compact";
 
 const HELP_OVERLAY_ID = "vspHelpOverlay";
 
-  const BONUS_TIME_LIMIT_MS = 20000;
+  const BONUS_TIME_LIMIT_MS = 10000;
   const BONUS_BLOB_COUNT = 3;
   const BONUS_MASTERPIECE_PAUSE_MS = 2000;
   const CORRECT_TAP_LOCK_MS = 180;
@@ -651,7 +681,7 @@ function applyBuildTextRender(){
 
 
 function nonGameHelpHtml(){
-  return `Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away.`;
+  return `Tap blobs with correct words to splatter paint. Try to splatter paint into every grid square.`;
 }
 
 function renderHelpOverlay(){
@@ -968,10 +998,14 @@ function gameplayShell({ bonus=false }){
 
 
 function renderEndScreen(){
+  const earnedMedalIconHtml = state.completionResult?.newlyCompleted
+    ? medalIconHtmlForMode(state.mode)
+    : "";
+
   window.VerseGameShell.renderCompleteScreen({
     app,
     icon: GAME_ICON,
-    iconHtml: GAME_ICON_HTML,
+    iconHtml: earnedMedalIconHtml,
     gameIcon: GAME_ICON,
     mode: state.mode,
     verseId: ctx.verseId,
@@ -2399,16 +2433,35 @@ function spawnWrongFaceParticleBurst(){
   function renderBonusBlobNodes() {
     const layer = $("#vspBlobLayer");
     if (!layer) return;
-    layer.innerHTML = state.bonusBlobs.filter(blob => blob.alive).map(bonusBlobMarkup).join("");
+
+    layer.innerHTML = state.bonusBlobs
+      .filter(blob => blob.alive)
+      .map(bonusBlobMarkup)
+      .join("");
+
     bindBoardMainInteraction();
-    state.bonusBlobs.forEach(updateBonusBlobDom);
+
+    const bounds = currentBounds();
+    state.bonusBlobs.forEach(blob => updateBonusBlobDom(blob, bounds));
   }
 
-  function updateBonusBlobDom(blob) {
+  function appendBonusBlobNode(blob, bounds = currentBounds()) {
+    const layer = $("#vspBlobLayer");
+    if (!layer || !blob || !blob.alive) return;
+
+    if (document.querySelector(`[data-bonus-id="${blob.id}"]`)) {
+      updateBonusBlobDom(blob, bounds);
+      return;
+    }
+
+    layer.insertAdjacentHTML("beforeend", bonusBlobMarkup(blob));
+    updateBonusBlobDom(blob, bounds);
+  }
+
+  function updateBonusBlobDom(blob, bounds = currentBounds()) {
     const node = document.querySelector(`[data-bonus-id="${blob.id}"]`);
     if (!node) return;
 
-    const bounds = currentBounds();
     node.style.transform = `translate(${blob.x * bounds.width}px, ${blob.y * bounds.height}px)`;
 
     const body = $(".vsp-blob-body", node);
@@ -2424,15 +2477,17 @@ function spawnWrongFaceParticleBurst(){
 
     state.bonusBlobs = state.bonusBlobs.filter(blob => blob.alive);
 
-    let spawned = 0;
+    const spawnedBlobs = [];
+    const bounds = currentBounds();
 
     while (state.bonusBlobs.length < BONUS_BLOB_COUNT) {
-      state.bonusBlobs.push(makeBonusBlob());
-      spawned += 1;
+      const blob = makeBonusBlob();
+      state.bonusBlobs.push(blob);
+      spawnedBlobs.push(blob);
     }
 
-    renderBonusBlobNodes();
-    playSpawnPopSoundForCount(spawned);
+    spawnedBlobs.forEach(blob => appendBonusBlobNode(blob, bounds));
+    playSpawnPopSoundForCount(spawnedBlobs.length);
   }
 
   function spawnBonusBlobs() {
@@ -2461,7 +2516,7 @@ function spawnWrongFaceParticleBurst(){
     state.bonusBlobs.forEach(blob => {
       if (!blob.alive) return;
       updateBlobMotion(blob, dt, bounds);
-      updateBonusBlobDom(blob);
+      updateBonusBlobDom(blob, bounds);
     });
 
     const pill = $("#vspBonusTimerChip");
