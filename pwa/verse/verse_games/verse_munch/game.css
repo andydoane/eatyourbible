@@ -6,6 +6,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root{
   --vmunch-bg-1:#7f66c6;
   --vmunch-bg-2:#5d49a8;
@@ -13,6 +21,9 @@
   --vmunch-shadow:0 14px 28px rgba(0,0,0,0.18);
   --vmunch-card-shadow:0 10px 0 rgba(0,0,0,0.18);
   --vmunch-white:#fff;
+
+  --vmunch-body-font: "Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --vmunch-display-font: "Titan One", "Baloo 2", system-ui, sans-serif;
 
   --vmunch-side-padding:14px;
   --vmunch-build-top-padding:12px;
@@ -81,6 +92,7 @@ body{
   background:
     radial-gradient(circle at top, rgba(255,255,255,0.16), transparent 36%),
     linear-gradient(180deg, var(--vmunch-bg-1) 0%, var(--vmunch-bg-2) 100%);
+  font-family:var(--vmunch-body-font);
   -webkit-user-select:none;
   user-select:none;
   -webkit-touch-callout:none;
@@ -94,6 +106,7 @@ body{
   padding: 0;
   display: block;
   overflow: hidden;
+  font-family:var(--vmunch-body-font);
 }
 
 .vmunch-root,
@@ -350,7 +363,7 @@ body.vmunch-page-flash-streak-rainbow::before {
 }
 
 .vmunch-bonus-intro-title{
-  font-family:"Titan One", system-ui, sans-serif;
+  font-family:var(--vmunch-display-font);
   color:#ffffff;
   font-size:clamp(26px, 6.2vw, 54px);
   line-height:0.98;
@@ -399,7 +412,7 @@ body.vmunch-page-flash-streak-rainbow::before {
 }
 
 .vmunch-bonus-score-title {
-  font-family: "Titan One", system-ui, sans-serif;
+  font-family: var(--vmunch-display-font);
   color: #ffffff;
   font-size: clamp(32px, 7.2vw, 68px);
   line-height: 0.95;
@@ -419,7 +432,7 @@ body.vmunch-page-flash-streak-rainbow::before {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 9px 0 rgba(0, 0, 0, 0.18);
-  font-family: "Titan One", system-ui, sans-serif;
+  font-family: var(--vmunch-display-font);
   color: #5f4ab1;
   line-height: 1;
 }
@@ -445,7 +458,7 @@ body.vmunch-page-flash-streak-rainbow::before {
 }
 
 .vmunch-bonus-continue-prompt {
-  font-family: "Titan One", system-ui, sans-serif;
+  font-family: var(--vmunch-display-font);
   color: #ffffff;
   font-size: clamp(18px, 4.5vw, 34px);
   line-height: 1;
@@ -572,7 +585,7 @@ body.vmunch-page-flash-streak-rainbow::before {
   border-radius:999px;
   background:rgba(255,255,255,0.94);
   box-shadow:0 6px 0 rgba(0,0,0,0.18);
-  font-family:"Titan One", system-ui, sans-serif;
+  font-family:var(--vmunch-display-font);
   color:#5f4ab1;
   line-height:1;
   animation:vmunchBonusHudPop 360ms cubic-bezier(.2,.88,.24,1) both;
@@ -615,7 +628,7 @@ body.vmunch-page-flash-streak-rainbow::before {
   margin-left: 2px;
   border-radius: 999px;
   box-sizing: border-box;
-  font-family: "Titan One", system-ui, sans-serif;
+  font-family: var(--vmunch-display-font);
   font-size: clamp(21px, 5vw, 34px);
   line-height: 1;
   letter-spacing: 0.03em;
@@ -769,6 +782,33 @@ body.vmunch-page-flash-streak-rainbow::before {
   min-width:44px;
   text-align:center;
   cursor:pointer;
+}
+
+.vmunch-mood-pill:not(.is-bonus-hud-pill) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 12px 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18);
+  font-family: var(--vmunch-display-font);
+  color: #5f4ab1;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  max-width: calc(100vw - 92px);
+  box-sizing: border-box;
+}
+
+.vmunch-mood-pill-label {
+  font-size: clamp(12px, 3.2vw, 18px);
+  opacity: 0.72;
+}
+
+.vmunch-mood-pill-value {
+  font-size: clamp(18px, 4.8vw, 30px);
 }
 
 .vmunch-pill.is-bonus-hud-pill {
@@ -1048,7 +1088,7 @@ body.vmunch-page-flash-streak-rainbow::before {
   pointer-events: none;
   user-select: none;
   white-space: nowrap;
-  font-family: "Titan One", system-ui, sans-serif;
+  font-family: var(--vmunch-display-font);
   font-size: var(--vmunch-score-pop-font-size, 36px);
   line-height: 1;
   letter-spacing: 0.02em;
@@ -1387,7 +1427,7 @@ body.vmunch-page-flash-streak-rainbow::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: "Titan One", system-ui, sans-serif;
+  font-family: var(--vmunch-display-font);
   line-height: 1;
   pointer-events: none;
   user-select: none;
@@ -1466,7 +1506,7 @@ body.vmunch-page-flash-streak-rainbow::before {
   box-sizing:border-box;
   border-radius:999px;
   padding:clamp(8px, 0.18em, 14px) clamp(16px, 0.42em, 30px) clamp(10px, 0.22em, 16px);
-  font-family:"Titan One", system-ui, sans-serif;
+  font-family:var(--vmunch-display-font);
   font-size:var(--vmunch-feedback-font-size, clamp(30px, 8vw, 62px));
   font-weight:400;
   line-height:1;
@@ -1948,4 +1988,9 @@ body.vmunch-page-flash-streak-rainbow::before {
     --vmunch-choice-padding-x:12px;
     --vmunch-choice-font:clamp(20px, 4.6vw, 28px);
   }
+}
+
+.vm-game-help-body,
+.vmunch-help-body {
+  text-wrap: balance;
 }

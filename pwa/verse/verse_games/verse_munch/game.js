@@ -8,6 +8,36 @@
   const GAME_ICON = "😋";
   const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   const GAME_THEME = {
     bg: "#7f66c6",
     accent: "#7f66c6"
@@ -16,7 +46,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-    const VMUNCH_DEBUG_VERSION = "VMUNCH v5.17";
+    const VMUNCH_DEBUG_VERSION = "VMUNCH v5.19";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -685,7 +715,7 @@ app.innerHTML = `
 
       <div class="vmunch-overlay-pills">
         <button class="vmunch-pill vmunch-menu-pill" id="vmunchMenuPill" aria-label="Game Menu">☰</button>
-        <div class="vmunch-pill" id="vmunchMoodPill">${escapeHtml(getMoodLabel())}</div>
+        <div class="vmunch-pill vmunch-mood-pill" id="vmunchMoodPill">${escapeHtml(getMoodLabel())}</div>
       </div>
 
       <div class="vmunch-field-wrap">
@@ -744,10 +774,14 @@ app.innerHTML = `
 function renderComplete(){
   stopLoop();
 
+  const earnedMedalIconHtml = completionResult?.newlyCompleted
+    ? medalIconHtmlForMode(selectedMode)
+    : "";
+
   window.VerseGameShell.renderCompleteScreen({
     app,
     icon: GAME_ICON,
-    iconHtml: GAME_ICON_HTML,
+    iconHtml: earnedMedalIconHtml,
     gameIcon: GAME_ICON,
     mode: selectedMode,
     verseId: ctx.verseId,
@@ -2862,10 +2896,10 @@ function updateBuildText(){
   }
 
   function getBonusFoodBeltConfig() {
-    const beltWidth = getBonusBeltWidth();
+    const hardModeBeltSpeed = 56 * 4.35;
 
     return {
-      speed: clamp(beltWidth * 0.34, 145, 245),
+      speed: hardModeBeltSpeed,
       gap: 70,
       size: clamp(state.fieldWidth * 0.13, 58, 86)
     };
@@ -3418,7 +3452,10 @@ function spawnChewCrumbs(isSecondary = false){
 
     pill.classList.remove("is-bonus-hud-pill");
     pill.dataset.vmunchBonusHudKey = "";
-    pill.textContent = `MOOD: ${getMoodLabel()}`;
+    pill.innerHTML = `
+      <span class="vmunch-mood-pill-label">MOOD</span>
+      <span class="vmunch-mood-pill-value">${escapeHtml(getMoodLabel())}</span>
+    `;
   }
 
   function getTrailTier(){
