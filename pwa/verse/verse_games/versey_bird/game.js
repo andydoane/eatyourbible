@@ -52,7 +52,7 @@
   const MAX_UNIT_BY_HEIGHT = 0.19;
   const DECOY_CLOUD_HITBOX_SCALE = 0.80;
   const WORD_CLOUD_RENDER_HEIGHT_U = 1.00;
-  const WORD_CLOUD_TEXT_HEIGHT_RATIO = 0.408;
+  const WORD_CLOUD_TEXT_HEIGHT_RATIO = 0.36;
   const LIGHTNING_PARTICLE_IMAGE = "versey_bird_lightning.svg";
   const PARTICLE_COLORS = {
     rainbow: [
