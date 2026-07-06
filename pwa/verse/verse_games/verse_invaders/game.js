@@ -7,6 +7,36 @@
   const GAME_ICON = "👾";
   const GAME_ICON_HTML = window.VerseGameShell.gameIconImageHtmlForId(GAME_ID, GAME_ICON, `${GAME_TITLE} icon`);
 
+  function medalIconHtmlForMode(mode) {
+    const medalByMode = {
+      easy: {
+        src: "../../verse_images/bronze_medal.png",
+        fallback: "🥉",
+        alt: "Bronze medal"
+      },
+      medium: {
+        src: "../../verse_images/silver_medal.png",
+        fallback: "🥈",
+        alt: "Silver medal"
+      },
+      hard: {
+        src: "../../verse_images/gold_medal.png",
+        fallback: "🥇",
+        alt: "Gold medal"
+      }
+    };
+
+    const medal = medalByMode[mode];
+
+    if (!medal) return "";
+
+    return window.VerseGameShell.gameIconImageHtml(
+      medal.src,
+      medal.fallback,
+      medal.alt
+    );
+  }
+
   const GAME_THEME = {
     bg: "#333333",
     accent: "#333333"
@@ -644,8 +674,8 @@
 
   function helpHtml() {
     return `Tap a color button to shoot the alien of that color.<br><br>
-      Shoot the next word of the verse. Continue until you finish the verse.<br><br>
-      Then see how many alien you can shoot down in the bonus round.`;
+      Shoot the next correct word of the verse until you finish it.<br><br>
+      Then see how many aliens you can shoot down in the bonus round.`;
   }
 
   function wireCommonNav() {
@@ -1806,8 +1836,14 @@
   function renderVictory() {
     stopLoop();
 
+    const earnedMedalIconHtml = completionResult?.newlyCompleted
+      ? medalIconHtmlForMode(selectedMode)
+      : "";
+
     window.VerseGameShell.renderCompleteScreen({
       app,
+      icon: GAME_ICON,
+      iconHtml: earnedMedalIconHtml,
       gameIcon: GAME_ICON,
       mode: selectedMode,
       verseId: ctx.verseId,
