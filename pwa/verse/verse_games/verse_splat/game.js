@@ -92,6 +92,28 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
     "./verse_splat_images/verse_splat_paint_blob_11.svg"
   ];
 
+  const staticPaintBlobImageCache = new Map();
+
+  function getStaticPaintBlobImage(src) {
+    if (!src) return null;
+
+    if (staticPaintBlobImageCache.has(src)) {
+      return staticPaintBlobImageCache.get(src);
+    }
+
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => renderStaticPaintSplats();
+    img.onerror = () => { };
+    img.src = src;
+
+    staticPaintBlobImageCache.set(src, img);
+
+    return img;
+  }
+
+  STATIC_PAINT_BLOB_SHAPES.forEach(getStaticPaintBlobImage);
+
   let muted = false;
   let lastBoardPressAt = 0;
 
@@ -2023,6 +2045,44 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     ctx.fill();
   }
 
+  function drawCanvasSvgPaintBlob(ctx, splat, w, h, seed) {
+    const img = getStaticPaintBlobImage(splat.blobImg);
+
+    if (!img || !img.complete || !img.naturalWidth) {
+      drawCanvasOrganicPaintBlob(ctx, w, h, seed);
+      return;
+    }
+
+    const maskCanvas = drawCanvasSvgPaintBlob.maskCanvas || document.createElement("canvas");
+    const maskCtx = maskCanvas.getContext("2d");
+    const drawW = Math.max(1, Math.ceil(w));
+    const drawH = Math.max(1, Math.ceil(h));
+
+    drawCanvasSvgPaintBlob.maskCanvas = maskCanvas;
+
+    if (!maskCtx) {
+      drawCanvasOrganicPaintBlob(ctx, w, h, seed);
+      return;
+    }
+
+    if (maskCanvas.width !== drawW || maskCanvas.height !== drawH) {
+      maskCanvas.width = drawW;
+      maskCanvas.height = drawH;
+    }
+
+    maskCtx.setTransform(1, 0, 0, 1, 0, 0);
+    maskCtx.globalCompositeOperation = "source-over";
+    maskCtx.globalAlpha = 1;
+    maskCtx.clearRect(0, 0, drawW, drawH);
+    maskCtx.drawImage(img, 0, 0, drawW, drawH);
+
+    maskCtx.globalCompositeOperation = "source-in";
+    maskCtx.fillStyle = splat.color || "#7f66c6";
+    maskCtx.fillRect(0, 0, drawW, drawH);
+
+    ctx.drawImage(maskCanvas, -drawW / 2, -drawH / 2, drawW, drawH);
+  }
+
   function drawCanvasPaintSplat(ctx, splat, width, height) {
     const x = splat.xRatio * width;
     const y = splat.yRatio * height;
@@ -2040,6 +2100,8 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
       ctx.beginPath();
       ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
       ctx.fill();
+    } else if (splat.blobImg) {
+      drawCanvasSvgPaintBlob(ctx, splat, w, h, seed);
     } else {
       drawCanvasOrganicPaintBlob(ctx, w, h, seed);
     }
