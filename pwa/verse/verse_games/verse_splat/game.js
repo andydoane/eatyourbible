@@ -460,6 +460,11 @@ const shuffle = window.VerseGameShell.shuffle;
     stopLoops();
     state.screen = screen;
     render();
+
+    requestAnimationFrame(() => {
+      renderStaticPaintSplats();
+    });
+
     if (screen === "game") afterGameScreenRender();
     if (screen === "coverage_result") afterCoverageResultRender();
     if (screen === "bonus") afterBonusScreenRender();
@@ -823,7 +828,9 @@ function gameplayShell({ bonus=false }){
             <div class="vsp-board-main" id="vspBoardMain">
               ${bonus ? "" : `<div class="vsp-grid-layer" id="vspGridLayer" style="--vsp-grid-cols:${coverageGridSize().cols};--vsp-grid-rows:${coverageGridSize().rows};"></div>`}
               ${bonus ? "" : `<div class="vsp-coverage-layer" id="vspCoverageLayer"></div>`}
-              <div class="vsp-paint-layer" id="vspPaintLayer"></div>
+              <div class="vsp-paint-layer" id="vspPaintLayer">
+                <canvas class="vsp-paint-canvas" id="vspPaintCanvas"></canvas>
+              </div>
               <div class="vsp-flash-layer ${state.flashKey ? 'is-active' : ''}" id="vspFlashLayer"></div>
               <div class="vsp-back-effect-layer" id="vspBackEffectLayer"></div>
               <div class="vsp-blob-layer" id="vspBlobLayer"></div>
@@ -1900,7 +1907,8 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
         opacity,
         rot,
         shape,
-        blobImg
+        blobImg,
+        seed: Math.random()
       });
     }
 
@@ -1947,30 +1955,109 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     }
   }
   
-  function renderStaticPaintSplats() {
+  function paintCanvasContext() {
+    const canvas = $("#vspPaintCanvas");
     const layer = $("#vspPaintLayer");
-    if (!layer) return;
 
-    layer.innerHTML = state.paintSplats.map((splat) => {
-      const maskStyle = splat.shape === "svg" && splat.blobImg
-        ? `--vsp-paint-mask:url('${splat.blobImg}');`
-        : "";
+    if (!canvas || !layer) return null;
 
-      return `
-        <span class="vsp-static-paint-splat is-${splat.shape}"
-          style="
-            left:${(splat.xRatio * 100).toFixed(2)}%;
-            top:${(splat.yRatio * 100).toFixed(2)}%;
-            width:${splat.w.toFixed(1)}px;
-            height:${splat.h.toFixed(1)}px;
-            background:${splat.color};
-            opacity:${splat.opacity.toFixed(2)};
-            transform:translate(-50%, -50%) rotate(${splat.rot.toFixed(1)}deg);
-            ${maskStyle}
-          ">
-        </span>
-      `;
-    }).join("");
+    const rect = layer.getBoundingClientRect();
+    const width = Math.max(1, Math.round(rect.width));
+    const height = Math.max(1, Math.round(rect.height));
+    const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+    const pixelWidth = Math.max(1, Math.round(width * dpr));
+    const pixelHeight = Math.max(1, Math.round(height * dpr));
+
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+    }
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    return { canvas, ctx, width, height };
+  }
+
+  function paintBlobNoise(seed, index) {
+    const value = Math.sin((seed * 9999) + (index * 127.1)) * 43758.5453;
+    return value - Math.floor(value);
+  }
+
+  function drawCanvasOrganicPaintBlob(ctx, w, h, seed) {
+    const pointCount = 18;
+    const points = [];
+
+    for (let i = 0; i < pointCount; i++) {
+      const angle = (Math.PI * 2 * i) / pointCount;
+      const wobble = 0.74 + paintBlobNoise(seed, i) * 0.34;
+      const x = Math.cos(angle) * (w * 0.5) * wobble;
+      const y = Math.sin(angle) * (h * 0.5) * wobble;
+
+      points.push({ x, y });
+    }
+
+    ctx.beginPath();
+
+    for (let i = 0; i < points.length; i++) {
+      const current = points[i];
+      const next = points[(i + 1) % points.length];
+      const midX = (current.x + next.x) / 2;
+      const midY = (current.y + next.y) / 2;
+
+      if (i === 0) {
+        ctx.moveTo(midX, midY);
+      } else {
+        ctx.quadraticCurveTo(current.x, current.y, midX, midY);
+      }
+    }
+
+    const first = points[0];
+    const second = points[1];
+    ctx.quadraticCurveTo(first.x, first.y, (first.x + second.x) / 2, (first.y + second.y) / 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawCanvasPaintSplat(ctx, splat, width, height) {
+    const x = splat.xRatio * width;
+    const y = splat.yRatio * height;
+    const w = Math.max(1, splat.w);
+    const h = Math.max(1, splat.h);
+    const seed = typeof splat.seed === "number" ? splat.seed : 0.5;
+
+    ctx.save();
+    ctx.globalAlpha = clamp(splat.opacity ?? 1, 0, 1);
+    ctx.fillStyle = splat.color || "#7f66c6";
+    ctx.translate(x, y);
+    ctx.rotate(((splat.rot || 0) * Math.PI) / 180);
+
+    if (splat.shape === "dot") {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      drawCanvasOrganicPaintBlob(ctx, w, h, seed);
+    }
+
+    ctx.restore();
+  }
+
+  function renderStaticPaintSplats() {
+    const paint = paintCanvasContext();
+    if (!paint) return;
+
+    const { ctx, width, height } = paint;
+
+    ctx.clearRect(0, 0, width, height);
+
+    for (const splat of state.paintSplats) {
+      drawCanvasPaintSplat(ctx, splat, width, height);
+    }
   }
 
 

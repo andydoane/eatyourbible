@@ -260,6 +260,16 @@ body{
 }
 .vsp-coverage-layer{z-index:0;pointer-events:none}
 .vsp-paint-layer{z-index:1;pointer-events:none}
+
+.vsp-paint-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
 .vsp-back-effect-layer{z-index:2;pointer-events:none}
 .vsp-blob-layer{z-index:3;pointer-events:none}
 .vsp-effect-layer{z-index:4;pointer-events:none}
