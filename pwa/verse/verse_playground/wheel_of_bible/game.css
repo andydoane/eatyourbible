@@ -771,7 +771,7 @@ body {
 }
 
 .wob-root.is-board-screen .wob-main {
-  padding: calc(50px + env(safe-area-inset-top)) 2px calc(4px + env(safe-area-inset-bottom));
+  padding: calc(50px + env(safe-area-inset-top)) 8px calc(4px + env(safe-area-inset-bottom));
 }
 
 .wob-root.is-listen-screen .wob-main {
@@ -1833,8 +1833,8 @@ button.wob-ref-group {
   }
 
   .wob-root.is-board-screen .wob-main {
-    padding-left: 1px;
-    padding-right: 1px;
+    padding-left: 6px;
+    padding-right: 6px;
   }
 
   .wob-letter-grid {
