@@ -2121,6 +2121,348 @@ function openResetProgressDialog() {
   }
 }
 
+function openProfileDestructiveMathDialog({
+  title,
+  description,
+  confirmLabel,
+  onConfirm
+}) {
+  let challenge = generateResetMathQuestion();
+
+  const confirmBtn = dlgBtn(confirmLabel, {
+    onClick: () => {
+      closeDialog();
+
+      try {
+        onConfirm?.();
+      } catch (err) {
+        console.error(err);
+
+        showDialog({
+          title: "Could Not Complete Action",
+          body: String(err?.message || err),
+          actions: [
+            dlgBtn("OK", { onClick: closeDialog })
+          ]
+        });
+      }
+    }
+  });
+
+  confirmBtn.classList.add("danger");
+  confirmBtn.disabled = true;
+
+  showDialog({
+    title,
+    bodyHtml: `
+      <div class="settings-reset-dialog">
+        <p>${escapeHtml(description)}</p>
+
+        <p>
+          To confirm, answer this question:
+        </p>
+
+        <label
+          class="settings-reset-label"
+          id="settingsResetQuestionLabel"
+          for="settingsResetAnswer"
+        >
+          ${escapeHtml(challenge.question)} =
+        </label>
+
+        <input
+          class="settings-reset-input"
+          id="settingsResetAnswer"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="off"
+          aria-label="Confirmation answer"
+        >
+
+        <div class="settings-reset-hint" id="settingsResetHint">
+          If you enter a wrong digit, the question will change.
+        </div>
+      </div>
+    `,
+    actions: [
+      dlgBtn("Cancel", {
+        secondary: true,
+        onClick: closeDialog
+      }),
+      confirmBtn
+    ]
+  });
+
+  const input = document.getElementById("settingsResetAnswer");
+  const label = document.getElementById("settingsResetQuestionLabel");
+  const hint = document.getElementById("settingsResetHint");
+
+  function setNewChallenge(message = "New question. Try again.") {
+    challenge = generateResetMathQuestion();
+
+    if (label) {
+      label.textContent = `${challenge.question} =`;
+    }
+
+    if (hint) {
+      hint.textContent = message;
+    }
+
+    if (input) {
+      input.value = "";
+      input.focus();
+    }
+
+    confirmBtn.disabled = true;
+  }
+
+  if (input) {
+    input.focus();
+
+    input.addEventListener("input", () => {
+      const rawValue = String(input.value || "");
+      const digitsOnly = rawValue.replace(/\D/g, "");
+
+      if (rawValue !== digitsOnly) {
+        input.value = digitsOnly;
+      }
+
+      if (!digitsOnly) {
+        confirmBtn.disabled = true;
+
+        if (hint) {
+          hint.textContent =
+            "If you enter a wrong digit, the question will change.";
+        }
+
+        return;
+      }
+
+      const answerText = String(challenge.answer);
+
+      if (!answerText.startsWith(digitsOnly)) {
+        setNewChallenge("Type the answer exactly.");
+        return;
+      }
+
+      const isCorrect = digitsOnly === answerText;
+      confirmBtn.disabled = !isCorrect;
+
+      if (hint) {
+        hint.textContent = isCorrect
+          ? "Correct. You can continue now."
+          : "Keep typing the answer.";
+      }
+    });
+  }
+}
+
+function resetActiveProfileProgress() {
+  const profileApi = getProfileApi();
+  const profile = profileApi?.getActiveProfile?.();
+
+  if (!profile) {
+    throw new Error("No Zookeeper profile is active.");
+  }
+
+  const progressKey =
+    profileApi.getProfileProgressStorageKey(profile.id);
+  const progress = createEmptyProgress();
+
+  localStorage.setItem(
+    progressKey,
+    JSON.stringify(progress)
+  );
+
+  const savedRaw = localStorage.getItem(progressKey);
+  const savedProgress = savedRaw
+    ? JSON.parse(savedRaw)
+    : null;
+
+  if (
+    !savedProgress ||
+    typeof savedProgress !== "object" ||
+    Array.isArray(savedProgress) ||
+    !savedProgress.verses ||
+    typeof savedProgress.verses !== "object" ||
+    !savedProgress.tutorial ||
+    typeof savedProgress.tutorial !== "object"
+  ) {
+    throw new Error(
+      "The reset progress could not be verified."
+    );
+  }
+
+  State.pendingBootRoute = null;
+  clearTransientStateForProfileActivation();
+  refreshCurrentProgressState();
+  setScreen(Screen.TODO_DEV);
+  applyMute();
+
+  return profile;
+}
+
+function deleteActiveProfileData() {
+  const profileApi = getProfileApi();
+  const profile = profileApi?.getActiveProfile?.();
+
+  if (!profile) {
+    throw new Error("No Zookeeper profile is active.");
+  }
+
+  const deleted = profileApi.deleteProfile(
+    profile.id,
+    { removeProgress: true }
+  );
+
+  if (!deleted) {
+    throw new Error(
+      "The Zookeeper profile could not be deleted."
+    );
+  }
+
+  State.pendingBootRoute = null;
+  clearTransientStateForProfileActivation();
+
+  const remainingProfiles =
+    profileApi.getAllProfiles?.() || [];
+
+  if (remainingProfiles.length) {
+    setScreen(Screen.PROFILE_PICKER);
+  } else {
+    openFirstProfileEditor();
+  }
+
+  applyMute();
+
+  return profile;
+}
+
+function eraseAllFamilyData() {
+  const profileApi = getProfileApi();
+  const profiles =
+    profileApi?.getAllProfiles?.() || [];
+
+  for (const profile of profiles) {
+    const progressKey =
+      profileApi.getProfileProgressStorageKey(profile.id);
+
+    if (progressKey) {
+      localStorage.removeItem(progressKey);
+    }
+  }
+
+  localStorage.removeItem(
+    profileApi.PROFILE_REGISTRY_STORAGE_KEY
+  );
+  localStorage.removeItem(
+    profileApi.LEGACY_PROGRESS_STORAGE_KEY
+  );
+
+  try {
+    clearGameMixState();
+  } catch (err) { }
+
+  try {
+    sessionStorage.removeItem(
+      "profileProgressBeforeGame"
+    );
+  } catch (err) { }
+
+  State.pendingBootRoute = null;
+  clearTransientStateForProfileActivation();
+  openFirstProfileEditor();
+  applyMute();
+}
+
+function openActiveProfileResetDialog() {
+  const profile =
+    getProfileApi()?.getActiveProfile?.();
+
+  if (!profile) {
+    openProfilePicker();
+    return;
+  }
+
+  openProfileDestructiveMathDialog({
+    title: `Reset ${profile.name}'s Progress?`,
+    description:
+      `This will erase ${profile.name}'s learned verses, medals, BibloPets, pet names, practice history, and tutorial progress. The Zookeeper name and picture will stay.`,
+    confirmLabel: "Reset Progress",
+    onConfirm: () => {
+      const resetProfile = resetActiveProfileProgress();
+
+      showDialog({
+        title: "Progress Reset",
+        body:
+          `${resetProfile.name}'s progress was reset. Their tutorial will begin again.`,
+        actions: [
+          dlgBtn("OK", { onClick: closeDialog })
+        ]
+      });
+    }
+  });
+}
+
+function openDeleteProfileDialog() {
+  const profile =
+    getProfileApi()?.getActiveProfile?.();
+
+  if (!profile) {
+    openProfilePicker();
+    return;
+  }
+
+  openProfileDestructiveMathDialog({
+    title: `Delete ${profile.name}'s Profile?`,
+    description:
+      `This permanently deletes ${profile.name}'s Zookeeper profile and all of its progress. Other Zookeepers will not be changed.`,
+    confirmLabel: "Delete Profile",
+    onConfirm: () => {
+      const deletedProfile = deleteActiveProfileData();
+
+      showDialog({
+        title: "Profile Deleted",
+        body:
+          `${deletedProfile.name}'s Zookeeper profile was deleted.`,
+        actions: [
+          dlgBtn("OK", { onClick: closeDialog })
+        ]
+      });
+    }
+  });
+}
+
+function openEraseAllFamilyDataDialog() {
+  const profiles =
+    getProfileApi()?.getAllProfiles?.() || [];
+
+  if (!profiles.length) {
+    openFirstProfileEditor();
+    return;
+  }
+
+  openProfileDestructiveMathDialog({
+    title: "Erase All Family Data?",
+    description:
+      `This permanently deletes all ${profiles.length} Zookeeper profiles and every saved progress record on this device. This cannot be undone.`,
+    confirmLabel: "Erase Everything",
+    onConfirm: () => {
+      eraseAllFamilyData();
+
+      showDialog({
+        title: "Family Data Erased",
+        body:
+          "All Zookeeper profiles and progress were deleted. Create a new Zookeeper to continue.",
+        actions: [
+          dlgBtn("OK", { onClick: closeDialog })
+        ]
+      });
+    }
+  });
+}
+
 function openPrivacyPolicy() {
   showDialog({
     title: "Privacy Policy",
@@ -3879,6 +4221,7 @@ const Screen = {
   PROFILE_WELCOME: "profile_welcome",
   PROFILE_PICKER: "profile_picker",
   PROFILE_EDITOR: "profile_editor",
+  PROFILE_MANAGE: "profile_manage",
   TITLE: "title",
   SETTINGS: "settings",
   TODO: "todo",
@@ -4002,6 +4345,7 @@ const State = {
   profileWelcomeStarted: false,
   profileWelcomeTimer: null,
 
+  profileEditorReturnScreen: Screen.PROFILE_PICKER,
   profileEditorMode: "add-profile",
   editingProfileId: "",
   profileEditorName: "",
@@ -4883,6 +5227,7 @@ function screenToIndex(screen) {
     Screen.PROFILE_WELCOME,
     Screen.PROFILE_PICKER,
     Screen.PROFILE_EDITOR,
+    Screen.PROFILE_MANAGE,
     Screen.TITLE,
     Screen.SETTINGS,
     Screen.TODO,
@@ -6203,6 +6548,7 @@ function renderNav() {
     State.screen !== Screen.PROFILE_WELCOME &&
     State.screen !== Screen.PROFILE_PICKER &&
     State.screen !== Screen.PROFILE_EDITOR &&
+    State.screen !== Screen.PROFILE_MANAGE &&
     State.screen !== Screen.TITLE &&
     State.screen !== Screen.SETTINGS &&
     State.screen !== Screen.TODO &&
@@ -6547,6 +6893,7 @@ function selectAdjacentProfilePicture(offset) {
 }
 
 function resetProfileEditorState() {
+  State.profileEditorReturnScreen = Screen.PROFILE_PICKER;
   State.profileEditorMode = PROFILE_EDITOR_MODES.ADD;
   State.editingProfileId = "";
   State.profileEditorName = "";
@@ -6819,9 +7166,12 @@ function openFirstProfileEditor() {
   go(Screen.PROFILE_EDITOR);
 }
 
-function openAddProfileEditor() {
+function openAddProfileEditor(
+  returnScreen = Screen.PROFILE_PICKER
+) {
   resetProfileEditorState();
 
+  State.profileEditorReturnScreen = returnScreen;
   State.profileEditorMode = PROFILE_EDITOR_MODES.ADD;
   State.profilePictureSelectionChanged = true;
 
@@ -6829,7 +7179,10 @@ function openAddProfileEditor() {
   go(Screen.PROFILE_EDITOR);
 }
 
-function openEditProfileEditor(profileId) {
+function openEditProfileEditor(
+  profileId,
+  returnScreen = Screen.PROFILE_PICKER
+) {
   const profileApi = getProfileApi();
   const profile = profileApi?.getProfileById?.(profileId);
 
@@ -6844,6 +7197,7 @@ function openEditProfileEditor(profileId) {
 
   resetProfileEditorState();
 
+  State.profileEditorReturnScreen = returnScreen;
   State.profileEditorMode = PROFILE_EDITOR_MODES.EDIT;
   State.editingProfileId = profile.id;
   State.profileEditorName = profile.name;
@@ -6853,6 +7207,14 @@ function openEditProfileEditor(profileId) {
 
   setProfilePictureIndexForVerseId(profile.avatarVerseId);
   go(Screen.PROFILE_EDITOR);
+}
+
+function closeProfileEditor() {
+  const returnScreen =
+    State.profileEditorReturnScreen || Screen.PROFILE_PICKER;
+
+  resetProfileEditorState();
+  go(returnScreen);
 }
 
 function stopProfileTransitionAudio() {
@@ -7071,9 +7433,13 @@ async function submitProfileEditor() {
         }
       );
 
+      const returnScreen =
+        State.profileEditorReturnScreen || Screen.PROFILE_PICKER;
+
       State.profileEditorBusy = false;
       State.profileEditorError = "";
-      openProfilePicker();
+      resetProfileEditorState();
+      go(returnScreen);
       return;
     }
 
@@ -7471,7 +7837,7 @@ function screenProfileEditor(idx) {
   );
 
   if (backBtn) {
-    backBtn.onclick = openProfilePicker;
+    backBtn.onclick = closeProfileEditor;
   }
 
   if (input) {
@@ -7518,6 +7884,224 @@ function screenProfileEditor(idx) {
   }
 
   updateProfileEditorValidationUi(wrap);
+
+  return makeSlide({
+    idx,
+    bg: "var(--purple)",
+    navHidden: true,
+    inner: wrap
+  });
+}
+
+function openProfileManagement() {
+  const profile =
+    getProfileApi()?.getActiveProfile?.();
+
+  if (!profile) {
+    openProfilePicker();
+    return;
+  }
+
+  go(Screen.PROFILE_MANAGE);
+}
+
+function screenProfileManage(idx) {
+  const wrap = document.createElement("div");
+  wrap.className =
+    "profile-screen profile-manage-screen";
+
+  const profileApi = getProfileApi();
+  const profile = profileApi?.getActiveProfile?.();
+  const profileCount =
+    (profileApi?.getAllProfiles?.() || []).length;
+
+  if (!profile) {
+    wrap.innerHTML = `
+      <div class="profile-page">
+        <div class="profile-shell profile-manage-shell">
+          <h1 class="profile-heading">
+            Choose a Zookeeper
+          </h1>
+
+          <button
+            class="profile-manage-action no-zoom"
+            type="button"
+            data-profile-manage-action="switch"
+          >
+            Choose Zookeeper
+          </button>
+        </div>
+      </div>
+    `;
+
+    const chooseBtn = wrap.querySelector(
+      '[data-profile-manage-action="switch"]'
+    );
+
+    if (chooseBtn) {
+      chooseBtn.onclick = openProfilePicker;
+    }
+
+    return makeSlide({
+      idx,
+      bg: "var(--purple)",
+      navHidden: true,
+      inner: wrap
+    });
+  }
+
+  wrap.innerHTML = `
+    <div class="profile-page">
+      <div class="profile-shell profile-manage-shell">
+        <div class="profile-manage-header">
+          <button
+            class="profile-back-btn no-zoom"
+            type="button"
+            data-profile-manage-home
+            aria-label="Back to Home"
+          >
+            ${SVG_BACK}
+          </button>
+
+          <h1 class="profile-heading">
+            Zookeeper Settings
+          </h1>
+
+          <span
+            class="profile-editor-header-spacer"
+            aria-hidden="true"
+          ></span>
+        </div>
+
+        <div class="profile-manage-identity">
+          ${profilePictureVisualHtml(
+    profile.avatarVerseId,
+    {
+      className: "profile-manage-avatar",
+      alt: `${profile.name}'s Zookeeper picture`
+    }
+  )}
+
+          <div class="profile-manage-name">
+            ${escapeHtml(profile.name)}
+          </div>
+
+          <div class="profile-manage-count">
+            ${profileCount === 1
+      ? "1 Zookeeper on this device"
+      : `${profileCount} Zookeepers on this device`
+    }
+          </div>
+        </div>
+
+        <div class="profile-manage-actions">
+          <button
+            class="profile-manage-action no-zoom"
+            type="button"
+            data-profile-manage-action="switch"
+          >
+            Switch Zookeeper
+          </button>
+
+          <button
+            class="profile-manage-action no-zoom"
+            type="button"
+            data-profile-manage-action="add"
+          >
+            Add Zookeeper
+          </button>
+
+          <button
+            class="profile-manage-action no-zoom"
+            type="button"
+            data-profile-manage-action="edit"
+          >
+            Edit ${escapeHtml(profile.name)}
+          </button>
+        </div>
+
+        <div class="profile-manage-danger">
+          <button
+            class="profile-manage-action profile-manage-action-danger no-zoom"
+            type="button"
+            data-profile-manage-action="reset"
+          >
+            Reset ${escapeHtml(profile.name)}’s Progress
+          </button>
+
+          <button
+            class="profile-manage-action profile-manage-action-danger no-zoom"
+            type="button"
+            data-profile-manage-action="delete"
+          >
+            Delete ${escapeHtml(profile.name)}’s Profile
+          </button>
+
+          <button
+            class="profile-manage-action profile-manage-action-family no-zoom"
+            type="button"
+            data-profile-manage-action="erase-family"
+          >
+            Erase All Family Data
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const homeBtn = wrap.querySelector(
+    "[data-profile-manage-home]"
+  );
+
+  if (homeBtn) {
+    homeBtn.onclick = () => {
+      go(Screen.TITLE);
+    };
+  }
+
+  wrap
+    .querySelectorAll("[data-profile-manage-action]")
+    .forEach((btn) => {
+      btn.onclick = () => {
+        const action = btn.getAttribute(
+          "data-profile-manage-action"
+        );
+
+        if (action === "switch") {
+          openProfilePicker();
+          return;
+        }
+
+        if (action === "add") {
+          openAddProfileEditor(
+            Screen.PROFILE_MANAGE
+          );
+          return;
+        }
+
+        if (action === "edit") {
+          openEditProfileEditor(
+            profile.id,
+            Screen.PROFILE_MANAGE
+          );
+          return;
+        }
+
+        if (action === "reset") {
+          openActiveProfileResetDialog();
+          return;
+        }
+
+        if (action === "delete") {
+          openDeleteProfileDialog();
+          return;
+        }
+
+        if (action === "erase-family") {
+          openEraseAllFamilyDataDialog();
+        }
+      };
+    });
 
   return makeSlide({
     idx,
@@ -7631,6 +8215,8 @@ function screenTitle(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen";
   const tutorialActive = isTutorialActive();
+  const activeProfile =
+    getProfileApi()?.getActiveProfile?.();
   const opt = TITLE_OPTIONS[State.titleOptionIndex];
   const buttonLabel =
     opt.id === "learn" && State.hasLearnedVerse
@@ -7648,7 +8234,36 @@ function screenTitle(idx) {
           onerror="this.style.display='none'">
       </div>
 
-    
+      ${
+        activeProfile
+          ? `
+            <button
+              class="title-profile-control no-zoom"
+              id="titleProfileBtn"
+              type="button"
+              aria-label="Manage Zookeeper ${escapeHtml(activeProfile.name)}"
+            >
+              ${profilePictureVisualHtml(
+                activeProfile.avatarVerseId,
+                {
+                  className: "title-profile-avatar",
+                  alt: ""
+                }
+              )}
+
+              <span class="title-profile-name">
+                ${escapeHtml(activeProfile.name)}
+              </span>
+
+              <span
+                class="title-profile-chevron"
+                aria-hidden="true"
+              >›</span>
+            </button>
+          `
+          : ""
+      }
+
       <div class="title-picker-tools">
         <div class="title-picker">
           <select id="versePicker" class="title-picker-select"></select>
@@ -7721,6 +8336,17 @@ function screenTitle(idx) {
 
     </div>
   `;
+
+  const titleProfileBtn = wrap.querySelector(
+    "#titleProfileBtn"
+  );
+
+  if (titleProfileBtn) {
+    titleProfileBtn.onclick = (e) => {
+      e.stopPropagation();
+      openProfileManagement();
+    };
+  }
 
   const titleTodoBtn = wrap.querySelector("#titleTodoBtn");
   if (titleTodoBtn) {
@@ -7887,6 +8513,8 @@ function screenTitle(idx) {
 function screenSettings(idx) {
   const wrap = document.createElement("div");
   wrap.className = "settings-screen";
+  const activeProfile =
+    getProfileApi()?.getActiveProfile?.();
 
   wrap.innerHTML = `
     <div class="settings-page">
@@ -7896,6 +8524,23 @@ function screenSettings(idx) {
           <h1 class="settings-heading">Settings</h1>
           <div class="settings-header-spacer" aria-hidden="true"></div>
         </div>
+
+        <section class="settings-card">
+          <div class="settings-card-title">Zookeeper</div>
+          <div class="settings-action-list">
+            <button
+              class="settings-action no-zoom"
+              type="button"
+              data-settings-action="manage-profile"
+            >
+              ${
+                activeProfile
+                  ? `Manage ${escapeHtml(activeProfile.name)}`
+                  : "Choose Zookeeper"
+              }
+            </button>
+          </div>
+        </section>
 
         <section class="settings-card">
           <div class="settings-card-title">Backup &amp; Restore</div>
@@ -7946,7 +8591,11 @@ function screenSettings(idx) {
           <div class="settings-card-title">Reset</div>
           <div class="settings-action-list">
             <button class="settings-action settings-action-danger no-zoom" type="button" data-settings-action="reset">
-              Reset All Progress
+              ${
+                activeProfile
+                  ? `Reset ${escapeHtml(activeProfile.name)}’s Progress`
+                  : "Reset Current Zookeeper’s Progress"
+              }
             </button>
           </div>
         </section>
@@ -7961,6 +8610,11 @@ function screenSettings(idx) {
       e.stopPropagation();
 
       const action = btn.getAttribute("data-settings-action");
+
+      if (action === "manage-profile") {
+        openProfileManagement();
+        return;
+      }
 
       if (action === "export") {
         exportSaveData();
@@ -7993,7 +8647,7 @@ function screenSettings(idx) {
       }
 
       if (action === "reset") {
-        openResetProgressDialog();
+        openActiveProfileResetDialog();
       }
     };
   });
@@ -10809,13 +11463,14 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title_sequence", "profile_welcome", "profile_picker", "profile_editor", "title", "settings", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "profile_welcome", "profile_picker", "profile_editor", "profile_manage", "title", "settings", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
     if (screen === Screen.PROFILE_WELCOME) slide = screenProfileWelcome(idx);
     if (screen === Screen.PROFILE_PICKER) slide = screenProfilePicker(idx);
     if (screen === Screen.PROFILE_EDITOR) slide = screenProfileEditor(idx);
+    if (screen === Screen.PROFILE_MANAGE) slide = screenProfileManage(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.SETTINGS) slide = screenSettings(idx);
     if (screen === Screen.TODO) slide = screenTodo(idx);

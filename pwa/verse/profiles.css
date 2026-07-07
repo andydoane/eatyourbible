@@ -576,3 +576,234 @@
     padding-bottom: 12px;
   }
 }
+
+/* ---------- Active Zookeeper control ---------- */
+
+.title-profile-control {
+  width: min(100%, 360px);
+  min-height: 54px;
+  margin: 4px auto 10px;
+  border: 3px solid rgba(255, 255, 255, 0.76);
+  border-radius: 999px;
+  padding: 5px 12px 5px 6px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font: inherit;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.title-profile-control:active {
+  transform: scale(0.985);
+}
+
+.title-profile-avatar {
+  width: 42px;
+  height: 42px;
+  border: 3px solid #ffffff;
+  border-radius: 13px;
+}
+
+.title-profile-avatar .profile-picture-fallback {
+  font-size: 24px;
+}
+
+.title-profile-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: clamp(19px, 4.6vw, 24px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.title-profile-chevron {
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* ---------- Zookeeper management ---------- */
+
+.profile-manage-shell {
+  width: min(100%, 580px);
+}
+
+.profile-manage-header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: clamp(16px, 3vh, 24px);
+}
+
+.profile-manage-header .profile-heading {
+  margin: 0;
+  font-size: clamp(27px, 6.6vw, 42px);
+}
+
+.profile-manage-identity {
+  width: min(100%, 440px);
+  border-radius: 28px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-manage-avatar {
+  width: min(42vw, 180px);
+  aspect-ratio: 1 / 1;
+  border: 7px solid #ffffff;
+  border-radius: 30px;
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.22);
+}
+
+.profile-manage-name {
+  width: 100%;
+  margin-top: 14px;
+  overflow-wrap: anywhere;
+  font-size: clamp(28px, 7vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.profile-manage-count {
+  margin-top: 7px;
+  font-size: clamp(14px, 3.5vw, 18px);
+  font-weight: 800;
+  opacity: 0.88;
+}
+
+.profile-manage-actions,
+.profile-manage-danger {
+  width: min(100%, 440px);
+  display: grid;
+  gap: 11px;
+}
+
+.profile-manage-actions {
+  margin-top: 18px;
+}
+
+.profile-manage-danger {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(255, 255, 255, 0.24);
+}
+
+.profile-manage-action {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 18px;
+  padding: 12px 16px;
+  background: #ffffff;
+  color: #7f66c6;
+  font: inherit;
+  font-size: clamp(18px, 4.5vw, 23px);
+  font-weight: 900;
+  line-height: 1.05;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.profile-manage-action:active {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.22);
+}
+
+.profile-manage-action-danger {
+  background: #ffc751;
+  color: #333333;
+}
+
+.profile-manage-action-family {
+  background: #ff5a51;
+  color: #ffffff;
+}
+
+@media (max-width: 380px) {
+  .title-profile-control {
+    min-height: 48px;
+    grid-template-columns: 36px minmax(0, 1fr) 20px;
+    gap: 8px;
+  }
+
+  .title-profile-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+  }
+
+  .title-profile-name {
+    font-size: 18px;
+  }
+
+  .profile-manage-header {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 7px;
+  }
+
+  .profile-manage-header .profile-heading {
+    font-size: 24px;
+  }
+
+  .profile-manage-avatar {
+    width: min(40vw, 150px);
+  }
+}
+
+@media (max-height: 700px) {
+  .title-profile-control {
+    min-height: 46px;
+    margin-top: 2px;
+    margin-bottom: 7px;
+  }
+
+  .title-profile-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .profile-manage-header {
+    margin-bottom: 10px;
+  }
+
+  .profile-manage-identity {
+    padding: 12px;
+  }
+
+  .profile-manage-avatar {
+    width: min(26vh, 145px);
+    border-width: 6px;
+    border-radius: 24px;
+  }
+
+  .profile-manage-name {
+    margin-top: 10px;
+    font-size: clamp(25px, 6vw, 34px);
+  }
+
+  .profile-manage-actions {
+    margin-top: 13px;
+  }
+
+  .profile-manage-danger {
+    margin-top: 15px;
+    padding-top: 14px;
+  }
+
+  .profile-manage-action {
+    min-height: 48px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
