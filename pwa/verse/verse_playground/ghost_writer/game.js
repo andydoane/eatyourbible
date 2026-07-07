@@ -1185,6 +1185,7 @@
     stopPlayback();
     clearGuideTimer();
     state.screen = "mode";
+    app?.classList.add("ghost-writer-mode-select");
 
     shell().renderModeSelect({
       app,
@@ -3237,23 +3238,35 @@
     const verticalAlign = options.verticalAlign || "center";
     let line = [];
     let lineWidth = 0;
+    let pendingSpace = false;
+    let splitLongToken = false;
 
     const pushLine = () => {
       lines.push({ items: line, width: lineWidth });
       line = [];
       lineWidth = 0;
+      pendingSpace = false;
     };
 
-    const addChar = (char) => {
+    const makeItem = (char) => {
       const widthUnits = glyphWidthUnits(char);
       const w = fontSize * widthUnits;
+      return { char, w, fontSize };
+    };
 
-      if (line.length && lineWidth + w > maxWidth) {
+    const appendItems = (items, width) => {
+      line.push(...items);
+      lineWidth += width;
+    };
+
+    const addCharEmergency = (char) => {
+      const item = makeItem(char);
+
+      if (line.length && lineWidth + item.w > maxWidth) {
         pushLine();
       }
 
-      line.push({ char, w, fontSize });
-      lineWidth += w;
+      appendItems([item], item.w);
     };
 
     const tokens = String(text || "").match(/\n|\s+|\S+/g) || [];
@@ -3265,20 +3278,45 @@
       }
 
       if (/^\s+$/.test(token)) {
-        if (line.length) addChar(" ");
+        pendingSpace = line.length > 0;
         continue;
       }
 
       const chars = Array.from(token);
-      const tokenWidth = chars.reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
+      const tokenItems = chars.map(makeItem);
+      const tokenWidth = tokenItems.reduce((sum, item) => sum + item.w, 0);
+      const spaceItem = makeItem(" ");
+      const spaceWidth = pendingSpace && line.length ? spaceItem.w : 0;
 
-      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth) {
+      // If a whole word can fit on an empty line, keep it together.
+      // This prevents layouts like UNDERSTANDI / NG.
+      if (tokenWidth <= maxWidth) {
+        if (line.length && lineWidth + spaceWidth + tokenWidth > maxWidth) {
+          pushLine();
+        }
+
+        if (pendingSpace && line.length) {
+          appendItems([spaceItem], spaceWidth);
+        }
+
+        appendItems(tokenItems, tokenWidth);
+        pendingSpace = false;
+        continue;
+      }
+
+      // Emergency fallback only: the word is wider than the whole allowed line.
+      // Mark this layout as overflowing so the fitter tries a smaller font first.
+      splitLongToken = true;
+
+      if (line.length) {
         pushLine();
       }
 
       for (const char of chars) {
-        addChar(char);
+        addCharEmergency(char);
       }
+
+      pendingSpace = false;
     }
 
     if (line.length || !lines.length) pushLine();
@@ -3316,7 +3354,7 @@
       height: totalHeight,
       width: usedWidth,
       lineCount: lines.length,
-      overflows: usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1
+      overflows: splitLongToken || usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1
     };
   }
 
