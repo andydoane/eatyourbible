@@ -1866,8 +1866,10 @@
     if (!challenge || challenge.type !== "reference") return "";
 
     return `
-      <div class="wob-challenge-prompt wob-reference-clue">
-        ${escapeHtml(referenceClueText(challenge))}
+      <div class="wob-context-card wob-reference-clue">
+        <span class="wob-context-blank">
+          ${escapeHtml(referenceClueText(challenge))}
+        </span>
       </div>
     `;
   }

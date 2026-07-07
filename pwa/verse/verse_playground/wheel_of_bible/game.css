@@ -424,6 +424,8 @@ body {
 }
 
 .wob-intro-word {
+  position: relative;
+  top: .08em;
   opacity: 0;
   transform: translateY(18px) scale(.72) rotate(-4deg);
   display: inline-flex;
@@ -1111,10 +1113,6 @@ button.wob-ref-group {
 }
 
 .wob-reference-clue {
-  min-width: min(82vw, 280px);
-  font-size: clamp(25px, 6.4vw, 42px);
-  line-height: 1;
-  letter-spacing: .08em;
   white-space: pre-wrap;
 }
 
@@ -1335,6 +1333,10 @@ button.wob-ref-group {
   font-family: "WOB Chunk", "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-weight: 400;
   letter-spacing: .01em;
+}
+
+.wob-final-intro-title,
+.wob-money-total-title {
   padding-top: var(--wob-chunk-text-y-nudge);
 }
 
@@ -1348,6 +1350,8 @@ button.wob-ref-group {
   color: #ffffff;
   background: #333333;
   min-width: clamp(142px, 38vw, 220px);
+  padding-top: calc(12px + var(--wob-chunk-text-y-nudge));
+  padding-bottom: 12px;
 }
 
 .wob-bonus-panel,
@@ -1514,6 +1518,8 @@ button.wob-ref-group {
   border-radius: 34px;
   min-height: clamp(96px, 18vh, 156px);
   padding: clamp(14px, 4vw, 24px) clamp(18px, 5vw, 32px);
+  padding-top: calc(clamp(14px, 4vw, 24px) + var(--wob-chunk-text-y-nudge));
+  padding-bottom: clamp(14px, 4vw, 24px);
   color: #ffffff;
   background: #2f7a32;
   font-size: clamp(52px, 15vw, 112px);
@@ -1583,7 +1589,7 @@ button.wob-ref-group {
   border-radius: 999px;
   min-width: clamp(148px, 38vw, 220px);
   min-height: clamp(48px, 8vh, 64px);
-  padding: 9px 26px;
+  padding: calc(9px + var(--wob-chunk-text-y-nudge)) 26px 9px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2113,6 +2119,10 @@ button.wob-ref-group {
   text-align: center;
   pointer-events: none;
   animation: wobRoundTotalPopIn 360ms cubic-bezier(.18, 1.35, .3, 1) both;
+}
+
+.wob-round-total-pop.is-challenge-bonus {
+  border: 4px solid #235b25;
 }
 
 .wob-round-total-label {
