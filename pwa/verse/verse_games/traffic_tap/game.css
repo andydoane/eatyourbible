@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root{
   --tt-bg:#a7cb6f;
   --tt-white:#ffffff;
@@ -17,6 +25,7 @@ body{
   margin:0;
   background:var(--tt-bg);
   color:var(--tt-white);
+  font-family:"Baloo 2", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   -webkit-user-select:none;
   user-select:none;
   -webkit-touch-callout:none;
