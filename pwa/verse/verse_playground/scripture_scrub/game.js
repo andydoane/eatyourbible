@@ -80,7 +80,7 @@
       dig: 0.64,
       glow: 1,
       leaves: 0.48,
-      mower: 0.57,
+      mower: 0.37,
       stickerPop: 1,
       rainbow: 0.69,
       splat: 0.83,
@@ -230,7 +230,7 @@
       introTitle: "Find the Bible",
       icon: "🏺",
       intro: "Dig carefully. Find the hidden Bible!",
-      instruction: "Uncover the Bible!",
+      instruction: "Find the hidden Bible!",
       kind: "archaeology",
       texture: "dirt",
       rewardIcon: "📖",
@@ -863,6 +863,54 @@
     if (root) root.classList.add("scrub-instruction-dismissed");
   }
 
+  function showArchaeologyCarefulTip(root, chip) {
+    if (!root || !chip) return;
+
+    root.dataset.scrubArchaeologyTipShown = "1";
+    root.dataset.scrubInstructionTransition = "1";
+    root.classList.add("scrub-instruction-dismissed");
+
+    setTimeout(() => {
+      if (!root.isConnected || roundConfig()?.kind !== "archaeology") return;
+
+      chip.textContent = "Clear as little dirt as possible!";
+      root.classList.remove("scrub-instruction-dismissed");
+      root.dataset.scrubInstructionTransition = "0";
+      playGameSound("popup");
+    }, 190);
+  }
+
+  function absorbInstructionTap(event, round = roundConfig()) {
+    const root = document.getElementById("scrubGame");
+    const chip = document.getElementById("scrubInstructionChip");
+
+    if (!root || !chip) return false;
+
+    if (root.dataset.scrubInstructionTransition === "1") {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      return true;
+    }
+
+    if (root.classList.contains("scrub-instruction-dismissed")) {
+      return false;
+    }
+
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+
+    pointerDown = false;
+    lastPoint = null;
+
+    if (round?.kind === "archaeology" && root.dataset.scrubArchaeologyTipShown !== "1") {
+      showArchaeologyCarefulTip(root, chip);
+      return true;
+    }
+
+    dismissInstructionChip();
+    return true;
+  }
+
   async function loadVerseJson() {
     const verseId = String(ctx.verseId || launchParams.verseId || "").trim();
     if (!verseId) return null;
@@ -969,6 +1017,71 @@
     return loaded.filter(Boolean);
   }
 
+  const roundAssetLoadPromises = new Map();
+
+  function loadRoundAssetOnce(key, loader, assignValue) {
+    if (roundAssetLoadPromises.has(key)) {
+      return roundAssetLoadPromises.get(key);
+    }
+
+    const promise = loader()
+      .then((value) => {
+        assignValue(value);
+        return value;
+      })
+      .catch((err) => {
+        console.warn("Scripture Scrub: could not load round asset", key, err);
+        return null;
+      });
+
+    roundAssetLoadPromises.set(key, promise);
+    return promise;
+  }
+
+  async function ensureRoundAssets(round) {
+    const jobs = [];
+
+    if (round?.id === "paint") {
+      jobs.push(loadRoundAssetOnce("paintBlobImages", loadPaintBlobImages, (value) => {
+        paintBlobImages = Array.isArray(value) ? value : [];
+      }));
+    }
+
+    if (round?.id === "leaves") {
+      jobs.push(loadRoundAssetOnce("leafImages", loadLeafImages, (value) => {
+        leafImages = Array.isArray(value) ? value : [];
+      }));
+    }
+
+    if (round?.id === "cookies") {
+      jobs.push(loadRoundAssetOnce("cookieImages", loadCookieImages, (value) => {
+        cookieImages = Array.isArray(value) ? value : [];
+      }));
+    }
+
+    if (round?.id === "chalkboard") {
+      jobs.push(loadRoundAssetOnce("chalkboardImage", loadChalkboardImage, (value) => {
+        chalkboardImage = value || null;
+      }));
+    }
+
+    if (round?.id === "mower") {
+      jobs.push(loadRoundAssetOnce("grassCoverImage", loadGrassBackgroundImage, (value) => {
+        grassCoverImage = value || null;
+      }));
+
+      jobs.push(loadRoundAssetOnce("mowedGrassImage", loadMowedGrassBackgroundImage, (value) => {
+        mowedGrassImage = value || null;
+      }));
+
+      jobs.push(loadRoundAssetOnce("mowerImage", loadMowerImage, (value) => {
+        mowerImage = value || null;
+      }));
+    }
+
+    await Promise.all(jobs);
+  }
+
   function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
@@ -1059,20 +1172,20 @@
 
     currentRoundIndex = targetIndex;
     archaeologyScore = null;
-    renderRound();
+    void renderRound();
   }
 
   function beginScrubRun() {
     currentRoundIndex = 0;
     archaeologyScore = null;
-    renderRound();
+    void renderRound();
   }
 
   function renderRoundIntro() {
-    renderRound();
+    void renderRound();
   }
 
-  function renderRound() {
+  async function renderRound() {
     cleanupRound();
     completionLocked = false;
     pointerDown = false;
@@ -1180,13 +1293,19 @@
       document.fonts.ready.then(() => fitVerseToScreen()).catch(() => { });
     }
 
+    const setupCurrentRoundVisuals = () => {
+      if (round !== roundConfig()) return;
+      setupRoundVisuals(round);
+    };
+
     resizeHandler = () => {
       fitVerseToScreen();
-      setupRoundVisuals(round);
+      setupCurrentRoundVisuals();
     };
     window.addEventListener("resize", resizeHandler);
 
-    setupRoundVisuals(round);
+    await ensureRoundAssets(round);
+    setupCurrentRoundVisuals();
   }
 
   function getReferenceDisplay() {
@@ -2212,9 +2331,9 @@
   function wireChalkboardErase(round) {
     coverCanvas.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
+      if (absorbInstructionTap(event, round)) return;
 
       event.preventDefault();
-      dismissInstructionChip();
       refreshChalkboardTargetRect();
 
       pointerDown = true;
@@ -2498,9 +2617,9 @@
   function wireGlowReveal(round) {
     coverCanvas.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
+      if (absorbInstructionTap(event, round)) return;
 
       event.preventDefault();
-      dismissInstructionChip();
       syncGlowVerseLayer();
       refreshGlowTargetRects();
 
@@ -3072,9 +3191,9 @@
 
     coverCanvas.onpointerdown = (event) => {
       if (menuOpen || completionLocked || mowerActive) return;
+      if (absorbInstructionTap(event, round)) return;
 
       event.preventDefault();
-      dismissInstructionChip();
 
       const point = getCanvasPoint(event);
       startMowerPass(point.x, round);
@@ -3372,8 +3491,9 @@
   function wireCanvasScrub(round) {
     coverCanvas.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
+      if (absorbInstructionTap(event, round)) return;
+
       event.preventDefault();
-      dismissInstructionChip();
 
       // iPad Safari can allow MP3 sounds but still delay generated oscillator tones.
       // Prime generated tones directly inside the first real scrub gesture.
@@ -3651,7 +3771,8 @@
 
     stageEl.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
-      dismissInstructionChip();
+      if (absorbInstructionTap(event, roundConfig())) return;
+
       tapLeafAt(event.clientX, event.clientY);
     };
 
@@ -3968,10 +4089,10 @@
 
       cookie.addEventListener("pointerdown", (event) => {
         if (menuOpen || completionLocked || cookie.dataset.cleared === "1") return;
+        if (absorbInstructionTap(event, roundConfig())) return;
 
         event.preventDefault();
         event.stopPropagation();
-        dismissInstructionChip();
         biteCookie(cookie);
       });
 
@@ -4418,12 +4539,14 @@
       btn.style.setProperty("--sticker-emoji-size", `${emojiSize}px`);
       btn.style.setProperty("--sticker-word-size", `${wordSize}px`);
 
-      btn.onclick = () => {
-        dismissInstructionChip();
-        peelSticker(btn);
-      };
+      btn.onclick = null;
       btn.onpointerdown = (event) => {
+        if (menuOpen || completionLocked || btn.classList.contains("is-peeled")) return;
+        if (absorbInstructionTap(event, roundConfig())) return;
+
+        event.preventDefault();
         event.stopPropagation();
+        peelSticker(btn);
       };
 
       layer.appendChild(btn);
@@ -4905,13 +5028,6 @@
   }
 
   verseJson = await loadVerseJson();
-  grassCoverImage = await loadGrassBackgroundImage();
-  mowedGrassImage = await loadMowedGrassBackgroundImage();
-  mowerImage = await loadMowerImage();
-  chalkboardImage = await loadChalkboardImage();
-  leafImages = await loadLeafImages();
-  cookieImages = await loadCookieImages();
-  paintBlobImages = await loadPaintBlobImages();
   await waitForLocalFonts();
   renderTitleScreen();
 })();
