@@ -3858,6 +3858,8 @@ async function loadVerseList() {
 const Screen = {
   INTRO: "intro",
   TITLE_SEQUENCE: "title_sequence",
+  PROFILE_PICKER: "profile_picker",
+  PROFILE_EDITOR: "profile_editor",
   TITLE: "title",
   SETTINGS: "settings",
   TODO: "todo",
@@ -3974,6 +3976,18 @@ const State = {
   finalRecallDone: false,
   finalRecallRevealed: false,
   fireworksTimer: null,
+
+  // Zookeeper profile screens
+  profileEditorMode: "add-profile",
+  editingProfileId: "",
+  profileEditorName: "",
+  profileEditorError: "",
+  profileEditorTouched: false,
+  profileEditorBusy: false,
+  profileEditorOriginalAvatarVerseId: "",
+  profilePictureSelectionChanged: false,
+  profileEditorMigrationCode: "",
+  profileEditorMigrationMessage: "",
 
   // Profile picture carousel
   profilePictureIndex: 0,
@@ -4820,6 +4834,8 @@ function screenToIndex(screen) {
   const order = [
     Screen.INTRO,
     Screen.TITLE_SEQUENCE,
+    Screen.PROFILE_PICKER,
+    Screen.PROFILE_EDITOR,
     Screen.TITLE,
     Screen.SETTINGS,
     Screen.TODO,
@@ -6121,6 +6137,8 @@ function renderNav() {
   const show = (
     State.screen !== Screen.INTRO &&
     State.screen !== Screen.TITLE_SEQUENCE &&
+    State.screen !== Screen.PROFILE_PICKER &&
+    State.screen !== Screen.PROFILE_EDITOR &&
     State.screen !== Screen.TITLE &&
     State.screen !== Screen.SETTINGS &&
     State.screen !== Screen.TODO &&
@@ -6356,6 +6374,818 @@ function makeSlide({ idx, bg, navHidden = false, inner }) {
 /* =========================
    6. Game Framework
    ========================= */
+
+
+const PROFILE_EDITOR_MODES = Object.freeze({
+  FIRST: "first-profile",
+  ADD: "add-profile",
+  EDIT: "edit-profile"
+});
+
+function getProfileApi() {
+  return window.BibloZooProfiles || null;
+}
+
+function getProfilePictureIndexForVerseId(verseId) {
+  const catalog = getProfilePictureCatalogForUi();
+  return catalog.indexOf(String(verseId || ""));
+}
+
+function setProfilePictureIndexForVerseId(verseId) {
+  const index = getProfilePictureIndexForVerseId(verseId);
+
+  State.profilePictureIndex = index >= 0 ? index : 0;
+  return State.profilePictureIndex;
+}
+
+function profilePictureVisualHtml(
+  verseId,
+  {
+    className = "",
+    alt = ""
+  } = {}
+) {
+  const profileApi = getProfileApi();
+  const cleanVerseId = String(verseId || "").trim();
+  const src = profileApi?.getProfilePictureSrc?.(cleanVerseId) || "";
+  const safeClassName = className
+    ? ` ${escapeHtml(className)}`
+    : "";
+
+  const imageHtml = src
+    ? `
+      <img
+        class="profile-picture-img"
+        src="${escapeHtml(src)}"
+        alt="${escapeHtml(alt)}"
+        draggable="false"
+        data-profile-picture-verse-id="${escapeHtml(cleanVerseId)}"
+        onload="BibloZooProfiles.handleProfilePictureLoad(this)"
+        onerror="BibloZooProfiles.handleProfilePictureError(this)"
+      >
+    `
+    : "";
+
+  return `
+    <div class="profile-picture-visual${safeClassName}">
+      <span class="profile-picture-fallback" aria-hidden="true">🐾</span>
+      ${imageHtml}
+    </div>
+  `;
+}
+
+function getProfileEditorAvatarVerseId() {
+  if (
+    State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT &&
+    !State.profilePictureSelectionChanged
+  ) {
+    return State.profileEditorOriginalAvatarVerseId || "";
+  }
+
+  return (
+    getSelectedProfilePictureVerseId() ||
+    State.profileEditorOriginalAvatarVerseId ||
+    ""
+  );
+}
+
+function selectAdjacentProfilePicture(offset) {
+  const catalog = getProfilePictureCatalogForUi();
+  if (!catalog.length) return "";
+
+  const numericOffset = Number(offset);
+  const safeOffset =
+    Number.isFinite(numericOffset) && numericOffset < 0
+      ? -1
+      : 1;
+
+  if (!State.profilePictureSelectionChanged) {
+    const originalIndex = getProfilePictureIndexForVerseId(
+      State.profileEditorOriginalAvatarVerseId
+    );
+
+    if (originalIndex >= 0) {
+      State.profilePictureIndex = originalIndex;
+      moveProfilePictureIndex(safeOffset);
+    } else {
+      State.profilePictureIndex =
+        safeOffset < 0
+          ? catalog.length - 1
+          : 0;
+    }
+
+    State.profilePictureSelectionChanged = true;
+  } else {
+    moveProfilePictureIndex(safeOffset);
+  }
+
+  return getSelectedProfilePictureVerseId();
+}
+
+function resetProfileEditorState() {
+  State.profileEditorMode = PROFILE_EDITOR_MODES.ADD;
+  State.editingProfileId = "";
+  State.profileEditorName = "";
+  State.profileEditorError = "";
+  State.profileEditorTouched = false;
+  State.profileEditorBusy = false;
+  State.profileEditorOriginalAvatarVerseId = "";
+  State.profilePictureSelectionChanged = false;
+  State.profileEditorMigrationCode = "";
+  State.profileEditorMigrationMessage = "";
+  State.profilePictureIndex = 0;
+}
+
+function getProfileEditorValidation() {
+  const profileApi = getProfileApi();
+
+  if (!profileApi?.validateProfileName) {
+    return {
+      ok: false,
+      code: "unavailable",
+      name: "",
+      message: "Zookeeper profiles are unavailable."
+    };
+  }
+
+  const excludeProfileId =
+    State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT
+      ? State.editingProfileId
+      : "";
+
+  return profileApi.validateProfileName(
+    State.profileEditorName,
+    { excludeProfileId }
+  );
+}
+
+function getProfileEditorMigrationNotice() {
+  if (State.profileEditorMode !== PROFILE_EDITOR_MODES.FIRST) {
+    return "";
+  }
+
+  if (State.profileEditorMigrationCode === "legacy_progress_ready") {
+    return `
+      <div class="profile-migration-notice">
+        We found progress already saved on this device. It will be added to your new Zookeeper profile.
+      </div>
+    `;
+  }
+
+  if (State.profileEditorMigrationCode === "legacy_progress_malformed") {
+    return `
+      <div class="profile-migration-notice profile-migration-warning">
+        We found old progress on this device, but it could not be read. The original data will be preserved.
+      </div>
+    `;
+  }
+
+  return "";
+}
+
+function openProfilePicker() {
+  resetProfileEditorState();
+  go(Screen.PROFILE_PICKER);
+}
+
+function openFirstProfileEditor() {
+  resetProfileEditorState();
+
+  const profileApi = getProfileApi();
+  const migrationState =
+    profileApi?.getLegacyMigrationState?.() || {};
+
+  State.profileEditorMode = PROFILE_EDITOR_MODES.FIRST;
+  State.profilePictureSelectionChanged = true;
+  State.profileEditorMigrationCode =
+    String(migrationState.code || "");
+  State.profileEditorMigrationMessage =
+    String(migrationState.message || "");
+
+  setProfilePictureIndex(0);
+  go(Screen.PROFILE_EDITOR);
+}
+
+function openAddProfileEditor() {
+  resetProfileEditorState();
+
+  State.profileEditorMode = PROFILE_EDITOR_MODES.ADD;
+  State.profilePictureSelectionChanged = true;
+
+  setProfilePictureIndex(0);
+  go(Screen.PROFILE_EDITOR);
+}
+
+function openEditProfileEditor(profileId) {
+  const profileApi = getProfileApi();
+  const profile = profileApi?.getProfileById?.(profileId);
+
+  if (!profile) {
+    showDialog({
+      title: "Profile Not Found",
+      body: "That Zookeeper profile could not be opened.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+    return;
+  }
+
+  resetProfileEditorState();
+
+  State.profileEditorMode = PROFILE_EDITOR_MODES.EDIT;
+  State.editingProfileId = profile.id;
+  State.profileEditorName = profile.name;
+  State.profileEditorOriginalAvatarVerseId =
+    profile.avatarVerseId || "";
+  State.profilePictureSelectionChanged = false;
+
+  setProfilePictureIndexForVerseId(profile.avatarVerseId);
+  go(Screen.PROFILE_EDITOR);
+}
+
+function stopProfileTransitionAudio() {
+  try {
+    audioEl.pause();
+    audioEl.currentTime = 0;
+  } catch (err) { }
+
+  try {
+    petUnlockAudioEl?.pause?.();
+    if (petUnlockAudioEl) {
+      petUnlockAudioEl.currentTime = 0;
+    }
+  } catch (err) { }
+}
+
+function clearTransientStateForProfileActivation() {
+  stopProfileTransitionAudio();
+
+  try {
+    clearGameMixState();
+  } catch (err) { }
+
+  State.pendingPetUnlockVerseId = null;
+  State.activeTodo = null;
+  State.pendingZooTodoGameId = "";
+  State.todoTutorialPage = 1;
+  State.todoTutorialJustFinishedLearn = false;
+  State.tutorialPracticeMode = false;
+  State.todoInfoPage = "";
+  State.petAnimationVerseId = null;
+  State.petAnimationStatus = "";
+  State.petAnimationClass = "";
+  State.selectedVerseId = VERSE_ID || null;
+
+  titleZooPetVerseId = "";
+}
+
+function continueAfterProfileActivation() {
+  clearTransientStateForProfileActivation();
+  refreshCurrentProgressState();
+
+  if (isTutorialActive()) {
+    go(Screen.TODO_DEV);
+    return;
+  }
+
+  go(Screen.TITLE);
+}
+
+function activateProfileFromPicker(profileId) {
+  const profileApi = getProfileApi();
+
+  try {
+    profileApi?.setActiveProfile?.(profileId);
+    continueAfterProfileActivation();
+  } catch (err) {
+    showDialog({
+      title: "Could Not Open Profile",
+      body: String(err?.message || err),
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  }
+}
+
+function createVerifiedEmptyProfileProgress(profileId) {
+  const profileApi = getProfileApi();
+  const profile = profileApi?.getProfileById?.(profileId);
+
+  if (!profile) {
+    throw new Error(
+      "The new Zookeeper profile could not be verified."
+    );
+  }
+
+  profileApi.setActiveProfile(profileId);
+
+  const progress = createEmptyProgress();
+  saveProgress(progress);
+
+  const progressKey =
+    profileApi.getProfileProgressStorageKey(profileId);
+  const savedRaw = progressKey
+    ? localStorage.getItem(progressKey)
+    : null;
+
+  if (!savedRaw) {
+    throw new Error(
+      "The new Zookeeper progress could not be saved."
+    );
+  }
+
+  const savedProgress = JSON.parse(savedRaw);
+
+  if (
+    !savedProgress ||
+    typeof savedProgress !== "object" ||
+    Array.isArray(savedProgress) ||
+    !savedProgress.verses ||
+    typeof savedProgress.verses !== "object" ||
+    !savedProgress.tutorial ||
+    typeof savedProgress.tutorial !== "object"
+  ) {
+    throw new Error(
+      "The new Zookeeper progress failed verification."
+    );
+  }
+
+  return savedProgress;
+}
+
+function updateProfileEditorValidationUi(rootEl) {
+  if (!rootEl) return;
+
+  const validation = getProfileEditorValidation();
+  const errorEl = rootEl.querySelector(
+    "[data-profile-editor-error]"
+  );
+  const submitBtn = rootEl.querySelector(
+    "[data-profile-editor-submit]"
+  );
+
+  const message =
+    State.profileEditorError ||
+    (
+      State.profileEditorTouched && !validation.ok
+        ? validation.message
+        : ""
+    );
+
+  if (errorEl) {
+    errorEl.textContent = message;
+    errorEl.classList.toggle("show", !!message);
+  }
+
+  if (submitBtn) {
+    submitBtn.disabled =
+      State.profileEditorBusy || !validation.ok;
+
+    submitBtn.textContent = State.profileEditorBusy
+      ? "Saving..."
+      : (
+        State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT
+          ? "Save Changes"
+          : "Create Zookeeper"
+      );
+  }
+}
+
+async function submitProfileEditor() {
+  if (State.profileEditorBusy) return;
+
+  const profileApi = getProfileApi();
+
+  State.profileEditorTouched = true;
+  State.profileEditorError = "";
+
+  try {
+    await window.BibloZooNameValidation
+      ?.loadNameBlocklist?.();
+
+    const validation = getProfileEditorValidation();
+
+    if (!validation.ok) {
+      State.profileEditorError = validation.message;
+      render();
+      return;
+    }
+
+    State.profileEditorBusy = true;
+    render();
+
+    const avatarVerseId =
+      getProfileEditorAvatarVerseId();
+
+    if (State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT) {
+      profileApi.updateProfile(
+        State.editingProfileId,
+        {
+          name: validation.name,
+          avatarVerseId
+        }
+      );
+
+      State.profileEditorBusy = false;
+      State.profileEditorError = "";
+      openProfilePicker();
+      return;
+    }
+
+    let createdProfile = null;
+
+    try {
+      createdProfile = profileApi.createProfile({
+        name: validation.name,
+        avatarVerseId,
+        makeActive: true
+      });
+
+      if (
+        State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
+        State.profileEditorMigrationCode === "legacy_progress_ready"
+      ) {
+        migrateLegacyProgressForProfile(
+          createdProfile.id
+        );
+      } else {
+        createVerifiedEmptyProfileProgress(
+          createdProfile.id
+        );
+
+        if (
+          State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
+          State.profileEditorMigrationCode === "no_legacy_progress"
+        ) {
+          profileApi.markLegacyMigrationNotNeeded?.();
+        }
+
+        if (
+          State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
+          State.profileEditorMigrationCode === "legacy_progress_malformed"
+        ) {
+          profileApi.markLegacyMigrationFailed?.(
+            createdProfile.id,
+            State.profileEditorMigrationMessage ||
+              "The old progress data could not be read."
+          );
+        }
+      }
+    } catch (err) {
+      if (createdProfile?.id) {
+        try {
+          profileApi.deleteProfile(
+            createdProfile.id,
+            { removeProgress: true }
+          );
+        } catch (cleanupError) {
+          console.warn(
+            "Could not clean up incomplete profile",
+            cleanupError
+          );
+        }
+      }
+
+      throw err;
+    }
+
+    State.profileEditorBusy = false;
+    State.profileEditorError = "";
+
+    const shouldWarnAboutLegacyData =
+      State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
+      State.profileEditorMigrationCode === "legacy_progress_malformed";
+
+    continueAfterProfileActivation();
+
+    if (shouldWarnAboutLegacyData) {
+      showDialog({
+        title: "Old Progress Preserved",
+        body: "Your Zookeeper profile was created, but the old progress could not be read. The original data was not deleted.",
+        actions: [
+          dlgBtn("OK", { onClick: closeDialog })
+        ]
+      });
+    }
+  } catch (err) {
+    State.profileEditorBusy = false;
+    State.profileEditorError =
+      String(err?.message || err);
+    render();
+  }
+}
+
+function screenProfilePicker(idx) {
+  const wrap = document.createElement("div");
+  wrap.className =
+    "profile-screen profile-picker-screen";
+
+  const profileApi = getProfileApi();
+  const profiles = profileApi?.getAllProfiles?.() || [];
+  const activeProfileId =
+    profileApi?.getActiveProfileId?.() || "";
+
+  const profileCardsHtml = profiles
+    .map((profile) => {
+      const activeClass =
+        profile.id === activeProfileId
+          ? " is-active"
+          : "";
+
+      return `
+        <button
+          class="profile-picker-card no-zoom${activeClass}"
+          type="button"
+          data-profile-picker-id="${escapeHtml(profile.id)}"
+          aria-label="Choose ${escapeHtml(profile.name)}"
+        >
+          ${profilePictureVisualHtml(
+            profile.avatarVerseId,
+            {
+              className: "profile-picker-avatar",
+              alt: `${profile.name}'s Zookeeper picture`
+            }
+          )}
+          <span class="profile-picker-name">
+            ${escapeHtml(profile.name)}
+          </span>
+        </button>
+      `;
+    })
+    .join("");
+
+  wrap.innerHTML = `
+    <div class="profile-page">
+      <div class="profile-shell profile-picker-shell">
+        <div class="profile-welcome">Welcome to</div>
+
+        <img
+          class="profile-logo"
+          src="${escapeHtml(TITLE_LOGO)}"
+          alt="BibloZoo"
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+
+        <h1 class="profile-heading">
+          Choose your Zookeeper
+        </h1>
+
+        <div class="profile-picker-grid">
+          ${profileCardsHtml}
+
+          <button
+            class="profile-picker-card profile-add-card no-zoom"
+            type="button"
+            data-profile-add
+            aria-label="Add Zookeeper"
+          >
+            <span class="profile-add-icon" aria-hidden="true">+</span>
+            <span class="profile-picker-name">
+              Add Zookeeper
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  wrap
+    .querySelectorAll("[data-profile-picker-id]")
+    .forEach((btn) => {
+      btn.onclick = () => {
+        activateProfileFromPicker(
+          btn.dataset.profilePickerId
+        );
+      };
+    });
+
+  const addBtn = wrap.querySelector("[data-profile-add]");
+  if (addBtn) {
+    addBtn.onclick = openAddProfileEditor;
+  }
+
+  return makeSlide({
+    idx,
+    bg: "var(--purple)",
+    navHidden: true,
+    inner: wrap
+  });
+}
+
+function screenProfileEditor(idx) {
+  const wrap = document.createElement("div");
+  wrap.className =
+    "profile-screen profile-editor-screen";
+
+  const isFirst =
+    State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST;
+  const isEdit =
+    State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT;
+
+  const heading = isFirst
+    ? "Let’s make your zookeeper profile."
+    : (
+      isEdit
+        ? "Edit your Zookeeper profile."
+        : "Add a new Zookeeper."
+    );
+
+  const backButtonHtml = isFirst
+    ? ""
+    : `
+      <button
+        class="profile-back-btn no-zoom"
+        type="button"
+        data-profile-editor-back
+        aria-label="Back to Zookeeper picker"
+      >
+        ${SVG_BACK}
+      </button>
+    `;
+
+  const catalog = getProfilePictureCatalogForUi();
+  const arrowsDisabled = catalog.length < 2;
+  const avatarVerseId =
+    getProfileEditorAvatarVerseId();
+  const maxLength =
+    getProfileApi()?.PROFILE_NAME_MAX_LENGTH || 16;
+
+  wrap.innerHTML = `
+    <div class="profile-page">
+      ${backButtonHtml}
+
+      <form
+        class="profile-shell profile-editor-shell"
+        data-profile-editor-form
+        novalidate
+      >
+        <div class="profile-welcome">Welcome to</div>
+
+        <img
+          class="profile-logo"
+          src="${escapeHtml(TITLE_LOGO)}"
+          alt="BibloZoo"
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+
+        <h1 class="profile-heading">
+          ${escapeHtml(heading)}
+        </h1>
+
+        ${getProfileEditorMigrationNotice()}
+
+        <div class="profile-avatar-stage">
+          ${profilePictureVisualHtml(
+            avatarVerseId,
+            {
+              className: "profile-editor-avatar",
+              alt: "Selected Zookeeper picture"
+            }
+          )}
+        </div>
+
+        <div
+          class="profile-avatar-controls"
+          aria-label="Choose a profile picture"
+        >
+          <button
+            class="profile-avatar-arrow no-zoom"
+            type="button"
+            data-profile-picture-prev
+            aria-label="Previous profile picture"
+            ${arrowsDisabled ? "disabled" : ""}
+          >
+            ${SVG_BACK}
+          </button>
+
+          <div class="profile-avatar-count" aria-live="polite">
+            ${
+              catalog.length
+                ? `${normalizeProfilePictureIndex() + 1} of ${catalog.length}`
+                : "Picture unavailable"
+            }
+          </div>
+
+          <button
+            class="profile-avatar-arrow no-zoom"
+            type="button"
+            data-profile-picture-next
+            aria-label="Next profile picture"
+            ${arrowsDisabled ? "disabled" : ""}
+          >
+            ${SVG_FORWARD}
+          </button>
+        </div>
+
+        <label
+          class="profile-name-label"
+          for="profileNameInput"
+        >
+          What is your name?
+        </label>
+
+        <input
+          class="profile-name-input"
+          id="profileNameInput"
+          name="profileName"
+          type="text"
+          maxlength="${maxLength}"
+          autocomplete="name"
+          autocapitalize="words"
+          spellcheck="false"
+          value="${escapeHtml(State.profileEditorName)}"
+          data-profile-name-input
+        >
+
+        <div
+          class="profile-editor-error"
+          data-profile-editor-error
+          aria-live="polite"
+        ></div>
+
+        <button
+          class="profile-submit-btn no-zoom"
+          type="submit"
+          data-profile-editor-submit
+        >
+          ${isEdit ? "Save Changes" : "Create Zookeeper"}
+        </button>
+      </form>
+    </div>
+  `;
+
+  const form = wrap.querySelector(
+    "[data-profile-editor-form]"
+  );
+  const input = wrap.querySelector(
+    "[data-profile-name-input]"
+  );
+  const backBtn = wrap.querySelector(
+    "[data-profile-editor-back]"
+  );
+  const previousBtn = wrap.querySelector(
+    "[data-profile-picture-prev]"
+  );
+  const nextBtn = wrap.querySelector(
+    "[data-profile-picture-next]"
+  );
+
+  if (backBtn) {
+    backBtn.onclick = openProfilePicker;
+  }
+
+  if (input) {
+    input.oninput = () => {
+      State.profileEditorName = input.value;
+      State.profileEditorTouched = true;
+      State.profileEditorError = "";
+      updateProfileEditorValidationUi(wrap);
+    };
+  }
+
+  if (previousBtn) {
+    previousBtn.onclick = () => {
+      if (input) {
+        State.profileEditorName = input.value;
+      }
+
+      selectAdjacentProfilePicture(-1);
+      render();
+    };
+  }
+
+  if (nextBtn) {
+    nextBtn.onclick = () => {
+      if (input) {
+        State.profileEditorName = input.value;
+      }
+
+      selectAdjacentProfilePicture(1);
+      render();
+    };
+  }
+
+  if (form) {
+    form.onsubmit = (event) => {
+      event.preventDefault();
+
+      if (input) {
+        State.profileEditorName = input.value;
+      }
+
+      submitProfileEditor();
+    };
+  }
+
+  updateProfileEditorValidationUi(wrap);
+
+  return makeSlide({
+    idx,
+    bg: "var(--purple)",
+    navHidden: true,
+    inner: wrap
+  });
+}
 
 
 function screenIntro(idx) {
@@ -9637,10 +10467,12 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title_sequence", "title", "settings", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "profile_picker", "profile_editor", "title", "settings", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
+    if (screen === Screen.PROFILE_PICKER) slide = screenProfilePicker(idx);
+    if (screen === Screen.PROFILE_EDITOR) slide = screenProfileEditor(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.SETTINGS) slide = screenSettings(idx);
     if (screen === Screen.TODO) slide = screenTodo(idx);
