@@ -1239,13 +1239,8 @@
   }
 
   function shouldShowAdvancedHintPrompt(item = state.currentItem) {
-    if (!canUseAdvancedHint(item)) return false;
-
-    if (item.kind === "reference") {
-      return state.advancedHintLevel < 2;
-    }
-
-    return item.kind === "word"
+    return canUseAdvancedHint(item)
+      && item.kind === "word"
       && !state.advancedFullHintUsed
       && state.advancedHintWordsSeen <= 4;
   }
