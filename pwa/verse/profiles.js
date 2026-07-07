@@ -12,6 +12,7 @@
   const PROFILE_REGISTRY_STORAGE_KEY = "biblozooProfiles";
   const PROFILE_REGISTRY_VERSION = 1;
   const LEGACY_PROGRESS_STORAGE_KEY = "verseMemoryProgress";
+  const PROFILE_NAME_MAX_LENGTH = 16;
 
   function cloneJson(value) {
     if (value == null) return value;
@@ -35,6 +36,89 @@
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "");
+  }
+
+  function getSharedNameValidationApi() {
+    return window.BibloZooNameValidation || null;
+  }
+
+  function getProfileNameMaxLength() {
+    const sharedMaxLength = Number(
+      getSharedNameValidationApi()?.MAX_LENGTH
+    );
+
+    return Number.isFinite(sharedMaxLength) && sharedMaxLength > 0
+      ? Math.floor(sharedMaxLength)
+      : PROFILE_NAME_MAX_LENGTH;
+  }
+
+  function cleanProfileName(value) {
+    const sharedCleaner =
+      getSharedNameValidationApi()?.cleanDisplayName;
+
+    if (typeof sharedCleaner === "function") {
+      return sharedCleaner(value, getProfileNameMaxLength());
+    }
+
+    return normalizeWhitespace(value)
+      .slice(0, getProfileNameMaxLength());
+  }
+
+  function validateProfileName(value, {
+    excludeProfileId = ""
+  } = {}) {
+    const untrimmedName = normalizeWhitespace(value);
+    const maxLength = getProfileNameMaxLength();
+
+    if (!untrimmedName) {
+      return {
+        ok: false,
+        code: "blank",
+        name: "",
+        message: "Please enter a Zookeeper name."
+      };
+    }
+
+    if (untrimmedName.length > maxLength) {
+      return {
+        ok: false,
+        code: "too_long",
+        name: cleanProfileName(untrimmedName),
+        message: `Zookeeper names can be up to ${maxLength} characters.`
+      };
+    }
+
+    const cleanName = cleanProfileName(untrimmedName);
+    const sharedBlockChecker =
+      getSharedNameValidationApi()?.isDisplayNameBlocked;
+
+    if (
+      typeof sharedBlockChecker === "function" &&
+      sharedBlockChecker(cleanName)
+    ) {
+      return {
+        ok: false,
+        code: "blocked",
+        name: cleanName,
+        message: "Please choose a different name."
+      };
+    }
+
+    if (isProfileNameInUse(cleanName, excludeProfileId)) {
+      return {
+        ok: false,
+        code: "duplicate",
+        name: cleanName,
+        message: "That Zookeeper name is already being used."
+      };
+    }
+
+    return {
+      ok: true,
+      code: "",
+      name: cleanName,
+      message: ""
+    };
   }
 
   function createEmptyProfileRegistry() {
@@ -237,16 +321,13 @@
     makeActive = true,
     id = ""
   } = {}) {
-    const cleanName = normalizeWhitespace(name);
+    const validation = validateProfileName(name);
 
-    if (!cleanName) {
-      throw new Error("Please enter a Zookeeper name.");
+    if (!validation.ok) {
+      throw new Error(validation.message);
     }
 
-    if (isProfileNameInUse(cleanName)) {
-      throw new Error("That Zookeeper name is already being used.");
-    }
-
+    const cleanName = validation.name;
     const registry = loadProfileRegistry();
     const usedIds = new Set(registry.profiles.map(profile => profile.id));
 
@@ -295,17 +376,19 @@
     }
 
     const currentProfile = registry.profiles[profileIndex];
-    const nextName = Object.prototype.hasOwnProperty.call(updates, "name")
-      ? normalizeWhitespace(updates.name)
+    const requestedName = Object.prototype.hasOwnProperty.call(updates, "name")
+      ? updates.name
       : currentProfile.name;
 
-    if (!nextName) {
-      throw new Error("Please enter a Zookeeper name.");
+    const validation = validateProfileName(requestedName, {
+      excludeProfileId: id
+    });
+
+    if (!validation.ok) {
+      throw new Error(validation.message);
     }
 
-    if (isProfileNameInUse(nextName, id)) {
-      throw new Error("That Zookeeper name is already being used.");
-    }
+    const nextName = validation.name;
 
     const nextAvatarVerseId = Object.prototype.hasOwnProperty.call(
       updates,
@@ -416,6 +499,9 @@
     deleteProfile,
     isProfileNameInUse,
 
+    PROFILE_NAME_MAX_LENGTH,
+    cleanProfileName,
+    validateProfileName,
     normalizeProfileNameForComparison,
     getProfileProgressStorageKey,
     profileHasSavedProgress,

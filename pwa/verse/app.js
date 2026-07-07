@@ -2464,7 +2464,8 @@ function getStandardGameRewardTitle(verseId, gameId, mode) {
    BibloPet Helpers
    ========================= */
 
-const PET_NAME_MAX_LENGTH = 16;
+const DISPLAY_NAME_MAX_LENGTH = 16;
+const PET_NAME_MAX_LENGTH = DISPLAY_NAME_MAX_LENGTH;
 
 const PET_NAME_BLOCKLIST_URL = "biblopet_name_blocklist.json";
 
@@ -2603,19 +2604,31 @@ function applyTitleZooPetFeetStyle(visitor, pet) {
   visitor.style.setProperty("--title-zoo-pet-ground-shift", `calc(-100% + ${feetFromBottom})`);
 }
 
-function cleanPetName(value) {
+function cleanDisplayName(value, maxLength = DISPLAY_NAME_MAX_LENGTH) {
+  const safeMaxLength = Number.isFinite(Number(maxLength))
+    ? Math.max(0, Math.floor(Number(maxLength)))
+    : DISPLAY_NAME_MAX_LENGTH;
+
   return String(value ?? "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, PET_NAME_MAX_LENGTH);
+    .slice(0, safeMaxLength);
 }
 
-function normalizePetNameForBlocklist(value) {
+function normalizeNameForBlocklist(value) {
   return String(value ?? "")
     .toLowerCase()
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "");
+}
+
+function cleanPetName(value) {
+  return cleanDisplayName(value, PET_NAME_MAX_LENGTH);
+}
+
+function normalizePetNameForBlocklist(value) {
+  return normalizeNameForBlocklist(value);
 }
 
 function extractBlocklistWordsFromJson(json) {
@@ -2717,7 +2730,7 @@ async function loadPetRandomNames() {
   return petRandomNamesLoadPromise;
 }
 
-async function loadPetNameBlocklist() {
+async function loadNameBlocklist() {
   if (petNameBlocklistLoadPromise) {
     return petNameBlocklistLoadPromise;
   }
@@ -2732,21 +2745,21 @@ async function loadPetNameBlocklist() {
     })
     .then((json) => {
       const words = extractBlocklistWordsFromJson(json)
-        .map((word) => normalizePetNameForBlocklist(word))
+        .map((word) => normalizeNameForBlocklist(word))
         .filter(Boolean);
 
       petNameBlocklist = [...new Set([
-        ...PET_NAME_FALLBACK_BLOCKLIST.map(normalizePetNameForBlocklist).filter(Boolean),
+        ...PET_NAME_FALLBACK_BLOCKLIST.map(normalizeNameForBlocklist).filter(Boolean),
         ...words
       ])];
 
       return petNameBlocklist;
     })
     .catch((err) => {
-      console.warn("Could not load BibloPet name blocklist", err);
+      console.warn("Could not load display-name blocklist", err);
 
       petNameBlocklist = PET_NAME_FALLBACK_BLOCKLIST
-        .map(normalizePetNameForBlocklist)
+        .map(normalizeNameForBlocklist)
         .filter(Boolean);
 
       return petNameBlocklist;
@@ -2755,15 +2768,31 @@ async function loadPetNameBlocklist() {
   return petNameBlocklistLoadPromise;
 }
 
-function isPetNameBlocked(value) {
-  const normalized = normalizePetNameForBlocklist(value);
+function isDisplayNameBlocked(value) {
+  const normalized = normalizeNameForBlocklist(value);
   if (!normalized) return false;
 
   return petNameBlocklist.some((blocked) => {
-    const cleanBlocked = normalizePetNameForBlocklist(blocked);
+    const cleanBlocked = normalizeNameForBlocklist(blocked);
     return cleanBlocked && normalized.includes(cleanBlocked);
   });
 }
+
+async function loadPetNameBlocklist() {
+  return loadNameBlocklist();
+}
+
+function isPetNameBlocked(value) {
+  return isDisplayNameBlocked(value);
+}
+
+window.BibloZooNameValidation = Object.freeze({
+  MAX_LENGTH: DISPLAY_NAME_MAX_LENGTH,
+  cleanDisplayName,
+  normalizeNameForBlocklist,
+  loadNameBlocklist,
+  isDisplayNameBlocked
+});
 
 function getSavedPetNameForVerseId(verseId) {
   const verseProgress = getVerseProgress(verseId);
