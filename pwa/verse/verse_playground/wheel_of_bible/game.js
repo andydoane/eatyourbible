@@ -376,15 +376,8 @@
     return base;
   }
 
-  function challengePrefilledCount(challenge) {
-    if (!challenge) return 0;
-
-    const canShowFirstLetter =
-      challenge.type === "reference" && challenge.refKind === "book";
-
-    if (!canShowFirstLetter) return 0;
-
-    return Array.isArray(challenge.expected) && challenge.expected.length > 1 ? 1 : 0;
+  function challengePrefilledCount() {
+    return 0;
   }
 
   function normalizeLetters(value) {
@@ -731,12 +724,12 @@
 
   function helpHtml() {
     return `
-      <ul class="wob-help-list">
-        <li>Spin the wheel to get a dollar amount or a prize.</li>
-        <li>Pick a letter from today's verse. Every matching blank tile reveals and earns money.</li>
-        <li>Tap the wiggling word or reference tile, then build the answer with letter or number tiles.</li>
-        <li>In the Final Round, race to rebuild as many blank words as you can.</li>
-      </ul>
+      <div class="wob-help-copy">
+        <p>Spin the wheel, then pick a letter.</p>
+        <p>Every matching letter tile on the gameboard earns you Bible Bux.</p>
+        <p>Tap the wiggling tiles to solve each Word Challenge to earn even more.</p>
+        <p>In the final Round, fill in as many missing letters as you can.</p>
+      </div>
     `;
   }
 
@@ -1131,7 +1124,7 @@
 
     const amount = Math.max(0, Number(bonus) || 0);
     const popup = document.createElement("div");
-    popup.className = "wob-round-total-pop";
+    popup.className = "wob-round-total-pop is-challenge-bonus";
     popup.innerHTML = `
       <div class="wob-round-total-label">Nice!</div>
       <div class="wob-round-total-amount">+${escapeHtml(formatMoney(amount))}</div>
@@ -1637,13 +1630,14 @@
       const parts = splitBookForChallenge(meta.book || "");
       const expected = normalizeLetters(parts.fillText).split("");
       if (!expected.length) return null;
+
       return {
         type: "reference",
         refKind: "book",
         inputKind: "letters",
         expected,
-        title: "Book Challenge",
-        prompt: "What book is this from?",
+        title: "Reference Challenge",
+        instruction: "Type the Bible book this verse is from",
         fixedPrefix: parts.fixedPrefix,
         displayText: parts.fillText,
         color: "#2f7a32",
@@ -1666,7 +1660,7 @@
         inputKind: "numbers",
         expected,
         title: "Reference Challenge",
-        prompt: "What chapter and verse is this?",
+        instruction: "Type the chapter and verse",
         displayText,
         color: "#2f7a32",
         bonus: 1600 + expected.length * 300
@@ -1708,7 +1702,7 @@
     challenge.refKind = step.refKind;
     challenge.inputKind = step.inputKind;
     challenge.expected = step.expected;
-    challenge.prompt = step.prompt;
+    challenge.instruction = step.instruction || "";
     challenge.fixedPrefix = step.fixedPrefix || "";
     challenge.displayText = step.displayText || "";
     challenge.contextHtml = step.contextHtml || "";
@@ -1820,23 +1814,90 @@
     drawChallenge();
   }
 
+  function referenceClueText(challenge) {
+    if (!challenge || challenge.type !== "reference") return "";
+
+    if (challenge.refKind === "book") {
+      let letterIndex = 0;
+
+      const clue = Array.from(String(challenge.displayText || "")).map(char => {
+        if (/[A-Za-z]/.test(char)) {
+          const show =
+            letterIndex === 0 ||
+            state.challengeHintIndexes.has(letterIndex);
+
+          const text = show
+            ? challenge.expected[letterIndex] || char
+            : "_";
+
+          letterIndex += 1;
+          return text;
+        }
+
+        return char;
+      }).join("");
+
+      return challenge.fixedPrefix
+        ? `${challenge.fixedPrefix} ${clue}`
+        : clue;
+    }
+
+    let digitIndex = 0;
+
+    return Array.from(String(challenge.displayText || "")).map(char => {
+      if (/\d/.test(char)) {
+        const show =
+          digitIndex === 0 ||
+          state.challengeHintIndexes.has(digitIndex);
+
+        const text = show
+          ? challenge.expected[digitIndex] || char
+          : "_";
+
+        digitIndex += 1;
+        return text;
+      }
+
+      return char;
+    }).join("");
+  }
+
+  function referenceClueHtml(challenge) {
+    if (!challenge || challenge.type !== "reference") return "";
+
+    return `
+      <div class="wob-challenge-prompt wob-reference-clue">
+        ${escapeHtml(referenceClueText(challenge))}
+      </div>
+    `;
+  }
+
   function drawChallenge() {
     const challenge = state.currentChallenge;
     const choiceClass = challenge.choices.length > 9 || challenge.inputKind === "numbers" ? "is-wide" : "";
-    const showPrompt = challenge.type === "reference";
+    const isReferenceChallenge = challenge.type === "reference";
     const isWordChallenge = challenge.type === "word";
-    const canUseHints = challenge.type === "word" || challenge.type === "reference";
-    const instruction = challenge.inputKind === "numbers" ? "Tap the numbers in order" : "Tap the letters in order";
+    const canUseHints = isWordChallenge || isReferenceChallenge;
+
+    const instruction = isReferenceChallenge
+      ? challenge.instruction
+      : (challenge.inputKind === "numbers"
+        ? "Tap the numbers in order"
+        : "Tap the letters in order");
+
     const contextHtml = isWordChallenge
       ? findEchoContext(challenge.word, state.challengeHintIndexes)
       : challenge.contextHtml;
-    const hintAvailable = canUseHints && challengeHintableIndexes(challenge).length > 0;
+
+    const hintAvailable =
+      canUseHints &&
+      challengeHintableIndexes(challenge).length > 0;
 
     app.innerHTML = rootHtml(`
       <div class="wob-word-challenge-root">
         <div class="wob-big-title ${challenge.title === "Key Word Challenge" ? "is-key-word-title" : ""}">${escapeHtml(challenge.title || "Challenge")}</div>
         <div class="wob-challenge-instruction">${escapeHtml(instruction)}</div>
-        ${showPrompt ? `<div class="wob-challenge-prompt">${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
+        ${isReferenceChallenge ? referenceClueHtml(challenge) : ""}
         ${contextHtml ? `<div class="wob-context-card">${contextHtml}</div>` : ""}
         ${typedChallengeHtml(challenge, state.challengeInputIndex)}
         <div class="wob-choice-grid is-rowed ${choiceClass}">
@@ -1845,33 +1906,82 @@
         ${canUseHints ? `<button class="wob-hint-button no-zoom ${hintAvailable ? "" : "is-disabled"}" id="challengeHintButton" type="button" ${hintAvailable ? "" : "disabled"}>Hint</button>` : ""}
       </div>
     `, { status: "Challenge", rootClass: "is-challenge-screen" });
+
     wireGameMenu();
-    document.querySelectorAll("[data-choice]").forEach(btn => btn.addEventListener("click", () => handleChallengeChoice(btn.dataset.choice || "")));
-    document.getElementById("challengeHintButton")?.addEventListener("click", handleChallengeHint);
+
+    document.querySelectorAll("[data-choice]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        handleChallengeChoice(btn.dataset.choice || "");
+      });
+    });
+
+    document
+      .getElementById("challengeHintButton")
+      ?.addEventListener("click", handleChallengeHint);
   }
 
   function typedChallengeHtml(challenge, filledCount) {
     if (challenge.type === "reference" && challenge.refKind === "book") {
-      return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length + (challenge.fixedPrefix ? 1 : 0))}">
-        ${challenge.fixedPrefix ? `<span class="wob-tile" style="--tile-bg:${challenge.color}">${escapeHtml(challenge.fixedPrefix)}</span>` : ""}
-        ${lettersToTiles(challenge.displayText, challenge.expected, filledCount, challenge.color, state.challengeHintIndexes)}
-      </div>`;
+      return `
+        <div
+          class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}"
+          id="challengeWord"
+          style="--challenge-count:${Math.max(1, challenge.expected.length + (challenge.fixedPrefix ? 1 : 0))}"
+        >
+          ${challenge.fixedPrefix
+            ? `<span class="wob-ref-separator">${escapeHtml(challenge.fixedPrefix)}</span>`
+            : ""}
+          ${lettersToTiles(
+            challenge.displayText,
+            challenge.expected,
+            filledCount,
+            challenge.color
+          )}
+        </div>
+      `;
     }
+
     if (challenge.type === "reference") {
       let digitIndex = 0;
-      return `<div class="wob-challenge-word is-reference-number ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, String(challenge.displayText || "").length)}">
-        ${Array.from(String(challenge.displayText || "")).map(char => {
-        if (/\d/.test(char)) {
-          const show = digitIndex < filledCount || state.challengeHintIndexes.has(digitIndex);
-          const text = show ? challenge.expected[digitIndex] : "";
-          digitIndex += 1;
-          return `<span class="wob-tile ${show ? "" : "is-hidden"}" style="--tile-bg:${challenge.color}">${escapeHtml(text)}</span>`;
-        }
-        return `<span class="wob-ref-separator">${escapeHtml(char)}</span>`;
-      }).join("")}
-      </div>`;
+
+      return `
+        <div
+          class="wob-challenge-word is-reference-number ${state.challengeBad ? "is-no" : ""}"
+          id="challengeWord"
+          style="--challenge-count:${Math.max(1, String(challenge.displayText || "").length)}"
+        >
+          ${Array.from(String(challenge.displayText || "")).map(char => {
+            if (/\d/.test(char)) {
+              const show = digitIndex < filledCount;
+              const text = show
+                ? challenge.expected[digitIndex]
+                : "";
+
+              digitIndex += 1;
+
+              return `<span class="wob-tile ${show ? "" : "is-hidden"}" style="--tile-bg:${challenge.color}">${escapeHtml(text)}</span>`;
+            }
+
+            return `<span class="wob-ref-separator">${escapeHtml(char)}</span>`;
+          }).join("")}
+        </div>
+      `;
     }
-    return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length)}">${lettersToTiles(challenge.word.display, challenge.expected, filledCount, challenge.color)}</div>`;
+
+    return `
+      <div
+        class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}"
+        id="challengeWord"
+        style="--challenge-count:${Math.max(1, challenge.expected.length)}"
+      >
+        ${lettersToTiles(
+          challenge.word.display,
+          challenge.expected,
+          filledCount,
+          challenge.color
+        )}
+      </div>
+    `;
   }
 
 
@@ -1879,35 +1989,31 @@
     if (!challenge) return [];
 
     const expected = challenge.expected || [];
-    const filledCount = Math.max(0, Number(state.challengeInputIndex) || 0);
+    const filledCount = Math.max(
+      0,
+      Number(state.challengeInputIndex) || 0
+    );
 
     if (challenge.type === "word") {
       return expected
         .map((_, index) => index)
-        .filter(index => index > 0 && !state.challengeHintIndexes.has(index));
+        .filter(index => {
+          return index > 0 &&
+            !state.challengeHintIndexes.has(index);
+        });
     }
 
     if (challenge.type === "reference") {
       return expected
         .map((_, index) => index)
-        .filter(index => index >= filledCount && !state.challengeHintIndexes.has(index));
+        .filter(index => {
+          return index > 0 &&
+            index >= filledCount &&
+            !state.challengeHintIndexes.has(index);
+        });
     }
 
     return [];
-  }
-
-
-  function advanceReferenceChallengePastHints(challenge) {
-    if (!challenge || challenge.type !== "reference") return;
-
-    const expected = challenge.expected || [];
-    let nextIndex = Math.max(0, Number(state.challengeInputIndex) || 0);
-
-    while (nextIndex < expected.length && state.challengeHintIndexes.has(nextIndex)) {
-      nextIndex += 1;
-    }
-
-    state.challengeInputIndex = nextIndex;
   }
 
   async function handleChallengeHint() {
@@ -1915,6 +2021,7 @@
     if (!challenge) return;
 
     const hintable = challengeHintableIndexes(challenge);
+
     if (!hintable.length) {
       drawChallenge();
       return;
@@ -1924,20 +2031,14 @@
       ? 1
       : ((challenge.expected || []).length >= 8 ? 3 : 2);
 
-    hintable.slice(0, revealCount).forEach(index => state.challengeHintIndexes.add(index));
+    hintable
+      .slice(0, revealCount)
+      .forEach(index => {
+        state.challengeHintIndexes.add(index);
+      });
+
     state.challengeHintCount += 1;
-
-    if (challenge.type === "reference") {
-      advanceReferenceChallengePastHints(challenge);
-    }
-
     playHint();
-
-    if (challenge.type === "reference" && state.challengeInputIndex >= (challenge.expected || []).length) {
-      await finishChallenge(challenge);
-      return;
-    }
-
     drawChallenge();
   }
 
@@ -1980,10 +2081,6 @@
     state.challengeFlash = choice;
     state.challengeBad = false;
     state.challengeInputIndex += 1;
-
-    if (challenge.type === "reference") {
-      advanceReferenceChallengePastHints(challenge);
-    }
 
     if (state.challengeInputIndex >= challenge.expected.length) {
       await finishChallenge(challenge);

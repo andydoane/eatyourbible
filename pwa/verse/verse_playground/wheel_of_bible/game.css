@@ -1110,6 +1110,14 @@ button.wob-ref-group {
   text-align: center;
 }
 
+.wob-reference-clue {
+  min-width: min(82vw, 280px);
+  font-size: clamp(25px, 6.4vw, 42px);
+  line-height: 1;
+  letter-spacing: .08em;
+  white-space: pre-wrap;
+}
+
 .wob-context-card {
   width: min(100%, 720px);
   border-radius: 26px;
@@ -1304,6 +1312,10 @@ button.wob-ref-group {
   justify-content: center;
   padding: 0 0 clamp(10px, 2.2vh, 20px);
   margin: 0 auto clamp(4px, 1.2vh, 10px);
+  overflow: visible;
+}
+
+.wob-root.is-final-intro-screen .wob-card {
   overflow: visible;
 }
 
@@ -1510,8 +1522,6 @@ button.wob-ref-group {
   text-align: center;
   text-shadow: none;
   box-shadow:
-    0 13px 0 rgba(0, 0, 0, .22),
-    0 22px 36px rgba(0, 0, 0, .18),
     inset 0 -8px 0 rgba(0, 0, 0, .14),
     inset 0 0 0 4px rgba(255, 255, 255, .16);
   display: flex;
@@ -1703,16 +1713,19 @@ button.wob-ref-group {
 /* =========================
    Help overlay content
    ========================= */
-.wob-help-list {
+.wob-help-copy {
   margin: 0;
-  padding-left: 1.1em;
   text-align: left;
   font-weight: 800;
   line-height: 1.22;
 }
 
-.wob-help-list li+li {
-  margin-top: 8px;
+.wob-help-copy p {
+  margin: 0;
+}
+
+.wob-help-copy p + p {
+  margin-top: 10px;
 }
 
 /* =========================
@@ -2345,7 +2358,7 @@ button.wob-ref-group {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  filter: drop-shadow(0 12px 0 rgba(0, 0, 0, .20));
+  filter: none;
   animation: wobSpinResultImagePop 560ms cubic-bezier(.18, 1.45, .28, 1) both;
 }
 
