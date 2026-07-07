@@ -21,9 +21,9 @@
   };
 
   const MODES = [
-    { id: "slow", label: "Slow" },
+    { id: "easy", label: "Slow" },
     { id: "medium", label: "Medium" },
-    { id: "fast", label: "Fast" }
+    { id: "hard", label: "Fast" }
   ];
 
   const INTRO_WORDS = ["tap", "the", "words", "match", "my", "beat"];
@@ -162,7 +162,7 @@
   };
 
   const ROUND_CONFIGS_BY_MODE = {
-    slow: [
+    easy: [
       { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
       { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
       { name: "Finale", bpm: 104, loop: "final", cue: "rainbow", explosion: 1.75, echo: false, pad: true }
@@ -175,7 +175,7 @@
       { name: "Finale", bpm: 120, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
     ],
 
-    fast: [
+    hard: [
       { name: "Warmup", bpm: 108, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
       { name: "Jam", bpm: 112, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
       { name: "Faster", bpm: 120, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
@@ -183,7 +183,7 @@
     ]
   };
 
-  const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.slow;
+  const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.easy;
 
   const CHUNK_RHYTHMS = {
     1: [[0]],
@@ -769,11 +769,11 @@
 
   function selectedModeId() {
     if (typeof selectedMode === "string") return selectedMode;
-    return selectedMode?.id || "slow";
+    return selectedMode?.id || "easy";
   }
 
   function currentRoundConfigs() {
-    return ROUND_CONFIGS_BY_MODE[selectedModeId()] || ROUND_CONFIGS_BY_MODE.slow;
+    return ROUND_CONFIGS_BY_MODE[selectedModeId()] || ROUND_CONFIGS_BY_MODE.easy;
   }
 
   function currentRound() {
@@ -2150,6 +2150,16 @@
   async function beginRun(mode) {
     selectedMode = mode;
 
+    // Clear any stale end/menu state before the first active-run check.
+    // Without this, Play Again can leave state.completed true from the
+    // previous run and stop the new run before initVerseData() resets it.
+    state.completed = false;
+    state.paused = false;
+    state.resumeAfterMenu = false;
+    state.busy = false;
+    state.acceptingInput = false;
+    state.currentButtons = [];
+
     const flowId = beginGameplayFlow();
 
     // IMPORTANT for iPhone/Safari:
@@ -3098,7 +3108,8 @@
     window.VerseGameShell.renderModeSelect({
       app,
       title: "Choose Your Speed",
-      icon: "🥁",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       backLabel: "Back to Verse Jam title",
@@ -3162,7 +3173,7 @@
 
 
   function renderEnd() {
-    const seconds = (totalElapsedMs() / 1000).toFixed(1);
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       title: "Verse Jam Complete!",
@@ -3183,7 +3194,7 @@
     if (center) {
       const note = document.createElement("div");
       note.className = "vm-game-complete-stats";
-      note.textContent = `You played the verse ${currentRoundConfigs().length} times · ${seconds}s`;
+      note.textContent = `Groove Score: ${state.groovyScore}`;
       const actions = center.querySelector(".vm-game-actions");
       center.insertBefore(note, actions || null);
     }
