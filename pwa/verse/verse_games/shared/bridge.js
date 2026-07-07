@@ -10,6 +10,7 @@
       source: params.get("source") || "",
       mix: params.get("mix") === "1",
       mode: params.get("mode") || "",
+      profileId: params.get("profileId") || "",
 
       todoSource: params.get("todoSource") || "",
       todoType: params.get("todoType") || "",
@@ -61,14 +62,36 @@
     }
   }
 
+  function getProgressStorageKey(){
+    const profileId = String(
+      getParams().profileId || ""
+    ).trim();
+
+    if (!profileId) return "";
+
+    return `verseMemoryProgress:${profileId}`;
+  }
+
   function loadProgress(){
     try {
-      const raw = localStorage.getItem("verseMemoryProgress");
+      const storageKey = getProgressStorageKey();
+
+      if (!storageKey) {
+        return {
+          ok: false,
+          progress: null,
+          error: new Error(
+            "No Zookeeper profile was supplied to the external game."
+          )
+        };
+      }
+
+      const raw = localStorage.getItem(storageKey);
 
       if (!raw) {
         return {
           ok: true,
-          progress: { version: 1, verses: {} }
+          progress: { version: 2, verses: {} }
         };
       }
 
@@ -87,7 +110,7 @@
       }
 
       if (!parsed.version) {
-        parsed.version = 1;
+        parsed.version = 2;
       }
 
       return {
@@ -106,9 +129,24 @@
 
   function saveProgress(progress){
     try {
-      localStorage.setItem("verseMemoryProgress", JSON.stringify(progress));
+      const storageKey = getProgressStorageKey();
+
+      if (!storageKey) {
+        console.warn(
+          "Progress was not saved because the external game has no Zookeeper profile."
+        );
+        return false;
+      }
+
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify(progress)
+      );
+
+      return true;
     } catch (err) {
       console.warn("Could not save progress in external bridge", err);
+      return false;
     }
   }
 
@@ -337,16 +375,34 @@ function markCompleted(payload){
     };
   }
 
-  function buildFallbackReturnUrl(){
+  function applyProfileIdentityToTarget(target) {
     const params = getParams();
-  
-    const fallback = new URL("../../index.html", window.location.href);
-  
-    if (params.verseId){
+
+    if (params.profileId) {
+      target.searchParams.set("internalReturn", "1");
+      target.searchParams.set(
+        "profileId",
+        params.profileId
+      );
+    }
+
+    return target;
+  }
+
+  function buildFallbackReturnUrl() {
+    const params = getParams();
+    const fallback = new URL(
+      "../../index.html",
+      window.location.href
+    );
+
+    if (params.verseId) {
       fallback.searchParams.set("v", params.verseId);
     }
-  
+
     fallback.searchParams.set("screen", "practice");
+    applyProfileIdentityToTarget(fallback);
+
     return fallback.href;
   }
 
@@ -354,7 +410,7 @@ function markCompleted(payload){
   function buildParentAppUrl({
     screen = "",
     petUnlock = false
-  } = {}){
+  } = {}) {
     const params = getParams();
 
     let target;
@@ -371,20 +427,23 @@ function markCompleted(payload){
     target.searchParams.delete("screen");
     target.searchParams.delete("petUnlock");
 
-    if (params.verseId){
+    if (params.verseId) {
       target.searchParams.set("v", params.verseId);
     }
 
-    if (screen){
+    if (screen) {
       target.searchParams.set("screen", screen);
     }
 
-    if (petUnlock && params.verseId){
+    if (petUnlock && params.verseId) {
       target.searchParams.set("petUnlock", params.verseId);
     }
 
+    applyProfileIdentityToTarget(target);
+
     return target;
   }
+
 
   function clearExternalPetUnlockPending(verseId){
     if (!verseId) return;
@@ -404,31 +463,19 @@ function markCompleted(payload){
   }
 
   function returnToTitle(){
-    const params = getParams();
-
-    const target = new URL("../../index.html", window.location.href);
-
-    if (params.verseId){
-      target.searchParams.set("v", params.verseId);
-    }
-
-    target.searchParams.set("screen", "title");
+    const target = buildParentAppUrl({
+      screen: "title"
+    });
 
     window.location.href = target.href;
   }
 
   function openZooTodo() {
-    const params = getParams();
-
-    const target = new URL("../../index.html", window.location.href);
-
-    if (params.verseId) {
-      target.searchParams.set("v", params.verseId);
-    }
-
     // While Zoo To-Do is still hidden behind the Coming Soon page,
     // return testers directly to the real clipboard prototype.
-    target.searchParams.set("screen", "todo_dev");
+    const target = buildParentAppUrl({
+      screen: "todo_dev"
+    });
 
     window.location.href = target.href;
   }
@@ -507,6 +554,8 @@ function exitGame(){
       ? new URL(raw, window.location.href)
       : new URL("../../index.html", window.location.href);
 
+    applyProfileIdentityToTarget(target);
+
     const loaded = loadProgress();
     const progress = loaded.ok && loaded.progress ? loaded.progress : null;
     const verseProgress = progress?.verses?.[params.verseId];
@@ -520,14 +569,7 @@ function exitGame(){
     window.location.href = target.href;
   } catch (err) {
     console.warn("Could not resolve return target", err);
-
-    const fallback = new URL("../../index.html", window.location.href);
-    if (params.verseId){
-      fallback.searchParams.set("v", params.verseId);
-      fallback.searchParams.set("screen", "practice");
-    }
-
-    window.location.href = fallback.href;
+    window.location.href = buildFallbackReturnUrl();
   }
 }
 
