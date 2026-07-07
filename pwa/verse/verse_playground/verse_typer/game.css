@@ -1883,6 +1883,8 @@ body {
 .vt-play-area-prompt-hint {
   pointer-events: auto;
   cursor: pointer;
+  white-space: normal;
+  text-wrap: balance;
 }
 
 .vt-streak-badge.is-streak-pop-red {
