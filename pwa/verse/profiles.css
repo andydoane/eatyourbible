@@ -12,6 +12,69 @@
   color: #ffffff;
 }
 
+/* ---------- Full-screen profile welcome ---------- */
+
+.profile-welcome-screen {
+  overflow: hidden;
+}
+
+.profile-welcome-splash {
+  width: 100%;
+  height: 100%;
+  padding:
+    calc(24px + var(--safeT))
+    clamp(18px, 5vw, 36px)
+    calc(24px + var(--safeB));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  opacity: 0;
+  transform: scale(0.985);
+  transition:
+    opacity 420ms ease,
+    transform 420ms ease;
+}
+
+.profile-welcome-splash.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.profile-welcome-splash.is-leaving {
+  opacity: 0;
+  transform: scale(1.015);
+}
+
+.profile-welcome-splash-text {
+  margin-bottom: clamp(12px, 3vh, 24px);
+  font-size: clamp(30px, 8vw, 58px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.profile-welcome-splash-logo {
+  display: block;
+  width: min(88vw, 620px);
+  max-height: min(42vh, 270px);
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-welcome-splash {
+    transition: none;
+    transform: none;
+  }
+
+  .profile-welcome-splash.is-visible,
+  .profile-welcome-splash.is-leaving {
+    transform: none;
+  }
+}
+
 .profile-page {
   width: 100%;
   min-height: 100%;

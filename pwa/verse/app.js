@@ -1363,10 +1363,10 @@ const PROGRESS_VERSION = 2;
 const TRAFFIC_PROGRESS_MIGRATION_VERSION = 1;
 
 function getCurrentProgressStorageKey() {
-  const profileProgressKey =
-    window.BibloZooProfiles?.getProfileProgressStorageKey?.() || "";
-
-  return profileProgressKey || PROGRESS_STORAGE_KEY;
+  return (
+    window.BibloZooProfiles
+      ?.getProfileProgressStorageKey?.() || ""
+  );
 }
 
 const TUTORIAL_STEPS = Object.freeze({
@@ -1657,6 +1657,11 @@ function migrateTrafficProgress(progress) {
 function loadProgress() {
   try {
     const storageKey = getCurrentProgressStorageKey();
+
+    if (!storageKey) {
+      return createEmptyProgress();
+    }
+
     const raw = localStorage.getItem(storageKey);
 
     if (!raw) return createEmptyProgress();
@@ -1696,9 +1701,22 @@ function saveProgress(progress) {
   try {
     const storageKey = getCurrentProgressStorageKey();
 
-    localStorage.setItem(storageKey, JSON.stringify(progress));
+    if (!storageKey) {
+      console.warn(
+        "Progress was not saved because no Zookeeper profile is active."
+      );
+      return false;
+    }
+
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(progress)
+    );
+
+    return true;
   } catch (err) {
     console.warn("Could not save progress to localStorage", err);
+    return false;
   }
 }
 
@@ -3858,6 +3876,7 @@ async function loadVerseList() {
 const Screen = {
   INTRO: "intro",
   TITLE_SEQUENCE: "title_sequence",
+  PROFILE_WELCOME: "profile_welcome",
   PROFILE_PICKER: "profile_picker",
   PROFILE_EDITOR: "profile_editor",
   TITLE: "title",
@@ -3977,7 +3996,12 @@ const State = {
   finalRecallRevealed: false,
   fireworksTimer: null,
 
-  // Zookeeper profile screens
+  // Zookeeper profile boot and screens
+  pendingBootRoute: null,
+  profileWelcomeNext: "picker",
+  profileWelcomeStarted: false,
+  profileWelcomeTimer: null,
+
   profileEditorMode: "add-profile",
   editingProfileId: "",
   profileEditorName: "",
@@ -4182,16 +4206,20 @@ function getPlaygroundActivities() {
    ========================= */
 
 const GAME_MIX_STORAGE_KEY = "verseMemoryGameMix";
-const GAME_MIX_VERSION = 1;
+const GAME_MIX_VERSION = 2;
 const GAME_MIX_MODES = ["easy", "medium", "hard"];
 const GAME_MIX_LOADING_MIN_MS = 600;
 
 let gameMixLaunchTimer = null;
 
 function createGameMixState(verseId) {
+  const profileId =
+    window.BibloZooProfiles?.getActiveProfileId?.() || "";
+
   return {
     version: GAME_MIX_VERSION,
     active: true,
+    profileId,
     verseId: verseId || "",
     playedGameIds: [],
     currentGameId: "",
@@ -4209,6 +4237,17 @@ function getGameMixState() {
     if (!parsed || typeof parsed !== "object") return null;
     if (parsed.version !== GAME_MIX_VERSION) return null;
     if (!parsed.active) return null;
+
+    const activeProfileId =
+      window.BibloZooProfiles?.getActiveProfileId?.() || "";
+
+    if (
+      !activeProfileId ||
+      parsed.profileId !== activeProfileId
+    ) {
+      clearGameMixState();
+      return null;
+    }
 
     if (!Array.isArray(parsed.playedGameIds)) {
       parsed.playedGameIds = [];
@@ -4308,7 +4347,14 @@ function launchGameMixGame(game) {
 
   let state = getGameMixState();
 
-  if (!state || state.verseId !== VERSE_ID) {
+  const activeProfileId =
+    window.BibloZooProfiles?.getActiveProfileId?.() || "";
+
+  if (
+    !state ||
+    state.verseId !== VERSE_ID ||
+    state.profileId !== activeProfileId
+  ) {
     state = createGameMixState(VERSE_ID);
   }
 
@@ -4834,6 +4880,7 @@ function screenToIndex(screen) {
   const order = [
     Screen.INTRO,
     Screen.TITLE_SEQUENCE,
+    Screen.PROFILE_WELCOME,
     Screen.PROFILE_PICKER,
     Screen.PROFILE_EDITOR,
     Screen.TITLE,
@@ -5052,12 +5099,20 @@ function practiceNext() {
 
 function getReturnToScreenUrl(screenName = "practice") {
   const url = new URL("index.html", window.location.href);
+  const profileId =
+    window.BibloZooProfiles?.getActiveProfileId?.() || "";
 
   if (VERSE_ID) {
     url.searchParams.set("v", VERSE_ID);
   }
 
   url.searchParams.set("screen", screenName);
+
+  if (profileId) {
+    url.searchParams.set("internalReturn", "1");
+    url.searchParams.set("profileId", profileId);
+  }
+
   return url.href;
 }
 
@@ -5099,12 +5154,16 @@ function appendZooTodoLaunchParams(params) {
 function launchExternalGame(manifest, options = {}) {
   if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
 
+  const profileId =
+    window.BibloZooProfiles?.getActiveProfileId?.() || "";
+
   const params = new URLSearchParams({
     verseId: VERSE_ID,
     ref: VERSE_REF || "",
     translation: TRANSLATION || "",
     returnTo: getReturnToPracticeUrl(),
-    source: "verse_memory_app"
+    source: "verse_memory_app",
+    profileId
   });
 
   if (options.mix) {
@@ -5123,12 +5182,16 @@ function launchExternalGame(manifest, options = {}) {
 function launchExternalPlaygroundActivity(manifest) {
   if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
 
+  const profileId =
+    window.BibloZooProfiles?.getActiveProfileId?.() || "";
+
   const params = new URLSearchParams({
     verseId: VERSE_ID,
     ref: VERSE_REF || "",
     translation: TRANSLATION || "",
     returnTo: getReturnToPlaygroundUrl(),
-    source: "verse_memory_app"
+    source: "verse_memory_app",
+    profileId
   });
 
   appendZooTodoLaunchParams(params);
@@ -6137,6 +6200,7 @@ function renderNav() {
   const show = (
     State.screen !== Screen.INTRO &&
     State.screen !== Screen.TITLE_SEQUENCE &&
+    State.screen !== Screen.PROFILE_WELCOME &&
     State.screen !== Screen.PROFILE_PICKER &&
     State.screen !== Screen.PROFILE_EDITOR &&
     State.screen !== Screen.TITLE &&
@@ -6543,6 +6607,195 @@ function getProfileEditorMigrationNotice() {
   return "";
 }
 
+function captureBootRouteFromUrl() {
+  const params = new URLSearchParams(
+    window.location.search
+  );
+
+  return {
+    verseId: params.get("v") || "",
+    screen: params.get("screen") || "",
+    petUnlock: params.get("petUnlock") || "",
+    tutorialPractice:
+      params.get("tutorialPractice") === "1",
+    mixNext: params.get("mixNext") === "1",
+    completedGameId:
+      params.get("completedGameId") || "",
+    mixPetUnlock:
+      params.get("mixPetUnlock") === "1",
+    internalReturn:
+      params.get("internalReturn") === "1",
+    profileId: params.get("profileId") || ""
+  };
+}
+
+function clearInternalReturnIdentityParams() {
+  try {
+    const url = new URL(window.location.href);
+
+    url.searchParams.delete("internalReturn");
+    url.searchParams.delete("profileId");
+
+    history.replaceState(null, "", url.href);
+  } catch (err) {
+    console.warn(
+      "Could not clear internal-return identity parameters",
+      err
+    );
+  }
+}
+
+function discardUnsafeInternalReturnCompletion(route) {
+  if (!route || !route.internalReturn) return route;
+
+  clearGameMixState();
+
+  return {
+    ...route,
+    internalReturn: false,
+    profileId: "",
+    petUnlock: "",
+    tutorialPractice: false,
+    mixNext: false,
+    completedGameId: "",
+    mixPetUnlock: false
+  };
+}
+
+async function resumePendingBootRoute() {
+  const route = State.pendingBootRoute || {};
+  State.pendingBootRoute = null;
+
+  try {
+    if (route.verseId) {
+      await loadVerse(route.verseId);
+      HAS_VERSE_SELECTION = true;
+    } else {
+      HAS_VERSE_SELECTION = !!VERSE_ID;
+    }
+  } catch (err) {
+    console.error(err);
+
+    showDialog({
+      title: "Verse JSON not found",
+      body: String(err?.message || err),
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+
+    setScreen(Screen.TITLE);
+    applyMute();
+    return;
+  }
+
+  if (
+    route.tutorialPractice &&
+    isTutorialActive()
+  ) {
+    State.tutorialPracticeMode = true;
+  }
+
+  if (route.mixNext && HAS_VERSE_SELECTION) {
+    const params = new URLSearchParams();
+
+    params.set("mixNext", "1");
+
+    if (route.completedGameId) {
+      params.set(
+        "completedGameId",
+        route.completedGameId
+      );
+    }
+
+    if (route.mixPetUnlock) {
+      params.set("mixPetUnlock", "1");
+    }
+
+    const handled = handleGameMixNextFromUrl(params);
+
+    applyMute();
+
+    if (handled) return;
+  }
+
+  if (route.petUnlock) {
+    State.pendingPetUnlockVerseId =
+      route.petUnlock;
+    State.selectedVerseId =
+      route.petUnlock;
+    setScreen(Screen.PET_UNLOCK);
+  } else if (
+    route.screen === "practice_hub" &&
+    HAS_VERSE_SELECTION
+  ) {
+    setScreen(Screen.PRACTICE_HUB);
+  } else if (
+    route.screen === "practice" &&
+    HAS_VERSE_SELECTION
+  ) {
+    setScreen(Screen.PRACTICE);
+  } else if (
+    route.screen === "playground" &&
+    HAS_VERSE_SELECTION
+  ) {
+    setScreen(Screen.PLAYGROUND);
+  } else if (
+    route.screen === "progress" &&
+    HAS_VERSE_SELECTION
+  ) {
+    setScreen(Screen.PROGRESS);
+  } else if (route.screen === "todo") {
+    setScreen(Screen.TODO);
+  } else if (route.screen === "todo_dev") {
+    setScreen(Screen.TODO_DEV);
+  } else if (
+    route.screen === "new_verse_picker"
+  ) {
+    setScreen(Screen.NEW_VERSE_PICKER);
+  } else if (route.screen === "settings") {
+    setScreen(Screen.SETTINGS);
+  } else {
+    setScreen(Screen.TITLE);
+  }
+
+  applyMute();
+}
+
+function clearProfileWelcomeTimer() {
+  if (!State.profileWelcomeTimer) return;
+
+  clearTimeout(State.profileWelcomeTimer);
+  State.profileWelcomeTimer = null;
+}
+
+function showProfileWelcome(nextStep = "picker") {
+  clearProfileWelcomeTimer();
+
+  State.profileWelcomeNext =
+    nextStep === "first-profile"
+      ? "first-profile"
+      : "picker";
+  State.profileWelcomeStarted = false;
+
+  setScreen(Screen.PROFILE_WELCOME);
+}
+
+function finishProfileWelcome() {
+  clearProfileWelcomeTimer();
+
+  if (
+    State.profileWelcomeNext === "first-profile"
+  ) {
+    openFirstProfileEditor();
+    return;
+  }
+
+  openProfilePicker();
+}
+
 function openProfilePicker() {
   resetProfileEditorState();
   go(Screen.PROFILE_PICKER);
@@ -6619,9 +6872,20 @@ function stopProfileTransitionAudio() {
 function clearTransientStateForProfileActivation() {
   stopProfileTransitionAudio();
 
-  try {
-    clearGameMixState();
-  } catch (err) { }
+  const pendingRoute = State.pendingBootRoute;
+  const preserveGameMix = !!(
+    pendingRoute?.internalReturn &&
+    (
+      pendingRoute.mixNext ||
+      pendingRoute.mixPetUnlock
+    )
+  );
+
+  if (!preserveGameMix) {
+    try {
+      clearGameMixState();
+    } catch (err) { }
+  }
 
   State.pendingPetUnlockVerseId = null;
   State.activeTodo = null;
@@ -6638,16 +6902,27 @@ function clearTransientStateForProfileActivation() {
   titleZooPetVerseId = "";
 }
 
-function continueAfterProfileActivation() {
+async function continueAfterProfileActivation() {
   clearTransientStateForProfileActivation();
   refreshCurrentProgressState();
 
-  if (isTutorialActive()) {
-    go(Screen.TODO_DEV);
+  const pendingRoute = State.pendingBootRoute;
+  const isAllowedTutorialReturn = !!(
+    pendingRoute?.internalReturn &&
+    pendingRoute.tutorialPractice
+  );
+
+  if (
+    isTutorialActive() &&
+    !isAllowedTutorialReturn
+  ) {
+    State.pendingBootRoute = null;
+    setScreen(Screen.TODO_DEV);
+    applyMute();
     return;
   }
 
-  go(Screen.TITLE);
+  await resumePendingBootRoute();
 }
 
 function activateProfileFromPicker(profileId) {
@@ -6655,7 +6930,19 @@ function activateProfileFromPicker(profileId) {
 
   try {
     profileApi?.setActiveProfile?.(profileId);
-    continueAfterProfileActivation();
+
+    void continueAfterProfileActivation()
+      .catch((err) => {
+        showDialog({
+          title: "Could Not Open Profile",
+          body: String(err?.message || err),
+          actions: [
+            dlgBtn("OK", {
+              onClick: closeDialog
+            })
+          ]
+        });
+      });
   } catch (err) {
     showDialog({
       title: "Could Not Open Profile",
@@ -6873,6 +7160,66 @@ async function submitProfileEditor() {
   }
 }
 
+function screenProfileWelcome(idx) {
+  const wrap = document.createElement("div");
+  wrap.className =
+    "profile-screen profile-welcome-screen";
+
+  wrap.innerHTML = `
+    <div class="profile-welcome-splash">
+      <div class="profile-welcome-splash-text">
+        Welcome to
+      </div>
+
+      <img
+        class="profile-welcome-splash-logo"
+        src="${escapeHtml(TITLE_LOGO)}"
+        alt="BibloZoo"
+        draggable="false"
+        onerror="this.style.display='none'"
+      >
+    </div>
+  `;
+
+  if (!State.profileWelcomeStarted) {
+    State.profileWelcomeStarted = true;
+
+    requestAnimationFrame(() => {
+      const splash = wrap.querySelector(
+        ".profile-welcome-splash"
+      );
+
+      if (!splash) return;
+
+      splash.classList.add("is-visible");
+
+      const reduceMotion =
+        window.matchMedia?.(
+          "(prefers-reduced-motion: reduce)"
+        )?.matches;
+
+      const holdMs = reduceMotion ? 250 : 950;
+      const fadeMs = reduceMotion ? 0 : 420;
+
+      State.profileWelcomeTimer = setTimeout(() => {
+        splash.classList.add("is-leaving");
+
+        State.profileWelcomeTimer = setTimeout(
+          finishProfileWelcome,
+          fadeMs
+        );
+      }, holdMs);
+    });
+  }
+
+  return makeSlide({
+    idx,
+    bg: "var(--purple)",
+    navHidden: true,
+    inner: wrap
+  });
+}
+
 function screenProfilePicker(idx) {
   const wrap = document.createElement("div");
   wrap.className =
@@ -6915,16 +7262,6 @@ function screenProfilePicker(idx) {
   wrap.innerHTML = `
     <div class="profile-page">
       <div class="profile-shell profile-picker-shell">
-        <div class="profile-welcome">Welcome to</div>
-
-        <img
-          class="profile-logo"
-          src="${escapeHtml(TITLE_LOGO)}"
-          alt="BibloZoo"
-          draggable="false"
-          onerror="this.style.display='none'"
-        >
-
         <h1 class="profile-heading">
           Choose your Zookeeper
         </h1>
@@ -7018,16 +7355,6 @@ function screenProfileEditor(idx) {
         data-profile-editor-form
         novalidate
       >
-        <div class="profile-welcome">Welcome to</div>
-
-        <img
-          class="profile-logo"
-          src="${escapeHtml(TITLE_LOGO)}"
-          alt="BibloZoo"
-          draggable="false"
-          onerror="this.style.display='none'"
-        >
-
         <h1 class="profile-heading">
           ${escapeHtml(heading)}
         </h1>
@@ -9170,9 +9497,11 @@ function screenVerseDetail(idx) {
   const btnDetailPractice = wrap.querySelector("#btnDetailPractice");
   if (btnDetailPractice) {
     btnDetailPractice.onclick = () => {
-      const url = new URL("index.html", window.location.href);
+      const url = new URL(
+        getReturnToScreenUrl("practice_hub")
+      );
+
       url.searchParams.set("v", verseId);
-      url.searchParams.set("screen", "practice_hub");
       window.location.href = url.href;
     };
   }
@@ -10467,10 +10796,11 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title_sequence", "profile_picker", "profile_editor", "title", "settings", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "profile_welcome", "profile_picker", "profile_editor", "title", "settings", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
+    if (screen === Screen.PROFILE_WELCOME) slide = screenProfileWelcome(idx);
     if (screen === Screen.PROFILE_PICKER) slide = screenProfilePicker(idx);
     if (screen === Screen.PROFILE_EDITOR) slide = screenProfileEditor(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
@@ -10643,62 +10973,62 @@ function setupAppUiTapSounds() {
     );
   }
 
-  HAS_VERSE_SELECTION = hasVerseIdInUrl();
+  const profileApi = getProfileApi();
+  const profiles =
+    profileApi?.getAllProfiles?.() || [];
 
-  try {
-    const requestedVerseId = getRequestedVerseIdFromUrl();
+  State.pendingBootRoute =
+    captureBootRouteFromUrl();
 
-    if (requestedVerseId) {
-      await loadVerse(requestedVerseId);
+  const requestedRoute =
+    State.pendingBootRoute;
+
+  if (requestedRoute?.internalReturn) {
+    const returnProfile =
+      profileApi?.getProfileById?.(
+        requestedRoute.profileId
+      );
+
+    if (returnProfile) {
+      try {
+        profileApi.setActiveProfile(
+          returnProfile.id
+        );
+
+        clearInternalReturnIdentityParams();
+        await continueAfterProfileActivation();
+        return;
+      } catch (err) {
+        console.warn(
+          "Could not restore the returning Zookeeper profile",
+          err
+        );
+      }
     }
-  } catch (e) {
-    console.error(e);
-    showDialog({
-      title: "Verse JSON not found",
-      body: String(e.message || e),
-      actions: [dlgBtn("OK", { onClick: closeDialog })]
-    });
+
+    State.pendingBootRoute =
+      discardUnsafeInternalReturnCompletion(
+        requestedRoute
+      );
+
+    clearInternalReturnIdentityParams();
   }
 
-  const params = new URLSearchParams(window.location.search);
-  const requestedScreen = params.get("screen");
-  const petUnlockVerseId = params.get("petUnlock");
+  if (profiles.length) {
+    try {
+      profileApi?.clearActiveProfile?.();
+    } catch (err) {
+      console.warn(
+        "Could not clear the previous active profile",
+        err
+      );
+    }
 
-  if (params.get("tutorialPractice") === "1" && isTutorialActive()) {
-    State.tutorialPracticeMode = true;
-  }
-
-  if (params.get("mixNext") === "1" && HAS_VERSE_SELECTION) {
-    const handled = handleGameMixNextFromUrl(params);
+    showProfileWelcome("picker");
     applyMute();
-    if (handled) return;
+    return;
   }
 
-  if (petUnlockVerseId) {
-    State.pendingPetUnlockVerseId = petUnlockVerseId;
-    State.selectedVerseId = petUnlockVerseId;
-    setScreen(Screen.PET_UNLOCK);
-  } else if (requestedScreen === "practice_hub" && HAS_VERSE_SELECTION) {
-    setScreen(Screen.PRACTICE_HUB);
-  } else if (requestedScreen === "practice" && HAS_VERSE_SELECTION) {
-    setScreen(Screen.PRACTICE);
-  } else if (requestedScreen === "playground" && HAS_VERSE_SELECTION) {
-    setScreen(Screen.PLAYGROUND);
-  } else if (requestedScreen === "progress" && HAS_VERSE_SELECTION) {
-    setScreen(Screen.PROGRESS);
-  } else if (requestedScreen === "todo") {
-    setScreen(Screen.TODO);
-  } else if (requestedScreen === "todo_dev") {
-    setScreen(Screen.TODO_DEV);
-  } else if (requestedScreen === "new_verse_picker") {
-    setScreen(Screen.NEW_VERSE_PICKER);
-  } else if (requestedScreen === "settings") {
-    setScreen(Screen.SETTINGS);
-  } else if (requestedScreen === "title") {
-    setScreen(Screen.TITLE);
-  } else {
-    setScreen(Screen.INTRO);
-  }
-
+  showProfileWelcome("first-profile");
   applyMute();
 })();
