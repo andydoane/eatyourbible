@@ -3974,6 +3974,10 @@ const State = {
   finalRecallDone: false,
   finalRecallRevealed: false,
   fireworksTimer: null,
+
+  // Profile picture carousel
+  profilePictureIndex: 0,
+
   // Title carousel
   titleOptionIndex: 0,
 
@@ -3985,6 +3989,60 @@ const State = {
   // Practice carousel
   practiceIndex: 0,
 };
+
+function getProfilePictureCatalogForUi() {
+  return (
+    window.BibloZooProfiles
+      ?.getProfilePictureCatalog?.() || []
+  );
+}
+
+function normalizeProfilePictureIndex(
+  index = State.profilePictureIndex
+) {
+  const catalog = getProfilePictureCatalogForUi();
+  const count = catalog.length;
+
+  if (!count) return 0;
+
+  const numericIndex = Number(index);
+  const safeIndex = Number.isFinite(numericIndex)
+    ? Math.trunc(numericIndex)
+    : 0;
+
+  return ((safeIndex % count) + count) % count;
+}
+
+function setProfilePictureIndex(index) {
+  State.profilePictureIndex =
+    normalizeProfilePictureIndex(index);
+
+  return State.profilePictureIndex;
+}
+
+function moveProfilePictureIndex(offset = 1) {
+  const numericOffset = Number(offset);
+  const safeOffset = Number.isFinite(numericOffset)
+    ? Math.trunc(numericOffset)
+    : 0;
+
+  return setProfilePictureIndex(
+    State.profilePictureIndex + safeOffset
+  );
+}
+
+function getSelectedProfilePictureVerseId() {
+  const catalog = getProfilePictureCatalogForUi();
+
+  if (!catalog.length) return "";
+
+  State.profilePictureIndex =
+    normalizeProfilePictureIndex(
+      State.profilePictureIndex
+    );
+
+  return catalog[State.profilePictureIndex] || "";
+}
 
 const TITLE_OPTIONS = [
   { id: "learn", label: "Learn the Verse", action: () => go(Screen.LEARN_LEVEL) },
@@ -9740,6 +9798,19 @@ function setupAppUiTapSounds() {
   setupAppUiTapSounds();
 
   await loadVerseList();
+
+  try {
+    await window.BibloZooProfiles
+      ?.loadProfilePictureCatalog?.(VERSE_LIST);
+
+    State.profilePictureIndex = 0;
+  } catch (err) {
+    console.warn(
+      "Could not initialize profile-picture catalog",
+      err
+    );
+  }
+
   HAS_VERSE_SELECTION = hasVerseIdInUrl();
 
   try {

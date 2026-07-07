@@ -15,6 +15,25 @@
   const LEGACY_PROGRESS_MIGRATION_VERSION = 1;
   const PROFILE_NAME_MAX_LENGTH = 16;
 
+  const PROFILE_PICTURE_DIR = "profile_pictures/";
+  const PROFILE_PICTURE_MANIFEST_URL =
+    `${PROFILE_PICTURE_DIR}profile_pictures.json`;
+  const PROFILE_PICTURE_FALLBACK_FILE =
+    "profile_picture_fallback.png";
+
+  const PROFILE_PICTURE_MANIFEST_MODES = Object.freeze({
+    LISTED: "listed",
+    ALL_VERSES: "all-verses"
+  });
+
+  let profilePictureManifest = null;
+  let profilePictureManifestLoadPromise = null;
+  let profilePictureCatalog = [];
+
+  const loadedProfilePictureVerseIds = new Set();
+  const missingProfilePictureVerseIds = new Set();
+  const profilePictureLoadPromises = new Map();
+
   const LEGACY_MIGRATION_STATUS = Object.freeze({
     UNINITIALIZED: "uninitialized",
     PENDING: "pending",
@@ -908,6 +927,343 @@
     }
   }
 
+  function normalizeProfilePictureVerseId(value) {
+    const verseId = String(value || "")
+      .trim()
+      .toLowerCase();
+
+    if (!/^[a-z0-9_]+$/.test(verseId)) {
+      return "";
+    }
+
+    return verseId;
+  }
+
+  function getProfilePictureSrc(verseId) {
+    const cleanVerseId =
+      normalizeProfilePictureVerseId(verseId);
+
+    if (!cleanVerseId) return "";
+
+    return `${PROFILE_PICTURE_DIR}profile_picture_${cleanVerseId}.png`;
+  }
+
+  function getProfilePictureFallbackSrc() {
+    return `${PROFILE_PICTURE_DIR}${PROFILE_PICTURE_FALLBACK_FILE}`;
+  }
+
+  function normalizeProfilePictureManifest(rawManifest) {
+    const manifest =
+      rawManifest &&
+      typeof rawManifest === "object" &&
+      !Array.isArray(rawManifest)
+        ? rawManifest
+        : {};
+
+    const requestedMode = String(manifest.mode || "");
+
+    const mode =
+      requestedMode === PROFILE_PICTURE_MANIFEST_MODES.LISTED
+        ? PROFILE_PICTURE_MANIFEST_MODES.LISTED
+        : PROFILE_PICTURE_MANIFEST_MODES.ALL_VERSES;
+
+    const seenVerseIds = new Set();
+
+    const verseIds = Array.isArray(manifest.verseIds)
+      ? manifest.verseIds
+          .map(normalizeProfilePictureVerseId)
+          .filter((verseId) => {
+            if (!verseId || seenVerseIds.has(verseId)) {
+              return false;
+            }
+
+            seenVerseIds.add(verseId);
+            return true;
+          })
+      : [];
+
+    return {
+      version: 1,
+      mode,
+      verseIds
+    };
+  }
+
+  function getProfilePictureManifest() {
+    return cloneJson(
+      profilePictureManifest ||
+      normalizeProfilePictureManifest(null)
+    );
+  }
+
+  async function loadProfilePictureManifest({
+    forceReload = false
+  } = {}) {
+    if (profilePictureManifest && !forceReload) {
+      return cloneJson(profilePictureManifest);
+    }
+
+    if (profilePictureManifestLoadPromise && !forceReload) {
+      return profilePictureManifestLoadPromise;
+    }
+
+    profilePictureManifestLoadPromise = fetch(
+      PROFILE_PICTURE_MANIFEST_URL,
+      { cache: "no-store" }
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return response.json();
+      })
+      .then((json) => {
+        profilePictureManifest =
+          normalizeProfilePictureManifest(json);
+
+        return cloneJson(profilePictureManifest);
+      })
+      .catch((err) => {
+        console.warn(
+          "Could not load profile-picture manifest; assuming all verses have pictures.",
+          err
+        );
+
+        profilePictureManifest =
+          normalizeProfilePictureManifest({
+            mode: PROFILE_PICTURE_MANIFEST_MODES.ALL_VERSES
+          });
+
+        return cloneJson(profilePictureManifest);
+      })
+      .finally(() => {
+        profilePictureManifestLoadPromise = null;
+      });
+
+    return profilePictureManifestLoadPromise;
+  }
+
+  function buildProfilePictureCatalog(
+    verseList,
+    manifest = profilePictureManifest
+  ) {
+    const normalizedManifest =
+      normalizeProfilePictureManifest(manifest);
+
+    const listedVerseIds = new Set(
+      normalizedManifest.verseIds
+    );
+
+    const seenVerseIds = new Set();
+
+    const officialVerseIds = Array.isArray(verseList)
+      ? verseList
+          .map((item) =>
+            normalizeProfilePictureVerseId(item?.id)
+          )
+          .filter((verseId) => {
+            if (!verseId || seenVerseIds.has(verseId)) {
+              return false;
+            }
+
+            seenVerseIds.add(verseId);
+            return true;
+          })
+      : [];
+
+    if (
+      normalizedManifest.mode ===
+      PROFILE_PICTURE_MANIFEST_MODES.LISTED
+    ) {
+      return officialVerseIds.filter((verseId) =>
+        listedVerseIds.has(verseId)
+      );
+    }
+
+    return officialVerseIds;
+  }
+
+  function getProfilePictureCatalog({
+    includeMissing = false
+  } = {}) {
+    const catalog = includeMissing
+      ? profilePictureCatalog
+      : profilePictureCatalog.filter(
+          (verseId) =>
+            !missingProfilePictureVerseIds.has(verseId)
+        );
+
+    return [...catalog];
+  }
+
+  function markProfilePictureLoaded(verseId) {
+    const cleanVerseId =
+      normalizeProfilePictureVerseId(verseId);
+
+    if (!cleanVerseId) return false;
+
+    loadedProfilePictureVerseIds.add(cleanVerseId);
+    missingProfilePictureVerseIds.delete(cleanVerseId);
+
+    return true;
+  }
+
+  function markProfilePictureMissing(verseId) {
+    const cleanVerseId =
+      normalizeProfilePictureVerseId(verseId);
+
+    if (!cleanVerseId) return false;
+
+    missingProfilePictureVerseIds.add(cleanVerseId);
+    loadedProfilePictureVerseIds.delete(cleanVerseId);
+
+    return true;
+  }
+
+  function isProfilePictureLoaded(verseId) {
+    const cleanVerseId =
+      normalizeProfilePictureVerseId(verseId);
+
+    return !!cleanVerseId &&
+      loadedProfilePictureVerseIds.has(cleanVerseId);
+  }
+
+  function isProfilePictureMissing(verseId) {
+    const cleanVerseId =
+      normalizeProfilePictureVerseId(verseId);
+
+    return !!cleanVerseId &&
+      missingProfilePictureVerseIds.has(cleanVerseId);
+  }
+
+  function preloadProfilePicture(verseId) {
+    const cleanVerseId =
+      normalizeProfilePictureVerseId(verseId);
+
+    if (!cleanVerseId) {
+      return Promise.resolve(false);
+    }
+
+    if (loadedProfilePictureVerseIds.has(cleanVerseId)) {
+      return Promise.resolve(true);
+    }
+
+    if (missingProfilePictureVerseIds.has(cleanVerseId)) {
+      return Promise.resolve(false);
+    }
+
+    if (profilePictureLoadPromises.has(cleanVerseId)) {
+      return profilePictureLoadPromises.get(cleanVerseId);
+    }
+
+    const src = getProfilePictureSrc(cleanVerseId);
+
+    if (!src) {
+      return Promise.resolve(false);
+    }
+
+    const loadPromise = new Promise((resolve) => {
+      const img = new Image();
+
+      img.onload = () => {
+        markProfilePictureLoaded(cleanVerseId);
+        resolve(true);
+      };
+
+      img.onerror = () => {
+        markProfilePictureMissing(cleanVerseId);
+        resolve(false);
+      };
+
+      img.src = src;
+    }).finally(() => {
+      profilePictureLoadPromises.delete(cleanVerseId);
+    });
+
+    profilePictureLoadPromises.set(
+      cleanVerseId,
+      loadPromise
+    );
+
+    return loadPromise;
+  }
+
+  function handleProfilePictureLoad(img) {
+    if (!img) return;
+
+    const isFallback =
+      img.dataset.profilePictureFallback === "1";
+
+    if (!isFallback) {
+      markProfilePictureLoaded(
+        img.dataset.profilePictureVerseId
+      );
+    }
+
+    img.hidden = false;
+    img.classList.add("is-loaded");
+    img.classList.remove("is-missing");
+  }
+
+  function handleProfilePictureError(img) {
+    if (!img) return;
+
+    const verseId =
+      normalizeProfilePictureVerseId(
+        img.dataset.profilePictureVerseId
+      );
+
+    if (verseId) {
+      markProfilePictureMissing(verseId);
+    }
+
+    img.classList.remove("is-loaded");
+    img.classList.add("is-missing");
+
+    if (img.dataset.profilePictureFallback !== "1") {
+      img.dataset.profilePictureFallback = "1";
+      img.dataset.profilePictureVerseId = "";
+      img.src = getProfilePictureFallbackSrc();
+      return;
+    }
+
+    img.hidden = true;
+    img.removeAttribute("src");
+  }
+
+  async function loadProfilePictureCatalog(
+    verseList,
+    {
+      forceReloadManifest = false
+    } = {}
+  ) {
+    const manifest =
+      await loadProfilePictureManifest({
+        forceReload: forceReloadManifest
+      });
+
+    profilePictureCatalog =
+      buildProfilePictureCatalog(
+        verseList,
+        manifest
+      );
+
+    profilePictureCatalog
+      .slice(0, 2)
+      .forEach((verseId) => {
+        preloadProfilePicture(verseId);
+      });
+
+    return getProfilePictureCatalog();
+  }
+
+  function resetProfilePictureSessionCache() {
+    loadedProfilePictureVerseIds.clear();
+    missingProfilePictureVerseIds.clear();
+    profilePictureLoadPromises.clear();
+  }
+
   window.BibloZooProfiles = Object.freeze({
     PROFILE_REGISTRY_STORAGE_KEY,
     PROFILE_REGISTRY_VERSION,
@@ -950,6 +1306,28 @@
     markLegacyMigrationCompleted,
     markLegacyMigrationFailed,
     markLegacyMigrationNotNeeded,
-    migrateLegacyProgressToProfile
+    migrateLegacyProgressToProfile,
+
+    PROFILE_PICTURE_DIR,
+    PROFILE_PICTURE_MANIFEST_URL,
+    PROFILE_PICTURE_FALLBACK_FILE,
+    PROFILE_PICTURE_MANIFEST_MODES,
+    normalizeProfilePictureVerseId,
+    getProfilePictureSrc,
+    getProfilePictureFallbackSrc,
+    normalizeProfilePictureManifest,
+    getProfilePictureManifest,
+    loadProfilePictureManifest,
+    buildProfilePictureCatalog,
+    loadProfilePictureCatalog,
+    getProfilePictureCatalog,
+    preloadProfilePicture,
+    handleProfilePictureLoad,
+    handleProfilePictureError,
+    markProfilePictureLoaded,
+    markProfilePictureMissing,
+    isProfilePictureLoaded,
+    isProfilePictureMissing,
+    resetProfilePictureSessionCache
   });
 })();
