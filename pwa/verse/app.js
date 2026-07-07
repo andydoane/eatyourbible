@@ -1778,16 +1778,87 @@ function migrateLegacyProgressForProfile(profileId) {
   );
 }
 
-function createVerseMemorySaveData() {
-  const progress = loadProgress();
+const FAMILY_SAVE_TYPE = "biblozoo-family-save";
+const FAMILY_SAVE_VERSION = 2;
+const LEGACY_SAVE_TYPE = "verse-memory-save";
+
+function cloneJsonForSave(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeImportedProgress(rawProgress) {
+  if (
+    !rawProgress ||
+    typeof rawProgress !== "object" ||
+    Array.isArray(rawProgress)
+  ) {
+    throw new Error("The save file does not contain valid progress data.");
+  }
+
+  const progress = cloneJsonForSave(rawProgress);
+
+  if (
+    !progress.verses ||
+    typeof progress.verses !== "object" ||
+    Array.isArray(progress.verses)
+  ) {
+    throw new Error("The save file progress data is missing verses.");
+  }
+
+  const importedVersion = Number(progress.version || 0);
+
+  if (
+    !Number.isFinite(importedVersion) ||
+    importedVersion < PROGRESS_VERSION
+  ) {
+    progress.version = PROGRESS_VERSION;
+  }
+
+  migrateTrafficProgress(progress);
+  migrateTutorialProgress(progress);
+
+  return progress;
+}
+
+function readProfileProgressForBackup(profileId) {
+  const profileApi = getProfileApi();
+  const progressKey =
+    profileApi?.getProfileProgressStorageKey?.(profileId) || "";
+
+  if (!progressKey) {
+    throw new Error("A Zookeeper progress key could not be created.");
+  }
+
+  const raw = localStorage.getItem(progressKey);
+
+  if (!raw) {
+    return createEmptyProgress();
+  }
+
+  return normalizeImportedProgress(JSON.parse(raw));
+}
+
+function createBibloZooFamilySaveData() {
+  const profileApi = getProfileApi();
+  const profiles = profileApi?.getAllProfiles?.() || [];
+
+  if (!profiles.length) {
+    throw new Error("There are no Zookeeper profiles to export.");
+  }
 
   return {
     app: "Verse Memory / BibloPet Zoo",
-    saveType: "verse-memory-save",
-    saveVersion: 1,
+    saveType: FAMILY_SAVE_TYPE,
+    saveVersion: FAMILY_SAVE_VERSION,
     exportedAt: new Date().toISOString(),
-    progressVersion: PROGRESS_VERSION,
-    progress
+    profiles: profiles.map((profile) => ({
+      id: profile.id,
+      name: profile.name,
+      avatarVerseId: profile.avatarVerseId || "",
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+      progress: readProfileProgressForBackup(profile.id)
+    }))
   };
 }
 
@@ -1802,7 +1873,7 @@ function refreshCurrentProgressState() {
 
 function exportSaveData() {
   try {
-    const saveData = createVerseMemorySaveData();
+    const saveData = createBibloZooFamilySaveData();
     const json = JSON.stringify(saveData, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -1822,7 +1893,7 @@ function exportSaveData() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `biblozoo-save-${dateStamp}.json`;
+    a.download = `biblozoo-family-save-${dateStamp}.json`;
     a.style.display = "none";
 
     document.body.appendChild(a);
@@ -1834,8 +1905,8 @@ function exportSaveData() {
     }, 1000);
 
     showDialog({
-      title: "Save Data Exported",
-      body: "Your progress backup file was created. Keep it somewhere safe so you can restore it later.",
+      title: "Family Backup Exported",
+      body: "All Zookeeper profiles and their progress were saved in one backup file.",
       actions: [dlgBtn("OK", { onClick: closeDialog })]
     });
   } catch (err) {
@@ -1843,13 +1914,18 @@ function exportSaveData() {
 
     showDialog({
       title: "Export Failed",
-      body: "Something went wrong while creating the backup file.",
+      body: String(
+        err?.message ||
+        "Something went wrong while creating the backup file."
+      ),
       actions: [dlgBtn("OK", { onClick: closeDialog })]
     });
   }
 }
 
-function openImportSaveDataPicker() {
+function openImportSaveDataPicker({
+  fromFirstProfile = false
+} = {}) {
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".json,application/json";
@@ -1861,14 +1937,517 @@ function openImportSaveDataPicker() {
 
     if (!file) return;
 
-    importSaveDataFromFile(file);
+    importSaveDataFromFile(file, {
+      fromFirstProfile
+    });
   };
 
   document.body.appendChild(input);
   input.click();
 }
 
-function importSaveDataFromFile(file) {
+function parseFamilySaveData(parsed) {
+  if (
+    !Array.isArray(parsed?.profiles) ||
+    !parsed.profiles.length
+  ) {
+    throw new Error(
+      "The family backup does not contain any Zookeeper profiles."
+    );
+  }
+
+  return {
+    ...parsed,
+    profiles: parsed.profiles.map((entry, index) => {
+      if (
+        !entry ||
+        typeof entry !== "object" ||
+        Array.isArray(entry)
+      ) {
+        throw new Error(
+          `Zookeeper ${index + 1} in the backup is invalid.`
+        );
+      }
+
+      const name = String(entry.name || "").trim();
+
+      if (!name) {
+        throw new Error(
+          `Zookeeper ${index + 1} in the backup has no name.`
+        );
+      }
+
+      return {
+        id: String(entry.id || "").trim(),
+        name,
+        avatarVerseId:
+          String(entry.avatarVerseId || "").trim(),
+        createdAt: Number(entry.createdAt) || Date.now(),
+        updatedAt: Number(entry.updatedAt) || Date.now(),
+        progress: normalizeImportedProgress(entry.progress)
+      };
+    })
+  };
+}
+
+function generateImportedProfileId(usedIds) {
+  let id = "";
+
+  do {
+    try {
+      id = globalThis.crypto?.randomUUID
+        ? `profile_${globalThis.crypto.randomUUID().replace(/-/g, "")}`
+        : "";
+    } catch (err) {
+      id = "";
+    }
+
+    if (!id) {
+      id = `profile_${Date.now().toString(36)}_${Math.random()
+        .toString(36)
+        .slice(2, 12)}`;
+    }
+  } while (usedIds.has(id));
+
+  usedIds.add(id);
+  return id;
+}
+
+function getUniqueImportedProfileName(
+  requestedName,
+  usedNameKeys
+) {
+  const profileApi = getProfileApi();
+  const maxLength =
+    Number(profileApi?.PROFILE_NAME_MAX_LENGTH) || 16;
+  const cleanBase =
+    profileApi?.cleanProfileName?.(requestedName) ||
+    String(requestedName || "").trim().slice(0, maxLength);
+
+  if (!cleanBase) {
+    throw new Error("An imported Zookeeper has an invalid name.");
+  }
+
+  const blockChecker =
+    window.BibloZooNameValidation?.isDisplayNameBlocked;
+
+  if (
+    typeof blockChecker === "function" &&
+    blockChecker(cleanBase)
+  ) {
+    throw new Error(
+      `The imported name "${cleanBase}" is not allowed.`
+    );
+  }
+
+  const normalize =
+    profileApi?.normalizeProfileNameForComparison;
+
+  const getKey = (value) => (
+    typeof normalize === "function"
+      ? normalize(value)
+      : String(value || "").toLowerCase()
+  );
+
+  let candidate = cleanBase;
+  let suffixNumber = 2;
+
+  while (usedNameKeys.has(getKey(candidate))) {
+    const suffix = ` ${suffixNumber}`;
+    const baseLength = Math.max(
+      1,
+      maxLength - suffix.length
+    );
+
+    candidate = `${cleanBase.slice(0, baseLength).trim()}${suffix}`;
+    suffixNumber += 1;
+  }
+
+  usedNameKeys.add(getKey(candidate));
+  return candidate;
+}
+
+function captureFamilyStorageSnapshot() {
+  const profileApi = getProfileApi();
+  const progressPrefix =
+    `${profileApi.LEGACY_PROGRESS_STORAGE_KEY}:`;
+  const progressEntries = {};
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+
+    if (key && key.startsWith(progressPrefix)) {
+      progressEntries[key] = localStorage.getItem(key);
+    }
+  }
+
+  return {
+    registryRaw: localStorage.getItem(
+      profileApi.PROFILE_REGISTRY_STORAGE_KEY
+    ),
+    progressEntries
+  };
+}
+
+function restoreFamilyStorageSnapshot(snapshot) {
+  const profileApi = getProfileApi();
+  const progressPrefix =
+    `${profileApi.LEGACY_PROGRESS_STORAGE_KEY}:`;
+  const currentKeys = [];
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+
+    if (key && key.startsWith(progressPrefix)) {
+      currentKeys.push(key);
+    }
+  }
+
+  currentKeys.forEach((key) => {
+    localStorage.removeItem(key);
+  });
+
+  Object.entries(snapshot.progressEntries || {})
+    .forEach(([key, value]) => {
+      if (value !== null) {
+        localStorage.setItem(key, value);
+      }
+    });
+
+  if (snapshot.registryRaw === null) {
+    localStorage.removeItem(
+      profileApi.PROFILE_REGISTRY_STORAGE_KEY
+    );
+  } else {
+    localStorage.setItem(
+      profileApi.PROFILE_REGISTRY_STORAGE_KEY,
+      snapshot.registryRaw
+    );
+  }
+}
+
+function writeAndVerifyProfileProgress(profileId, progress) {
+  const profileApi = getProfileApi();
+  const progressKey =
+    profileApi.getProfileProgressStorageKey(profileId);
+
+  if (!progressKey) {
+    throw new Error(
+      "An imported Zookeeper progress key could not be created."
+    );
+  }
+
+  localStorage.setItem(
+    progressKey,
+    JSON.stringify(progress)
+  );
+
+  const savedRaw = localStorage.getItem(progressKey);
+  const saved = savedRaw ? JSON.parse(savedRaw) : null;
+
+  if (
+    !saved ||
+    typeof saved !== "object" ||
+    Array.isArray(saved) ||
+    !saved.verses ||
+    typeof saved.verses !== "object" ||
+    Array.isArray(saved.verses) ||
+    !saved.tutorial ||
+    typeof saved.tutorial !== "object"
+  ) {
+    throw new Error(
+      "An imported Zookeeper progress record failed verification."
+    );
+  }
+}
+
+function prepareFamilyImport(familyData, mode) {
+  const profileApi = getProfileApi();
+  const currentRegistry =
+    profileApi.loadProfileRegistry();
+  const keepExisting = mode === "add";
+  const baseProfiles = keepExisting
+    ? currentRegistry.profiles.map((profile) => ({
+      ...profile
+    }))
+    : [];
+
+  const usedIds = new Set(
+    baseProfiles.map((profile) => profile.id)
+  );
+
+  const usedNameKeys = new Set(
+    baseProfiles.map((profile) =>
+      profileApi.normalizeProfileNameForComparison(
+        profile.name
+      )
+    )
+  );
+
+  const imported = familyData.profiles.map((entry) => {
+    const id = keepExisting
+      ? generateImportedProfileId(usedIds)
+      : (
+        entry.id && !usedIds.has(entry.id)
+          ? (
+            usedIds.add(entry.id),
+            entry.id
+          )
+          : generateImportedProfileId(usedIds)
+      );
+
+    return {
+      profile: {
+        id,
+        name: getUniqueImportedProfileName(
+          entry.name,
+          usedNameKeys
+        ),
+        avatarVerseId: entry.avatarVerseId,
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt
+      },
+      progress: entry.progress
+    };
+  });
+
+  const nextRegistry =
+    profileApi.normalizeProfileRegistry({
+      version: profileApi.PROFILE_REGISTRY_VERSION,
+      activeProfileId: "",
+      profiles: [
+        ...baseProfiles,
+        ...imported.map((item) => item.profile)
+      ],
+      migration: keepExisting
+        ? currentRegistry.migration
+        : undefined
+    });
+
+  return {
+    imported,
+    nextRegistry
+  };
+}
+
+function applyFamilyImport(familyData, mode) {
+  const profileApi = getProfileApi();
+  const snapshot = captureFamilyStorageSnapshot();
+
+  try {
+    const prepared = prepareFamilyImport(
+      familyData,
+      mode
+    );
+
+    prepared.imported.forEach((item) => {
+      writeAndVerifyProfileProgress(
+        item.profile.id,
+        item.progress
+      );
+    });
+
+    profileApi.saveProfileRegistry(
+      prepared.nextRegistry
+    );
+
+    const verifiedRegistry =
+      profileApi.loadProfileRegistry();
+
+    if (
+      verifiedRegistry.profiles.length !==
+      prepared.nextRegistry.profiles.length
+    ) {
+      throw new Error(
+        "The imported Zookeeper registry failed verification."
+      );
+    }
+
+    const expectedIds = new Set(
+      prepared.nextRegistry.profiles.map(
+        (profile) => profile.id
+      )
+    );
+
+    if (
+      verifiedRegistry.profiles.some(
+        (profile) => !expectedIds.has(profile.id)
+      )
+    ) {
+      throw new Error(
+        "The imported Zookeeper registry did not match the backup."
+      );
+    }
+
+    if (mode === "replace") {
+      const progressPrefix =
+        `${profileApi.LEGACY_PROGRESS_STORAGE_KEY}:`;
+      const keysToRemove = [];
+
+      for (
+        let index = 0;
+        index < localStorage.length;
+        index += 1
+      ) {
+        const key = localStorage.key(index);
+
+        if (
+          key &&
+          key.startsWith(progressPrefix)
+        ) {
+          const profileId = key.slice(
+            progressPrefix.length
+          );
+
+          if (!expectedIds.has(profileId)) {
+            keysToRemove.push(key);
+          }
+        }
+      }
+
+      keysToRemove.forEach((key) => {
+        localStorage.removeItem(key);
+      });
+    }
+
+    try {
+      clearGameMixState();
+    } catch (err) { }
+
+    State.pendingBootRoute = null;
+    clearTransientStateForProfileActivation();
+    setScreen(Screen.PROFILE_PICKER);
+    applyMute();
+
+    return prepared.imported.map(
+      (item) => item.profile
+    );
+  } catch (err) {
+    restoreFamilyStorageSnapshot(snapshot);
+    throw err;
+  }
+}
+
+function showFamilyImportResult(importedProfiles, mode) {
+  const count = importedProfiles.length;
+
+  showDialog({
+    title: "Family Backup Restored",
+    body:
+      mode === "add"
+        ? `${count} Zookeeper${count === 1 ? "" : "s"} added. Choose who will play.`
+        : `${count} Zookeeper${count === 1 ? "" : "s"} restored. Choose who will play.`,
+    actions: [
+      dlgBtn("OK", {
+        onClick: closeDialog
+      })
+    ]
+  });
+}
+
+function runFamilyImport(familyData, mode) {
+  try {
+    const importedProfiles =
+      applyFamilyImport(familyData, mode);
+
+    showFamilyImportResult(
+      importedProfiles,
+      mode
+    );
+  } catch (err) {
+    console.warn("Could not restore family backup", err);
+
+    showDialog({
+      title: "Import Failed",
+      body: String(
+        err?.message ||
+        "The family backup could not be restored."
+      ),
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+  }
+}
+
+function openFamilyImportDialog(
+  familyData,
+  {
+    fromFirstProfile = false
+  } = {}
+) {
+  const profileApi = getProfileApi();
+  const existingCount =
+    (profileApi?.getAllProfiles?.() || []).length;
+  const backupCount = familyData.profiles.length;
+  const exportedAt = familyData.exportedAt
+    ? new Date(familyData.exportedAt).toLocaleString()
+    : "Unknown";
+
+  const restoreFamily = () => {
+    closeDialog();
+    runFamilyImport(familyData, "replace");
+  };
+
+  if (!existingCount || fromFirstProfile) {
+    showDialog({
+      title: "Restore Family Backup?",
+      body:
+        `This backup contains ${backupCount} Zookeeper${backupCount === 1 ? "" : "s"}. Backup date: ${exportedAt}`,
+      actions: [
+        dlgBtn("Cancel", {
+          secondary: true,
+          onClick: closeDialog
+        }),
+        dlgBtn("Restore Family", {
+          onClick: restoreFamily
+        })
+      ]
+    });
+
+    return;
+  }
+
+  showDialog({
+    title: "Import Family Backup",
+    body:
+      `This backup contains ${backupCount} Zookeeper${backupCount === 1 ? "" : "s"}. You can add them to this device or replace all current family data. Name conflicts will be renamed automatically.`,
+    actions: [
+      dlgBtn("Cancel", {
+        secondary: true,
+        onClick: closeDialog
+      }),
+      dlgBtn("Add Zookeepers", {
+        onClick: () => {
+          closeDialog();
+          runFamilyImport(familyData, "add");
+        }
+      }),
+      dlgBtn("Replace All", {
+        onClick: () => {
+          closeDialog();
+
+          openProfileDestructiveMathDialog({
+            title: "Replace All Family Data?",
+            description:
+              "This will remove every current Zookeeper and replace them with the profiles in the selected backup.",
+            confirmLabel: "Replace All",
+            onConfirm: restoreFamily
+          });
+        }
+      })
+    ]
+  });
+}
+
+function importSaveDataFromFile(
+  file,
+  {
+    fromFirstProfile = false
+  } = {}
+) {
   const reader = new FileReader();
 
   reader.onload = () => {
@@ -1876,41 +2455,55 @@ function importSaveDataFromFile(file) {
       const raw = String(reader.result || "");
       const parsed = JSON.parse(raw);
 
-      if (!parsed || typeof parsed !== "object") {
+      if (
+        !parsed ||
+        typeof parsed !== "object" ||
+        Array.isArray(parsed)
+      ) {
         throw new Error("Invalid save file.");
       }
 
-      if (parsed.saveType !== "verse-memory-save") {
-        throw new Error("This does not look like a Verse Memory save file.");
+      if (parsed.saveType === FAMILY_SAVE_TYPE) {
+        const familyData =
+          parseFamilySaveData(parsed);
+
+        openFamilyImportDialog(
+          familyData,
+          {
+            fromFirstProfile
+          }
+        );
+
+        return;
       }
 
-      if (!parsed.progress || typeof parsed.progress !== "object") {
-        throw new Error("The save file does not contain progress data.");
+      if (parsed.saveType !== LEGACY_SAVE_TYPE) {
+        throw new Error(
+          "This does not look like a BibloZoo save file."
+        );
       }
 
-      if (!parsed.progress.verses || typeof parsed.progress.verses !== "object") {
-        throw new Error("The save file progress data is missing verses.");
-      }
+      const importedProgress =
+        normalizeImportedProgress(parsed.progress);
 
-      const importedProgress = parsed.progress;
-
-      const importedVersion = Number(importedProgress.version || 0);
-
-      if (!Number.isFinite(importedVersion) || importedVersion < PROGRESS_VERSION) {
-        importedProgress.version = PROGRESS_VERSION;
-      }
-
-      migrateTrafficProgress(importedProgress);
-      migrateTutorialProgress(importedProgress);
-
-      openRestoreProgressDialog(importedProgress, parsed);
+      openRestoreProgressDialog(
+        importedProgress,
+        parsed
+      );
     } catch (err) {
       console.warn("Could not import save data", err);
 
       showDialog({
         title: "Import Failed",
-        body: String(err.message || "This save file could not be imported."),
-        actions: [dlgBtn("OK", { onClick: closeDialog })]
+        body: String(
+          err?.message ||
+          "This save file could not be imported."
+        ),
+        actions: [
+          dlgBtn("OK", {
+            onClick: closeDialog
+          })
+        ]
       });
     }
   };
@@ -1919,7 +2512,11 @@ function importSaveDataFromFile(file) {
     showDialog({
       title: "Import Failed",
       body: "The save file could not be read.",
-      actions: [dlgBtn("OK", { onClick: closeDialog })]
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
     });
   };
 
@@ -1927,13 +2524,33 @@ function importSaveDataFromFile(file) {
 }
 
 function openRestoreProgressDialog(importedProgress, saveData) {
+  const profileApi = getProfileApi();
+  const activeProfile =
+    profileApi?.getActiveProfile?.();
+
+  if (!activeProfile) {
+    showDialog({
+      title: "Older Backup Needs a Zookeeper",
+      body:
+        "This older backup contains progress for one player, but it does not contain a Zookeeper name or profile picture. Create a Zookeeper first, then import this file from Settings.",
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+
+    return;
+  }
+
   const exportedAt = saveData?.exportedAt
     ? new Date(saveData.exportedAt).toLocaleString()
     : "Unknown";
 
   showDialog({
-    title: "Restore Progress?",
-    body: `This will replace the progress currently saved on this device. Backup date: ${exportedAt}`,
+    title: `Restore ${activeProfile.name}'s Progress?`,
+    body:
+      `This will replace only ${activeProfile.name}'s current progress. Backup date: ${exportedAt}`,
     actions: [
       dlgBtn("Cancel", {
         secondary: true,
@@ -1941,21 +2558,75 @@ function openRestoreProgressDialog(importedProgress, saveData) {
       }),
       dlgBtn("Restore", {
         onClick: () => {
-          saveProgress(importedProgress);
-          refreshCurrentProgressState();
-          closeDialog();
-          render();
+          try {
+            const saved = saveProgress(
+              importedProgress
+            );
 
-          showDialog({
-            title: "Progress Restored",
-            body: "Your saved progress has been restored on this device.",
-            actions: [dlgBtn("OK", { onClick: closeDialog })]
-          });
+            if (!saved) {
+              throw new Error(
+                "The progress could not be written."
+              );
+            }
+
+            const storageKey =
+              getCurrentProgressStorageKey();
+            const savedRaw =
+              localStorage.getItem(storageKey);
+            const verified = savedRaw
+              ? JSON.parse(savedRaw)
+              : null;
+
+            if (
+              !verified ||
+              typeof verified !== "object" ||
+              !verified.verses ||
+              typeof verified.verses !== "object"
+            ) {
+              throw new Error(
+                "The restored progress failed verification."
+              );
+            }
+
+            refreshCurrentProgressState();
+            closeDialog();
+            render();
+
+            showDialog({
+              title: "Progress Restored",
+              body:
+                `${activeProfile.name}'s saved progress has been restored.`,
+              actions: [
+                dlgBtn("OK", {
+                  onClick: closeDialog
+                })
+              ]
+            });
+          } catch (err) {
+            console.warn(
+              "Could not restore legacy progress",
+              err
+            );
+
+            showDialog({
+              title: "Restore Failed",
+              body: String(
+                err?.message ||
+                "The saved progress could not be restored."
+              ),
+              actions: [
+                dlgBtn("OK", {
+                  onClick: closeDialog
+                })
+              ]
+            });
+          }
         }
       })
     ]
   });
 }
+
 
 function generateResetMathQuestion() {
   // Two-digit number plus one-digit number.
@@ -7393,7 +8064,11 @@ function updateProfileEditorValidationUi(rootEl) {
       : (
         State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT
           ? "Save Changes"
-          : "Create Zookeeper"
+          : (
+            State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST
+              ? "Create"
+              : "Create Zookeeper"
+          )
       );
   }
 }
@@ -7675,14 +8350,14 @@ function screenProfilePicker(idx) {
 }
 
 function screenProfileEditor(idx) {
-  const wrap = document.createElement("div");
-  wrap.className =
-    "profile-screen profile-editor-screen";
-
   const isFirst =
     State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST;
   const isEdit =
     State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT;
+
+  const wrap = document.createElement("div");
+  wrap.className =
+    `profile-screen profile-editor-screen${isFirst ? " is-first-profile" : ""}`;
 
   const heading = isFirst
     ? "Let’s make your zookeeper profile."
@@ -7809,13 +8484,29 @@ function screenProfileEditor(idx) {
           aria-live="polite"
         ></div>
 
-        <button
-          class="profile-submit-btn no-zoom"
-          type="submit"
-          data-profile-editor-submit
-        >
-          ${isEdit ? "Save Changes" : "Create Zookeeper"}
-        </button>
+        <div class="profile-editor-actions${isFirst ? " is-first" : ""}">
+          <button
+            class="profile-submit-btn no-zoom"
+            type="submit"
+            data-profile-editor-submit
+          >
+            ${isEdit ? "Save Changes" : "Create"}
+          </button>
+
+          ${
+            isFirst
+              ? `
+                <button
+                  class="profile-submit-btn profile-import-btn no-zoom"
+                  type="button"
+                  data-profile-editor-import
+                >
+                  Import
+                </button>
+              `
+              : ""
+          }
+        </div>
       </form>
     </div>
   `;
@@ -7834,6 +8525,9 @@ function screenProfileEditor(idx) {
   );
   const nextBtn = wrap.querySelector(
     "[data-profile-picture-next]"
+  );
+  const importBtn = wrap.querySelector(
+    "[data-profile-editor-import]"
   );
 
   if (backBtn) {
@@ -7868,6 +8562,14 @@ function screenProfileEditor(idx) {
 
       selectAdjacentProfilePicture(1);
       render();
+    };
+  }
+
+  if (importBtn) {
+    importBtn.onclick = () => {
+      openImportSaveDataPicker({
+        fromFirstProfile: true
+      });
     };
   }
 
@@ -8234,40 +8936,32 @@ function screenTitle(idx) {
           onerror="this.style.display='none'">
       </div>
 
-      ${
-        activeProfile
-          ? `
-            <button
-              class="title-profile-control no-zoom"
-              id="titleProfileBtn"
-              type="button"
-              aria-label="Manage Zookeeper ${escapeHtml(activeProfile.name)}"
-            >
-              ${profilePictureVisualHtml(
-                activeProfile.avatarVerseId,
-                {
-                  className: "title-profile-avatar",
-                  alt: ""
-                }
-              )}
 
-              <span class="title-profile-name">
-                ${escapeHtml(activeProfile.name)}
-              </span>
-
-              <span
-                class="title-profile-chevron"
-                aria-hidden="true"
-              >›</span>
-            </button>
-          `
-          : ""
-      }
-
-      <div class="title-picker-tools">
+      <div class="title-picker-tools${activeProfile ? " has-profile" : ""}">
         <div class="title-picker">
           <select id="versePicker" class="title-picker-select"></select>
         </div>
+
+        ${
+          activeProfile
+            ? `
+              <button
+                class="title-profile-icon-btn no-zoom"
+                id="titleProfileBtn"
+                type="button"
+                aria-label="Open Zookeeper settings for ${escapeHtml(activeProfile.name)}"
+              >
+                ${profilePictureVisualHtml(
+                  activeProfile.avatarVerseId,
+                  {
+                    className: "title-toolbar-profile-avatar",
+                    alt: ""
+                  }
+                )}
+              </button>
+            `
+            : ""
+        }
 
         <button
           class="title-settings-btn no-zoom"
@@ -8546,11 +9240,11 @@ function screenSettings(idx) {
           <div class="settings-card-title">Backup &amp; Restore</div>
           <div class="settings-action-list">
             <button class="settings-action no-zoom" type="button" data-settings-action="export">
-              Export Save Data
+              Export Family Backup
             </button>
 
             <button class="settings-action no-zoom" type="button" data-settings-action="import">
-              Import Save Data
+              Import Backup
             </button>
           </div>
         </section>
