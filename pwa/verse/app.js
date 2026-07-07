@@ -7348,16 +7348,29 @@ function screenProfileEditor(idx) {
 
   wrap.innerHTML = `
     <div class="profile-page">
-      ${backButtonHtml}
-
       <form
         class="profile-shell profile-editor-shell"
         data-profile-editor-form
         novalidate
       >
-        <h1 class="profile-heading">
-          ${escapeHtml(heading)}
-        </h1>
+        <div class="profile-editor-header${isFirst ? " is-first" : ""}">
+          ${backButtonHtml}
+
+          <h1 class="profile-heading">
+            ${escapeHtml(heading)}
+          </h1>
+
+          ${
+            isFirst
+              ? ""
+              : `
+                <span
+                  class="profile-editor-header-spacer"
+                  aria-hidden="true"
+                ></span>
+              `
+          }
+        </div>
 
         ${getProfileEditorMigrationNotice()}
 

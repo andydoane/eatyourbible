@@ -126,10 +126,33 @@
   text-wrap: balance;
 }
 
+.profile-editor-header {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+  margin:
+    clamp(6px, 1.4vh, 12px)
+    auto
+    clamp(18px, 3vh, 28px);
+}
+
+.profile-editor-header.is-first {
+  display: block;
+}
+
+.profile-editor-header .profile-heading {
+  margin: 0;
+}
+
+.profile-editor-header-spacer {
+  width: 48px;
+  height: 48px;
+}
+
 .profile-back-btn {
-  position: absolute;
-  top: calc(16px + var(--safeT));
-  left: clamp(14px, 4vw, 28px);
+  position: static;
   z-index: 10;
   width: 48px;
   height: 48px;
@@ -319,6 +342,14 @@
   opacity: 1;
 }
 
+.profile-editor-error:not(.show) {
+  min-height: 0;
+  height: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
 .profile-submit-btn {
   width: min(100%, 420px);
   min-height: 58px;
@@ -351,6 +382,7 @@
 /* ---------- Profile picker ---------- */
 
 .profile-picker-shell {
+  margin-block: auto;
   padding-bottom: 12px;
 }
 
@@ -445,6 +477,20 @@
     font-size: 28px;
   }
 
+  .profile-editor-header {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 7px;
+  }
+
+  .profile-editor-header:not(.is-first) .profile-heading {
+    font-size: 24px;
+  }
+
+  .profile-editor-header-spacer {
+    width: 44px;
+    height: 44px;
+  }
+
   .profile-picker-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 11px;
@@ -482,34 +528,51 @@
 
 @media (max-height: 700px) {
   .profile-page {
-    padding-top: calc(14px + var(--safeT));
-    padding-bottom: calc(22px + var(--safeB));
-  }
-
-  .profile-logo {
-    max-height: 82px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    padding-top: calc(10px + var(--safeT));
+    padding-bottom: calc(14px + var(--safeB));
   }
 
   .profile-heading {
-    margin-bottom: 13px;
-  }
-
-  .profile-editor-avatar {
-    width: min(48vh, 230px);
-  }
-
-  .profile-avatar-controls {
-    margin-top: 10px;
     margin-bottom: 10px;
   }
 
+  .profile-editor-header {
+    margin-top: 0;
+    margin-bottom: 9px;
+  }
+
+  .profile-editor-avatar {
+    width: min(37vh, 210px);
+    border-width: 7px;
+    border-radius: 28px;
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.24);
+  }
+
+  .profile-avatar-controls {
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
+
+  .profile-avatar-arrow {
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+  }
+
+  .profile-name-label {
+    margin-top: 0;
+    font-size: clamp(20px, 4.8vw, 25px);
+  }
+
   .profile-name-input {
-    height: 52px;
+    height: 50px;
+    margin-top: 8px;
   }
 
   .profile-submit-btn {
-    min-height: 52px;
+    min-height: 50px;
+    margin-top: 5px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 }
