@@ -19,7 +19,7 @@
   // Dev-only shortcut: long-press the sponge on the title screen to jump here.
   // Set to one of: "mud", "paint", "fog", "chalkboard", "glow", "rainbow", "leaves", "stickers", "cookies", "mower", "archaeology"
   // Set to null to disable.
-  const DEBUG_SKIP_ROUND_ID = "chalkboard";
+  const DEBUG_SKIP_ROUND_ID = null;
   const DEBUG_SKIP_LONG_PRESS_MS = 900;
   const VERSE_FIT_DEBUG = false;
 
@@ -109,6 +109,7 @@
   };
 
   const BIBLE_REVEAL_COMPLETION_THRESHOLD = 0.96;
+  const ROUND_ASSET_LOOKAHEAD_COUNT = 2;
 
   const ROUNDS = [
     {
@@ -1082,6 +1083,32 @@
     await Promise.all(jobs);
   }
 
+  function preloadUpcomingRoundAssets(startIndex = currentRoundIndex, lookahead = ROUND_ASSET_LOOKAHEAD_COUNT) {
+    const startPreload = () => {
+      const jobs = [];
+
+      for (let offset = 1; offset <= lookahead; offset += 1) {
+        const round = ROUNDS[startIndex + offset];
+        if (!round) continue;
+
+        jobs.push(ensureRoundAssets(round));
+      }
+
+      if (!jobs.length) return;
+
+      Promise.all(jobs).catch((err) => {
+        console.warn("Scripture Scrub: upcoming round preload failed", err);
+      });
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(startPreload, { timeout: 1200 });
+      return;
+    }
+
+    setTimeout(startPreload, 250);
+  }
+
   function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
@@ -1113,6 +1140,7 @@
     });
 
     wireTitleSpongeDebugSkip();
+    preloadUpcomingRoundAssets(0, ROUND_ASSET_LOOKAHEAD_COUNT);
   }
 
   function wireTitleSpongeDebugSkip() {
@@ -1306,6 +1334,10 @@
 
     await ensureRoundAssets(round);
     setupCurrentRoundVisuals();
+
+    if (round === roundConfig()) {
+      preloadUpcomingRoundAssets(currentRoundIndex, ROUND_ASSET_LOOKAHEAD_COUNT);
+    }
   }
 
   function getReferenceDisplay() {
