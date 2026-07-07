@@ -12,7 +12,16 @@
   const PROFILE_REGISTRY_STORAGE_KEY = "biblozooProfiles";
   const PROFILE_REGISTRY_VERSION = 1;
   const LEGACY_PROGRESS_STORAGE_KEY = "verseMemoryProgress";
+  const LEGACY_PROGRESS_MIGRATION_VERSION = 1;
   const PROFILE_NAME_MAX_LENGTH = 16;
+
+  const LEGACY_MIGRATION_STATUS = Object.freeze({
+    UNINITIALIZED: "uninitialized",
+    PENDING: "pending",
+    COMPLETED: "completed",
+    FAILED: "failed",
+    NOT_NEEDED: "not_needed"
+  });
 
   function cloneJson(value) {
     if (value == null) return value;
@@ -121,11 +130,49 @@
     };
   }
 
+  function createDefaultLegacyMigrationState(overrides = {}) {
+    const requestedStatus = String(overrides.status || "");
+
+    const status = Object.values(LEGACY_MIGRATION_STATUS)
+      .includes(requestedStatus)
+      ? requestedStatus
+      : LEGACY_MIGRATION_STATUS.UNINITIALIZED;
+
+    const pendingAt = Number(overrides.pendingAt);
+    const completedAt = Number(overrides.completedAt);
+    const failedAt = Number(overrides.failedAt);
+
+    return {
+      legacyProgressVersion: LEGACY_PROGRESS_MIGRATION_VERSION,
+      status,
+      profileId: String(overrides.profileId || "").trim(),
+      pendingAt: Number.isFinite(pendingAt) && pendingAt > 0
+        ? pendingAt
+        : 0,
+      completedAt: Number.isFinite(completedAt) && completedAt > 0
+        ? completedAt
+        : 0,
+      failedAt: Number.isFinite(failedAt) && failedAt > 0
+        ? failedAt
+        : 0,
+      error: String(overrides.error || "").slice(0, 500)
+    };
+  }
+
+  function normalizeLegacyMigrationState(rawMigration) {
+    if (!rawMigration || typeof rawMigration !== "object") {
+      return createDefaultLegacyMigrationState();
+    }
+
+    return createDefaultLegacyMigrationState(rawMigration);
+  }
+
   function createEmptyProfileRegistry() {
     return {
       version: PROFILE_REGISTRY_VERSION,
       activeProfileId: "",
-      profiles: []
+      profiles: [],
+      migration: createDefaultLegacyMigrationState()
     };
   }
 
@@ -201,7 +248,8 @@
     return {
       version: PROFILE_REGISTRY_VERSION,
       activeProfileId,
-      profiles
+      profiles,
+      migration: normalizeLegacyMigrationState(registry.migration)
     };
   }
 
@@ -476,6 +524,390 @@
     return LEGACY_PROGRESS_STORAGE_KEY;
   }
 
+  function profileRegistryStorageExists() {
+    try {
+      return localStorage.getItem(PROFILE_REGISTRY_STORAGE_KEY) !== null;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function readLegacyProgressRaw() {
+    try {
+      return localStorage.getItem(LEGACY_PROGRESS_STORAGE_KEY);
+    } catch (err) {
+      throw new Error("The old progress data could not be read.");
+    }
+  }
+
+  function parseLegacyProgressRaw(rawValue) {
+    if (rawValue === null) {
+      return {
+        ok: false,
+        code: "missing",
+        progress: null,
+        message: "No old progress was found."
+      };
+    }
+
+    try {
+      const parsed = JSON.parse(rawValue);
+
+      if (
+        !parsed ||
+        typeof parsed !== "object" ||
+        Array.isArray(parsed)
+      ) {
+        return {
+          ok: false,
+          code: "malformed",
+          progress: null,
+          message: "The old progress data is not a valid progress object."
+        };
+      }
+
+      return {
+        ok: true,
+        code: "ready",
+        progress: parsed,
+        message: ""
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        code: "malformed",
+        progress: null,
+        message: "The old progress data contains invalid JSON."
+      };
+    }
+  }
+
+  function getLegacyMigrationState() {
+    let registryRaw = null;
+
+    try {
+      registryRaw = localStorage.getItem(
+        PROFILE_REGISTRY_STORAGE_KEY
+      );
+    } catch (err) {
+      return {
+        code: "profiles_already_initialized",
+        registryExists: true,
+        registryMalformed: true,
+        hasLegacyProgress: hasLegacyProgress(),
+        migration: createDefaultLegacyMigrationState(),
+        message: "The profile registry could not be read."
+      };
+    }
+
+    if (registryRaw !== null) {
+      try {
+        const parsedRegistry = JSON.parse(registryRaw);
+        const registry = normalizeProfileRegistry(parsedRegistry);
+        const migration = registry.migration;
+
+        if (migration.status === LEGACY_MIGRATION_STATUS.PENDING) {
+          return {
+            code: "migration_pending",
+            registryExists: true,
+            registryMalformed: false,
+            hasLegacyProgress: hasLegacyProgress(),
+            migration: cloneJson(migration),
+            message: "Old progress is waiting to be added to a profile."
+          };
+        }
+
+        if (migration.status === LEGACY_MIGRATION_STATUS.COMPLETED) {
+          return {
+            code: "migration_completed",
+            registryExists: true,
+            registryMalformed: false,
+            hasLegacyProgress: hasLegacyProgress(),
+            migration: cloneJson(migration),
+            message: "Old progress has already been migrated."
+          };
+        }
+
+        if (migration.status === LEGACY_MIGRATION_STATUS.FAILED) {
+          return {
+            code: "migration_failed",
+            registryExists: true,
+            registryMalformed: false,
+            hasLegacyProgress: hasLegacyProgress(),
+            migration: cloneJson(migration),
+            message: migration.error || "Old progress migration failed."
+          };
+        }
+
+        if (migration.status === LEGACY_MIGRATION_STATUS.NOT_NEEDED) {
+          return {
+            code: "migration_not_needed",
+            registryExists: true,
+            registryMalformed: false,
+            hasLegacyProgress: hasLegacyProgress(),
+            migration: cloneJson(migration),
+            message: "There was no old progress to migrate."
+          };
+        }
+
+        return {
+          code: "profiles_already_initialized",
+          registryExists: true,
+          registryMalformed: false,
+          hasLegacyProgress: hasLegacyProgress(),
+          migration: cloneJson(migration),
+          message: "Zookeeper profiles have already been initialized."
+        };
+      } catch (err) {
+        return {
+          code: "profiles_already_initialized",
+          registryExists: true,
+          registryMalformed: true,
+          hasLegacyProgress: hasLegacyProgress(),
+          migration: createDefaultLegacyMigrationState(),
+          message: "The existing profile registry contains invalid JSON."
+        };
+      }
+    }
+
+    const rawLegacyProgress = readLegacyProgressRaw();
+
+    if (rawLegacyProgress === null) {
+      return {
+        code: "no_legacy_progress",
+        registryExists: false,
+        registryMalformed: false,
+        hasLegacyProgress: false,
+        migration: createDefaultLegacyMigrationState(),
+        message: "No old progress was found."
+      };
+    }
+
+    const parsedLegacyProgress =
+      parseLegacyProgressRaw(rawLegacyProgress);
+
+    if (!parsedLegacyProgress.ok) {
+      return {
+        code: "legacy_progress_malformed",
+        registryExists: false,
+        registryMalformed: false,
+        hasLegacyProgress: true,
+        migration: createDefaultLegacyMigrationState(),
+        message: parsedLegacyProgress.message
+      };
+    }
+
+    return {
+      code: "legacy_progress_ready",
+      registryExists: false,
+      registryMalformed: false,
+      hasLegacyProgress: true,
+      migration: createDefaultLegacyMigrationState(),
+      message: "Old progress is ready to be added to a profile."
+    };
+  }
+
+  function updateLegacyMigrationState(status, updates = {}) {
+    const registry = loadProfileRegistry();
+
+    registry.migration = createDefaultLegacyMigrationState({
+      ...registry.migration,
+      ...updates,
+      status
+    });
+
+    saveProfileRegistry(registry);
+
+    return cloneJson(registry.migration);
+  }
+
+  function markLegacyMigrationPending(profileId = "") {
+    const rawLegacyProgress = readLegacyProgressRaw();
+    const parsedLegacyProgress =
+      parseLegacyProgressRaw(rawLegacyProgress);
+
+    if (!parsedLegacyProgress.ok) {
+      throw new Error(parsedLegacyProgress.message);
+    }
+
+    return updateLegacyMigrationState(
+      LEGACY_MIGRATION_STATUS.PENDING,
+      {
+        profileId: String(profileId || "").trim(),
+        pendingAt: Date.now(),
+        completedAt: 0,
+        failedAt: 0,
+        error: ""
+      }
+    );
+  }
+
+  function markLegacyMigrationCompleted(profileId) {
+    return updateLegacyMigrationState(
+      LEGACY_MIGRATION_STATUS.COMPLETED,
+      {
+        profileId: String(profileId || "").trim(),
+        completedAt: Date.now(),
+        failedAt: 0,
+        error: ""
+      }
+    );
+  }
+
+  function markLegacyMigrationFailed(profileId, error) {
+    return updateLegacyMigrationState(
+      LEGACY_MIGRATION_STATUS.FAILED,
+      {
+        profileId: String(profileId || "").trim(),
+        failedAt: Date.now(),
+        error: String(
+          error?.message ||
+          error ||
+          "Old progress migration failed."
+        )
+      }
+    );
+  }
+
+  function markLegacyMigrationNotNeeded() {
+    return updateLegacyMigrationState(
+      LEGACY_MIGRATION_STATUS.NOT_NEEDED,
+      {
+        profileId: "",
+        completedAt: Date.now(),
+        failedAt: 0,
+        error: ""
+      }
+    );
+  }
+
+  function migrateLegacyProgressToProfile(profileId, {
+    prepareProgress,
+    allowOverwrite = false
+  } = {}) {
+    const id = String(profileId || "").trim();
+
+    if (!id) {
+      throw new Error("A destination Zookeeper profile is required.");
+    }
+
+    const profile = getProfileById(id);
+
+    if (!profile) {
+      throw new Error("The destination Zookeeper profile does not exist.");
+    }
+
+    const rawLegacyProgress = readLegacyProgressRaw();
+    const parsedLegacyProgress =
+      parseLegacyProgressRaw(rawLegacyProgress);
+
+    if (!parsedLegacyProgress.ok) {
+      throw new Error(parsedLegacyProgress.message);
+    }
+
+    markLegacyMigrationPending(id);
+
+    try {
+      let preparedProgress = cloneJson(
+        parsedLegacyProgress.progress
+      );
+
+      if (typeof prepareProgress === "function") {
+        preparedProgress = prepareProgress(
+          cloneJson(parsedLegacyProgress.progress)
+        );
+      }
+
+      if (
+        !preparedProgress ||
+        typeof preparedProgress !== "object" ||
+        Array.isArray(preparedProgress)
+      ) {
+        throw new Error(
+          "The old progress could not be prepared for migration."
+        );
+      }
+
+      const destinationKey =
+        getProfileProgressStorageKey(id);
+
+      if (!destinationKey) {
+        throw new Error(
+          "The destination progress key could not be created."
+        );
+      }
+
+      const serializedProgress =
+        JSON.stringify(preparedProgress);
+
+      const existingDestination =
+        localStorage.getItem(destinationKey);
+
+      if (
+        existingDestination !== null &&
+        existingDestination !== serializedProgress &&
+        !allowOverwrite
+      ) {
+        throw new Error(
+          "This Zookeeper already has different saved progress."
+        );
+      }
+
+      if (
+        existingDestination === null ||
+        allowOverwrite
+      ) {
+        localStorage.setItem(
+          destinationKey,
+          serializedProgress
+        );
+      }
+
+      const verifiedRaw =
+        localStorage.getItem(destinationKey);
+
+      if (verifiedRaw !== serializedProgress) {
+        throw new Error(
+          "The migrated progress could not be verified."
+        );
+      }
+
+      const verifiedProgress = JSON.parse(verifiedRaw);
+
+      if (
+        !verifiedProgress ||
+        typeof verifiedProgress !== "object" ||
+        Array.isArray(verifiedProgress)
+      ) {
+        throw new Error(
+          "The migrated progress failed its verification check."
+        );
+      }
+
+      const migration =
+        markLegacyMigrationCompleted(id);
+
+      return {
+        ok: true,
+        profile: cloneJson(profile),
+        progressKey: destinationKey,
+        progress: cloneJson(verifiedProgress),
+        migration
+      };
+    } catch (err) {
+      try {
+        markLegacyMigrationFailed(id, err);
+      } catch (markerError) {
+        console.warn(
+          "Could not record legacy migration failure",
+          markerError
+        );
+      }
+
+      throw err;
+    }
+  }
+
   window.BibloZooProfiles = Object.freeze({
     PROFILE_REGISTRY_STORAGE_KEY,
     PROFILE_REGISTRY_VERSION,
@@ -505,7 +937,19 @@
     normalizeProfileNameForComparison,
     getProfileProgressStorageKey,
     profileHasSavedProgress,
+
+    LEGACY_PROGRESS_MIGRATION_VERSION,
+    LEGACY_MIGRATION_STATUS,
+    profileRegistryStorageExists,
     hasLegacyProgress,
-    getLegacyProgressStorageKey
+    getLegacyProgressStorageKey,
+    readLegacyProgressRaw,
+    parseLegacyProgressRaw,
+    getLegacyMigrationState,
+    markLegacyMigrationPending,
+    markLegacyMigrationCompleted,
+    markLegacyMigrationFailed,
+    markLegacyMigrationNotNeeded,
+    migrateLegacyProgressToProfile
   });
 })();

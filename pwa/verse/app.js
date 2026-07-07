@@ -1702,6 +1702,64 @@ function saveProgress(progress) {
   }
 }
 
+function normalizeProgressForProfileMigration(rawProgress) {
+  if (
+    !rawProgress ||
+    typeof rawProgress !== "object" ||
+    Array.isArray(rawProgress)
+  ) {
+    throw new Error(
+      "The old progress data is not a valid progress object."
+    );
+  }
+
+  const progress = JSON.parse(
+    JSON.stringify(rawProgress)
+  );
+
+  if (
+    !progress.verses ||
+    typeof progress.verses !== "object" ||
+    Array.isArray(progress.verses)
+  ) {
+    progress.verses = {};
+  }
+
+  const currentVersion = Number(progress.version || 0);
+
+  if (
+    !Number.isFinite(currentVersion) ||
+    currentVersion < PROGRESS_VERSION
+  ) {
+    progress.version = PROGRESS_VERSION;
+  }
+
+  migrateTrafficProgress(progress);
+  migrateTutorialProgress(progress);
+
+  return progress;
+}
+
+function migrateLegacyProgressForProfile(profileId) {
+  const profileApi = window.BibloZooProfiles;
+
+  if (
+    !profileApi ||
+    typeof profileApi.migrateLegacyProgressToProfile !== "function"
+  ) {
+    throw new Error(
+      "The Zookeeper profile migration system is unavailable."
+    );
+  }
+
+  return profileApi.migrateLegacyProgressToProfile(
+    profileId,
+    {
+      prepareProgress: normalizeProgressForProfileMigration
+    }
+  );
+}
+
 function createVerseMemorySaveData() {
   const progress = loadProgress();
 
