@@ -1780,6 +1780,8 @@ function migrateLegacyProgressForProfile(profileId) {
 
 const FAMILY_SAVE_TYPE = "biblozoo-family-save";
 const FAMILY_SAVE_VERSION = 2;
+const PROFILE_SAVE_TYPE = "biblozoo-profile-save";
+const PROFILE_SAVE_VERSION = 2;
 const LEGACY_SAVE_TYPE = "verse-memory-save";
 
 function cloneJsonForSave(value) {
@@ -1871,43 +1873,88 @@ function refreshCurrentProgressState() {
   titleZooPetVerseId = "";
 }
 
+function createBibloZooProfileSaveData(
+  profileId = getProfileApi()?.getActiveProfileId?.()
+) {
+  const profileApi = getProfileApi();
+  const profile =
+    profileApi?.getProfileById?.(profileId);
+
+  if (!profile) {
+    throw new Error(
+      "Choose a Zookeeper before creating an individual backup."
+    );
+  }
+
+  return {
+    app: "Verse Memory / BibloPet Zoo",
+    saveType: PROFILE_SAVE_TYPE,
+    saveVersion: PROFILE_SAVE_VERSION,
+    exportedAt: new Date().toISOString(),
+    profile: {
+      id: profile.id,
+      name: profile.name,
+      avatarVerseId: profile.avatarVerseId || "",
+      createdAt: profile.createdAt,
+      updatedAt: profile.updatedAt,
+      progress: readProfileProgressForBackup(profile.id)
+    }
+  };
+}
+
+function downloadJsonSave(saveData, filenamePrefix) {
+  const json = JSON.stringify(saveData, null, 2);
+  const blob = new Blob(
+    [json],
+    { type: "application/json" }
+  );
+  const url = URL.createObjectURL(blob);
+
+  const now = new Date();
+  const pad = (value) =>
+    String(value).padStart(2, "0");
+
+  const dateStamp = [
+    now.getFullYear(),
+    pad(now.getMonth() + 1),
+    pad(now.getDate())
+  ].join("-") + "-" + [
+    pad(now.getHours()),
+    pad(now.getMinutes()),
+    pad(now.getSeconds())
+  ].join("-");
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filenamePrefix}-${dateStamp}.json`;
+  a.style.display = "none";
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
 function exportSaveData() {
   try {
     const saveData = createBibloZooFamilySaveData();
-    const json = JSON.stringify(saveData, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
 
-    const now = new Date();
-    const pad = (value) => String(value).padStart(2, "0");
-
-    const dateStamp = [
-      now.getFullYear(),
-      pad(now.getMonth() + 1),
-      pad(now.getDate())
-    ].join("-") + "-" + [
-      pad(now.getHours()),
-      pad(now.getMinutes()),
-      pad(now.getSeconds())
-    ].join("-");
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `biblozoo-family-save-${dateStamp}.json`;
-    a.style.display = "none";
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 1000);
+    downloadJsonSave(
+      saveData,
+      "biblozoo-family-save"
+    );
 
     showDialog({
       title: "Family Backup Exported",
       body: "All Zookeeper profiles and their progress were saved in one backup file.",
-      actions: [dlgBtn("OK", { onClick: closeDialog })]
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
     });
   } catch (err) {
     console.warn("Could not export save data", err);
@@ -1918,7 +1965,58 @@ function exportSaveData() {
         err?.message ||
         "Something went wrong while creating the backup file."
       ),
-      actions: [dlgBtn("OK", { onClick: closeDialog })]
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+  }
+}
+
+function exportActiveProfileSaveData() {
+  try {
+    const saveData =
+      createBibloZooProfileSaveData();
+    const profile = saveData.profile;
+    const safeName = String(profile.name || "zookeeper")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") ||
+      "zookeeper";
+
+    downloadJsonSave(
+      saveData,
+      `biblozoo-${safeName}-save`
+    );
+
+    showDialog({
+      title: `${profile.name} Backed Up`,
+      body:
+        `${profile.name}'s Zookeeper profile and progress were saved in an individual backup file.`,
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+  } catch (err) {
+    console.warn(
+      "Could not export individual profile",
+      err
+    );
+
+    showDialog({
+      title: "Backup Failed",
+      body: String(
+        err?.message ||
+        "The Zookeeper backup could not be created."
+      ),
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
     });
   }
 }
@@ -1987,6 +2085,41 @@ function parseFamilySaveData(parsed) {
         progress: normalizeImportedProgress(entry.progress)
       };
     })
+  };
+}
+
+function parseProfileSaveData(parsed) {
+  const entry = parsed?.profile;
+
+  if (
+    !entry ||
+    typeof entry !== "object" ||
+    Array.isArray(entry)
+  ) {
+    throw new Error(
+      "The individual backup does not contain a valid Zookeeper profile."
+    );
+  }
+
+  const name = String(entry.name || "").trim();
+
+  if (!name) {
+    throw new Error(
+      "The individual backup does not contain a Zookeeper name."
+    );
+  }
+
+  return {
+    ...parsed,
+    profile: {
+      id: String(entry.id || "").trim(),
+      name,
+      avatarVerseId:
+        String(entry.avatarVerseId || "").trim(),
+      createdAt: Number(entry.createdAt) || Date.now(),
+      updatedAt: Number(entry.updatedAt) || Date.now(),
+      progress: normalizeImportedProgress(entry.progress)
+    }
   };
 }
 
@@ -2442,6 +2575,163 @@ function openFamilyImportDialog(
   });
 }
 
+function runIndividualProfileImportAsNew(
+  profileEntry
+) {
+  try {
+    const importedProfiles =
+      applyFamilyImport(
+        {
+          profiles: [profileEntry]
+        },
+        "add"
+      );
+
+    const importedProfile =
+      importedProfiles[0];
+
+    showDialog({
+      title: "Zookeeper Added",
+      body:
+        `${importedProfile.name} was added from the individual backup. Choose who will play.`,
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+  } catch (err) {
+    console.warn(
+      "Could not restore individual profile",
+      err
+    );
+
+    showDialog({
+      title: "Import Failed",
+      body: String(
+        err?.message ||
+        "The individual Zookeeper backup could not be restored."
+      ),
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+  }
+}
+
+function openIndividualProfileImportDialog(
+  profileData,
+  {
+    fromFirstProfile = false
+  } = {}
+) {
+  const profileApi = getProfileApi();
+  const existingProfiles =
+    profileApi?.getAllProfiles?.() || [];
+  const activeProfile =
+    profileApi?.getActiveProfile?.();
+  const importedProfile = profileData.profile;
+  const exportedAt = profileData.exportedAt
+    ? new Date(profileData.exportedAt).toLocaleString()
+    : "Unknown";
+
+  if (!existingProfiles.length || fromFirstProfile) {
+    showDialog({
+      title: `Restore ${importedProfile.name}?`,
+      body:
+        `This individual backup contains ${importedProfile.name}'s Zookeeper profile and progress. Backup date: ${exportedAt}`,
+      actions: [
+        dlgBtn("Cancel", {
+          secondary: true,
+          onClick: closeDialog
+        }),
+        dlgBtn("Add Zookeeper", {
+          onClick: () => {
+            closeDialog();
+            runIndividualProfileImportAsNew(
+              importedProfile
+            );
+          }
+        })
+      ]
+    });
+
+    return;
+  }
+
+  const actions = [
+    dlgBtn("Cancel", {
+      secondary: true,
+      onClick: closeDialog
+    }),
+    dlgBtn("Add as New", {
+      onClick: () => {
+        closeDialog();
+        runIndividualProfileImportAsNew(
+          importedProfile
+        );
+      }
+    })
+  ];
+
+  if (activeProfile) {
+    actions.push(
+      dlgBtn(`Replace ${activeProfile.name}`, {
+        onClick: () => {
+          restoreImportedProgressToActiveProfile(
+            importedProfile.progress,
+            activeProfile
+          );
+        }
+      })
+    );
+  }
+
+  showDialog({
+    title: "Import Zookeeper Backup",
+    body:
+      activeProfile
+        ? `Add ${importedProfile.name} as a new Zookeeper, or replace only ${activeProfile.name}'s progress. Names and pictures are preserved when adding as new.`
+        : `Add ${importedProfile.name} as a new Zookeeper on this device.`,
+    actions
+  });
+}
+
+function openLegacyProgressProfileEditor(
+  importedProgress,
+  saveData
+) {
+  const profileApi = getProfileApi();
+  const hasProfiles =
+    (profileApi?.getAllProfiles?.() || []).length > 0;
+  const exportedAt = saveData?.exportedAt
+    ? new Date(saveData.exportedAt).toLocaleDateString()
+    : "";
+  const importedProgressLabel = exportedAt
+    ? `the older backup from ${exportedAt}`
+    : "the older backup";
+
+  closeDialog();
+
+  if (hasProfiles) {
+    openAddProfileEditor(
+      Screen.PROFILE_MANAGE,
+      {
+        importedProgress,
+        importedProgressLabel
+      }
+    );
+    return;
+  }
+
+  openFirstProfileEditor({
+    importedProgress,
+    importedProgressLabel
+  });
+}
+
 function importSaveDataFromFile(
   file,
   {
@@ -2469,6 +2759,20 @@ function importSaveDataFromFile(
 
         openFamilyImportDialog(
           familyData,
+          {
+            fromFirstProfile
+          }
+        );
+
+        return;
+      }
+
+      if (parsed.saveType === PROFILE_SAVE_TYPE) {
+        const profileData =
+          parseProfileSaveData(parsed);
+
+        openIndividualProfileImportDialog(
+          profileData,
           {
             fromFirstProfile
           }
@@ -2523,19 +2827,103 @@ function importSaveDataFromFile(
   reader.readAsText(file);
 }
 
-function openRestoreProgressDialog(importedProgress, saveData) {
-  const profileApi = getProfileApi();
-  const activeProfile =
-    profileApi?.getActiveProfile?.();
+function restoreImportedProgressToActiveProfile(
+  importedProgress,
+  activeProfile
+) {
+  try {
+    const saved = saveProgress(
+      importedProgress
+    );
 
-  if (!activeProfile) {
+    if (!saved) {
+      throw new Error(
+        "The progress could not be written."
+      );
+    }
+
+    const storageKey =
+      getCurrentProgressStorageKey();
+    const savedRaw =
+      localStorage.getItem(storageKey);
+    const verified = savedRaw
+      ? JSON.parse(savedRaw)
+      : null;
+
+    if (
+      !verified ||
+      typeof verified !== "object" ||
+      !verified.verses ||
+      typeof verified.verses !== "object"
+    ) {
+      throw new Error(
+        "The restored progress failed verification."
+      );
+    }
+
+    refreshCurrentProgressState();
+    closeDialog();
+    render();
+
     showDialog({
-      title: "Older Backup Needs a Zookeeper",
+      title: "Progress Restored",
       body:
-        "This older backup contains progress for one player, but it does not contain a Zookeeper name or profile picture. Create a Zookeeper first, then import this file from Settings.",
+        `${activeProfile.name}'s saved progress has been restored.`,
       actions: [
         dlgBtn("OK", {
           onClick: closeDialog
+        })
+      ]
+    });
+  } catch (err) {
+    console.warn(
+      "Could not restore imported progress",
+      err
+    );
+
+    showDialog({
+      title: "Restore Failed",
+      body: String(
+        err?.message ||
+        "The saved progress could not be restored."
+      ),
+      actions: [
+        dlgBtn("OK", {
+          onClick: closeDialog
+        })
+      ]
+    });
+  }
+}
+
+function openRestoreProgressDialog(
+  importedProgress,
+  saveData
+) {
+  const profileApi = getProfileApi();
+  const activeProfile =
+    profileApi?.getActiveProfile?.();
+  const exportedAt = saveData?.exportedAt
+    ? new Date(saveData.exportedAt).toLocaleString()
+    : "Unknown";
+
+  if (!activeProfile) {
+    showDialog({
+      title: "Create a Zookeeper From This Backup?",
+      body:
+        `This older backup contains progress for one player, but no Zookeeper name or picture. Backup date: ${exportedAt}`,
+      actions: [
+        dlgBtn("Cancel", {
+          secondary: true,
+          onClick: closeDialog
+        }),
+        dlgBtn("Create Zookeeper", {
+          onClick: () => {
+            openLegacyProgressProfileEditor(
+              importedProgress,
+              saveData
+            );
+          }
         })
       ]
     });
@@ -2543,84 +2931,29 @@ function openRestoreProgressDialog(importedProgress, saveData) {
     return;
   }
 
-  const exportedAt = saveData?.exportedAt
-    ? new Date(saveData.exportedAt).toLocaleString()
-    : "Unknown";
-
   showDialog({
-    title: `Restore ${activeProfile.name}'s Progress?`,
+    title: "Import Single-Player Progress",
     body:
-      `This will replace only ${activeProfile.name}'s current progress. Backup date: ${exportedAt}`,
+      `Create a new Zookeeper with this progress, or replace only ${activeProfile.name}'s current progress. Backup date: ${exportedAt}`,
     actions: [
       dlgBtn("Cancel", {
         secondary: true,
         onClick: closeDialog
       }),
-      dlgBtn("Restore", {
+      dlgBtn("Add as New", {
         onClick: () => {
-          try {
-            const saved = saveProgress(
-              importedProgress
-            );
-
-            if (!saved) {
-              throw new Error(
-                "The progress could not be written."
-              );
-            }
-
-            const storageKey =
-              getCurrentProgressStorageKey();
-            const savedRaw =
-              localStorage.getItem(storageKey);
-            const verified = savedRaw
-              ? JSON.parse(savedRaw)
-              : null;
-
-            if (
-              !verified ||
-              typeof verified !== "object" ||
-              !verified.verses ||
-              typeof verified.verses !== "object"
-            ) {
-              throw new Error(
-                "The restored progress failed verification."
-              );
-            }
-
-            refreshCurrentProgressState();
-            closeDialog();
-            render();
-
-            showDialog({
-              title: "Progress Restored",
-              body:
-                `${activeProfile.name}'s saved progress has been restored.`,
-              actions: [
-                dlgBtn("OK", {
-                  onClick: closeDialog
-                })
-              ]
-            });
-          } catch (err) {
-            console.warn(
-              "Could not restore legacy progress",
-              err
-            );
-
-            showDialog({
-              title: "Restore Failed",
-              body: String(
-                err?.message ||
-                "The saved progress could not be restored."
-              ),
-              actions: [
-                dlgBtn("OK", {
-                  onClick: closeDialog
-                })
-              ]
-            });
-          }
+          openLegacyProgressProfileEditor(
+            importedProgress,
+            saveData
+          );
+        }
+      }),
+      dlgBtn(`Replace ${activeProfile.name}`, {
+        onClick: () => {
+          restoreImportedProgressToActiveProfile(
+            importedProgress,
+            activeProfile
+          );
         }
       })
     ]
@@ -5027,6 +5360,8 @@ const State = {
   profilePictureSelectionChanged: false,
   profileEditorMigrationCode: "",
   profileEditorMigrationMessage: "",
+  profileEditorImportedProgress: null,
+  profileEditorImportedProgressLabel: "",
 
   // Profile picture carousel
   profilePictureIndex: 0,
@@ -7575,6 +7910,8 @@ function resetProfileEditorState() {
   State.profilePictureSelectionChanged = false;
   State.profileEditorMigrationCode = "";
   State.profileEditorMigrationMessage = "";
+  State.profileEditorImportedProgress = null;
+  State.profileEditorImportedProgressLabel = "";
   State.profilePictureIndex = 0;
 }
 
@@ -7602,6 +7939,18 @@ function getProfileEditorValidation() {
 }
 
 function getProfileEditorMigrationNotice() {
+  if (State.profileEditorImportedProgress) {
+    const sourceLabel =
+      State.profileEditorImportedProgressLabel ||
+      "the selected backup";
+
+    return `
+      <div class="profile-migration-notice">
+        This new Zookeeper will use the progress from ${escapeHtml(sourceLabel)}.
+      </div>
+    `;
+  }
+
   if (State.profileEditorMode !== PROFILE_EDITOR_MODES.FIRST) {
     return "";
   }
@@ -7819,7 +8168,10 @@ function openProfilePicker() {
   go(Screen.PROFILE_PICKER);
 }
 
-function openFirstProfileEditor() {
+function openFirstProfileEditor({
+  importedProgress = null,
+  importedProgressLabel = ""
+} = {}) {
   resetProfileEditorState();
 
   const profileApi = getProfileApi();
@@ -7832,19 +8184,35 @@ function openFirstProfileEditor() {
     String(migrationState.code || "");
   State.profileEditorMigrationMessage =
     String(migrationState.message || "");
+  State.profileEditorImportedProgress =
+    importedProgress
+      ? cloneJsonForSave(importedProgress)
+      : null;
+  State.profileEditorImportedProgressLabel =
+    String(importedProgressLabel || "");
 
   setProfilePictureIndex(0);
   go(Screen.PROFILE_EDITOR);
 }
 
 function openAddProfileEditor(
-  returnScreen = Screen.PROFILE_PICKER
+  returnScreen = Screen.PROFILE_PICKER,
+  {
+    importedProgress = null,
+    importedProgressLabel = ""
+  } = {}
 ) {
   resetProfileEditorState();
 
   State.profileEditorReturnScreen = returnScreen;
   State.profileEditorMode = PROFILE_EDITOR_MODES.ADD;
   State.profilePictureSelectionChanged = true;
+  State.profileEditorImportedProgress =
+    importedProgress
+      ? cloneJsonForSave(importedProgress)
+      : null;
+  State.profileEditorImportedProgressLabel =
+    String(importedProgressLabel || "");
 
   setProfilePictureIndex(0);
   go(Screen.PROFILE_EDITOR);
@@ -8127,7 +8495,14 @@ async function submitProfileEditor() {
         makeActive: true
       });
 
-      if (
+      if (State.profileEditorImportedProgress) {
+        writeAndVerifyProfileProgress(
+          createdProfile.id,
+          normalizeImportedProgress(
+            State.profileEditorImportedProgress
+          )
+        );
+      } else if (
         State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
         State.profileEditorMigrationCode === "legacy_progress_ready"
       ) {
@@ -8182,6 +8557,7 @@ async function submitProfileEditor() {
       State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
       State.profileEditorMigrationCode === "legacy_progress_malformed";
 
+    resetProfileEditorState();
     continueAfterProfileActivation();
 
     if (shouldWarnAboutLegacyData) {
@@ -8338,7 +8714,9 @@ function screenProfilePicker(idx) {
 
   const addBtn = wrap.querySelector("[data-profile-add]");
   if (addBtn) {
-    addBtn.onclick = openAddProfileEditor;
+    addBtn.onclick = () => {
+      openAddProfileEditor();
+    };
   }
 
   return makeSlide({
@@ -8720,6 +9098,14 @@ function screenProfileManage(idx) {
           >
             Edit ${escapeHtml(profile.name)}
           </button>
+
+          <button
+            class="profile-manage-action no-zoom"
+            type="button"
+            data-profile-manage-action="backup"
+          >
+            Back Up ${escapeHtml(profile.name)}
+          </button>
         </div>
 
         <div class="profile-manage-danger">
@@ -8786,6 +9172,11 @@ function screenProfileManage(idx) {
             profile.id,
             Screen.PROFILE_MANAGE
           );
+          return;
+        }
+
+        if (action === "backup") {
+          exportActiveProfileSaveData();
           return;
         }
 
