@@ -2919,10 +2919,21 @@ function openRestoreProgressDialog(
         }),
         dlgBtn("Create Zookeeper", {
           onClick: () => {
-            openLegacyProgressProfileEditor(
-              importedProgress,
-              saveData
-            );
+            showDialog({
+              title: "Backup Ready",
+              body:
+                "We found the saved progress. Now choose a name and picture for the Zookeeper who will use it.",
+              actions: [
+                dlgBtn("Continue", {
+                  onClick: () => {
+                    openLegacyProgressProfileEditor(
+                      importedProgress,
+                      saveData
+                    );
+                  }
+                })
+              ]
+            });
           }
         })
       ]
@@ -8693,9 +8704,6 @@ function screenProfilePicker(idx) {
             aria-label="Add Zookeeper"
           >
             <span class="profile-add-icon" aria-hidden="true">+</span>
-            <span class="profile-picker-name">
-              Add Zookeeper
-            </span>
           </button>
         </div>
       </div>
@@ -9682,6 +9690,10 @@ function screenSettings(idx) {
                   : "Reset Current Zookeeper’s Progress"
               }
             </button>
+
+            <button class="settings-action settings-action-danger no-zoom" type="button" data-settings-action="erase-family">
+              Erase All Family Data
+            </button>
           </div>
         </section>
       </div>
@@ -9728,6 +9740,11 @@ function screenSettings(idx) {
 
       if (action === "contact") {
         showContactSupportDialog();
+        return;
+      }
+
+      if (action === "erase-family") {
+        openEraseAllFamilyDataDialog();
         return;
       }
 

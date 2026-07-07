@@ -474,11 +474,8 @@
 
 .profile-add-card {
   justify-content: center;
+  gap: 0;
   background: rgba(255, 255, 255, 0.16);
-  color: #ffffff;
-}
-
-.profile-add-card .profile-picker-name {
   color: #ffffff;
 }
 
@@ -631,9 +628,19 @@
 }
 
 .title-toolbar-profile-avatar {
+  flex: 0 0 42px;
   width: 42px;
   height: 42px;
+  margin: 0;
   border-radius: 10px;
+}
+
+.title-toolbar-profile-avatar .profile-picture-img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  object-fit: cover;
 }
 
 .title-toolbar-profile-avatar .profile-picture-fallback {
