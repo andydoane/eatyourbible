@@ -205,6 +205,10 @@
   line-height: 1;
 }
 
+.profile-picture-fallback.is-hidden {
+  display: none;
+}
+
 .profile-picture-img {
   z-index: 2;
   object-fit: cover;

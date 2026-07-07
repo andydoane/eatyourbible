@@ -1201,6 +1201,15 @@
       );
     }
 
+    const fallback =
+      img.parentElement?.querySelector?.(
+        ".profile-picture-fallback"
+      );
+
+    if (fallback) {
+      fallback.classList.add("is-hidden");
+    }
+
     img.hidden = false;
     img.classList.add("is-loaded");
     img.classList.remove("is-missing");
@@ -1226,6 +1235,15 @@
       img.dataset.profilePictureVerseId = "";
       img.src = getProfilePictureFallbackSrc();
       return;
+    }
+
+    const fallback =
+      img.parentElement?.querySelector?.(
+        ".profile-picture-fallback"
+      );
+
+    if (fallback) {
+      fallback.classList.remove("is-hidden");
     }
 
     img.hidden = true;
