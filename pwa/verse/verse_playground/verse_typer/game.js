@@ -20,10 +20,16 @@
   };
 
   const MODES = [
-    { id: "beginner", label: "Beginner" },
+    { id: "easy", label: "Beginner" },
     { id: "medium", label: "Medium" },
-    { id: "advanced", label: "Advanced" }
+    { id: "hard", label: "Advanced" }
   ];
+
+  const INTERNAL_MODE_BY_SHELL_MODE = {
+    easy: "beginner",
+    medium: "medium",
+    hard: "advanced"
+  };
 
   const LETTER_ROWS = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
@@ -998,7 +1004,8 @@
     window.VerseGameShell.renderModeSelect({
       app,
       title: "Choose Your Mode",
-      icon: "🐛✨",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       backLabel: "Back to Verse Typer title",
@@ -1010,7 +1017,7 @@
         primeHtmlAudio();
         unlockAudio();
         preloadGameAssets();
-        selectedMode = ["beginner", "medium", "advanced"].includes(mode) ? mode : "beginner";
+        selectedMode = INTERNAL_MODE_BY_SHELL_MODE[mode] || "beginner";
         await beginRun();
       }
     });
@@ -1228,13 +1235,17 @@
   function canUseAdvancedHint(item = state.currentItem) {
     return selectedMode === "advanced"
       && !!item
-      && item.kind !== "reference"
       && item.kind !== "mega";
   }
 
   function shouldShowAdvancedHintPrompt(item = state.currentItem) {
-    return canUseAdvancedHint(item)
-      && item.kind === "word"
+    if (!canUseAdvancedHint(item)) return false;
+
+    if (item.kind === "reference") {
+      return state.advancedHintLevel < 2;
+    }
+
+    return item.kind === "word"
       && !state.advancedFullHintUsed
       && state.advancedHintWordsSeen <= 4;
   }
@@ -2001,6 +2012,14 @@
   function renderItemSegments(item) {
     if (item.kind === "reference") {
       const typedPositions = new Set(item.digitPositions.slice(0, state.typedIndex));
+      const advancedHidden = selectedMode === "advanced";
+      const fullReveal = !advancedHidden || state.revealed || state.advancedHintLevel >= 2;
+      const hintedDigitIndex = advancedHidden
+        && state.advancedHintLevel >= 1
+        && item.expected.length
+        ? Math.min(state.typedIndex, item.expected.length - 1)
+        : -1;
+
       return `
         <span class="vt-head ${state.headShakeUntil > performance.now() ? "is-no" : ""}">${faceHtml()}</span>
         <span class="vt-body vt-reference-body">
@@ -2009,8 +2028,13 @@
         const typed = typedPositions.has(index);
         const just = index === state.justTypedSegmentIndex;
         const typeIndex = isDigit ? item.digitPositions.indexOf(index) : -1;
+        const visible = !isDigit
+          || fullReveal
+          || typed
+          || typeIndex === hintedDigitIndex;
         const dataAttr = typeIndex >= 0 ? ` data-vt-type-index="${typeIndex}"` : "";
-        return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}"${dataAttr}>${escapeHtml(char)}</span>`;
+
+        return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}"${dataAttr}>${visible ? escapeHtml(char) : ""}</span>`;
       }).join("")}
         </span>
         <span class="vt-tail ${tailStageClass()}"></span>
@@ -2751,12 +2775,9 @@
 
   function helpHtml() {
     return `
-      Type each caterpillar word with the letter keyboard.<br><br>
-      Beginner is a shorter round: type the verse chunks, book, and numbers, then hatch the butterfly.<br><br>
-      Medium adds the Mega-pillar, where you type the whole verse as one long caterpillar.<br><br>
-      Advanced hides the letters, but you can tap the caterpillar for a hint. Advanced also includes the Mega-pillar.<br><br>
-      After each verse chunk, the chunk appears on screen while its audio plays. Then the next caterpillar comes in.<br><br>
-      Wrong letters make the caterpillar say “no,” but this is a playground — just keep typing!
+      Type each caterpillar word.<br><br>
+      Advanced hides the letters, but you can tap the caterpillar for a hint.<br><br>
+      Complete the Mega-Pillar by typing the entire verse in one go!
     `;
   }
 
