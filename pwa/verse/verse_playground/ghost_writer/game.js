@@ -18,8 +18,8 @@
   };
 
   const MODES = [
-    { id: "beginner", label: "👻 Beginner" },
-    { id: "advanced", label: "🌙 Advanced" }
+    { id: "beginner", label: "Beginner" },
+    { id: "advanced", label: "Advanced" }
   ];
 
   const ENABLE_PUNCTUATION_RECORDER = false;
@@ -84,9 +84,9 @@
     ghost: {
       label: "Ghost Black",
       kind: "special",
-      value: "#050509",
+      value: "#101114",
       cardClass: "",
-      texture: "ghost"
+      texture: "flat"
     },
     red: { ...COLOR_PALETTE.red, kind: "solid", cardClass: "" },
     orange: { ...COLOR_PALETTE.orange, kind: "solid", cardClass: "" },
@@ -1189,7 +1189,8 @@
     shell().renderModeSelect({
       app,
       title: "Choose Your Ghost",
-      icon: "👻✍️",
+      icon: GAME_ICON,
+      iconHtml: GAME_ICON_HTML,
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       backLabel: "Back to Ghost Writer title",
@@ -2357,9 +2358,10 @@
     const cleanOptions = sanitizeRemixOptions({ ...options });
     const background = getBackgroundConfig(cleanOptions);
     const toolConfig = getPlaybackToolConfig(cleanOptions);
+    const isDefaultGhostPlayback = getBackgroundKey(cleanOptions) === "ghost";
 
     app.innerHTML = `
-      <div class="ghost-playback-root">
+      <div class="ghost-playback-root${isDefaultGhostPlayback ? " is-default-ghost" : ""}">
         <div class="ghost-playback-card ${escapeHtml(background.cardClass || "")}" id="ghostPlaybackCard">
           <canvas id="ghostPlaybackCanvas" aria-label="Ghost writing playback"></canvas>
           <img
@@ -2558,6 +2560,25 @@
 
         <div class="ghost-remix-scroll">
           ${settingsHtml}
+        </div>
+      </div>
+
+      <div class="ghost-confirm-overlay" id="ghostStartOverConfirm" hidden>
+        <div
+          class="ghost-confirm-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ghostStartOverTitle"
+          aria-describedby="ghostStartOverText"
+        >
+          <div class="ghost-confirm-title" id="ghostStartOverTitle">Start over?</div>
+          <p class="ghost-confirm-text" id="ghostStartOverText">
+            This will erase your handwriting practice for this verse.
+          </p>
+          <div class="ghost-confirm-actions">
+            <button class="vm-btn vm-btn-secondary" id="ghostStartOverCancelBtn" type="button">Cancel</button>
+            <button class="vm-btn" id="ghostStartOverConfirmBtn" type="button">Start Over</button>
+          </div>
         </div>
       </div>
     `, { menu: true, wide: true, rootClass: "is-remix-screen" });
@@ -2766,9 +2787,49 @@
       }
     });
 
-    document.getElementById("ghostAgainBtn")?.addEventListener("click", () => {
+    const startOverBtn = document.getElementById("ghostAgainBtn");
+    const startOverConfirm = document.getElementById("ghostStartOverConfirm");
+    const startOverCancelBtn = document.getElementById("ghostStartOverCancelBtn");
+    const startOverConfirmBtn = document.getElementById("ghostStartOverConfirmBtn");
+
+    const closeStartOverConfirm = () => {
+      if (!startOverConfirm) return;
+      startOverConfirm.hidden = true;
+      startOverBtn?.focus?.();
+    };
+
+    const openStartOverConfirm = () => {
+      if (!startOverConfirm) return;
+      startOverConfirm.hidden = false;
+      startOverConfirmBtn?.focus?.();
+    };
+
+    startOverBtn?.addEventListener("click", () => {
+      playUiTapSound();
+      openStartOverConfirm();
+    });
+
+    startOverCancelBtn?.addEventListener("click", () => {
+      playUiTapSound();
+      closeStartOverConfirm();
+    });
+
+    startOverConfirmBtn?.addEventListener("click", () => {
       playUiTapSound();
       startRun(selectedMode);
+    });
+
+    startOverConfirm?.addEventListener("click", (event) => {
+      if (event.target !== startOverConfirm) return;
+      playUiTapSound();
+      closeStartOverConfirm();
+    });
+
+    startOverConfirm?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      playUiTapSound();
+      closeStartOverConfirm();
     });
 
     document.getElementById("ghostBackBtn")?.addEventListener("click", () => {

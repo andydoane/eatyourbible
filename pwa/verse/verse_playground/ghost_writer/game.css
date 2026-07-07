@@ -1,4 +1,20 @@
 @font-face {
+  font-family: "Baloo 2";
+  src: url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Titan One";
+  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+@font-face {
   font-family: "Playwrite US Modern";
   src: url("./ghost_writer_fonts/Playwrite_US_Modern.woff") format("woff");
   font-weight: 100 400;
@@ -565,6 +581,23 @@ body {
   box-shadow: 0 22px 70px rgba(0, 0, 0, .64), inset 0 0 0 1px rgba(255, 255, 255, .10);
 }
 
+.ghost-playback-root.is-default-ghost {
+  background: #101114;
+}
+
+.ghost-playback-root.is-default-ghost::before {
+  display: none;
+}
+
+.ghost-playback-root.is-default-ghost .ghost-playback-card {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  border-radius: 0;
+  background: #101114;
+  box-shadow: none;
+}
+
 .ghost-playback-card.is-chalkboard {
   background: #15352d;
 }
@@ -830,6 +863,57 @@ body {
 
 .ghost-remix-actions .ghost-full {
   grid-column: 1 / -1;
+}
+
+.ghost-confirm-overlay[hidden] {
+  display: none;
+}
+
+.ghost-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, .58);
+}
+
+.ghost-confirm-dialog {
+  width: min(420px, 100%);
+  border-radius: 28px;
+  padding: 18px;
+  background: rgba(255, 255, 255, .97);
+  color: #20212b;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, .48);
+  text-align: center;
+}
+
+.ghost-confirm-title {
+  font-size: clamp(25px, 6vw, 34px);
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.ghost-confirm-text {
+  margin: 0 0 16px;
+  color: rgba(32, 33, 43, .78);
+  font-size: clamp(17px, 4.4vw, 21px);
+  font-weight: 800;
+  line-height: 1.18;
+}
+
+.ghost-confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ghost-confirm-actions .vm-btn {
+  width: 100%;
+  min-height: 54px;
+  font-size: clamp(17px, 4.4vw, 22px);
 }
 
 .ghost-help-list {
