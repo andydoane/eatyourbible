@@ -1362,6 +1362,13 @@ const PROGRESS_STORAGE_KEY = "verseMemoryProgress";
 const PROGRESS_VERSION = 2;
 const TRAFFIC_PROGRESS_MIGRATION_VERSION = 1;
 
+function getCurrentProgressStorageKey() {
+  const profileProgressKey =
+    window.BibloZooProfiles?.getProfileProgressStorageKey?.() || "";
+
+  return profileProgressKey || PROGRESS_STORAGE_KEY;
+}
+
 const TUTORIAL_STEPS = Object.freeze({
   INTRO: "intro",
   CHOOSE_VERSE: "choose_verse",
@@ -1649,7 +1656,9 @@ function migrateTrafficProgress(progress) {
 
 function loadProgress() {
   try {
-    const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    const storageKey = getCurrentProgressStorageKey();
+    const raw = localStorage.getItem(storageKey);
+
     if (!raw) return createEmptyProgress();
 
     const parsed = JSON.parse(raw);
@@ -1685,7 +1694,9 @@ function loadProgress() {
 
 function saveProgress(progress) {
   try {
-    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+    const storageKey = getCurrentProgressStorageKey();
+
+    localStorage.setItem(storageKey, JSON.stringify(progress));
   } catch (err) {
     console.warn("Could not save progress to localStorage", err);
   }
@@ -1884,7 +1895,9 @@ function generateResetMathQuestion() {
 
 function resetAllProgressData() {
   try {
-    localStorage.removeItem(PROGRESS_STORAGE_KEY);
+    const storageKey = getCurrentProgressStorageKey();
+
+    localStorage.removeItem(storageKey);
   } catch (err) {
     console.warn("Could not reset progress", err);
   }
