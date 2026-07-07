@@ -1865,13 +1865,7 @@
   function referenceClueHtml(challenge) {
     if (!challenge || challenge.type !== "reference") return "";
 
-    return `
-      <div class="wob-context-card wob-reference-clue">
-        <span class="wob-context-blank">
-          ${escapeHtml(referenceClueText(challenge))}
-        </span>
-      </div>
-    `;
+    return `<div class="wob-reference-clue"><span class="wob-context-blank">${escapeHtml(referenceClueText(challenge))}</span></div>`;
   }
 
   function drawChallenge() {
