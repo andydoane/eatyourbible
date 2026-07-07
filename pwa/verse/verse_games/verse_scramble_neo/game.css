@@ -1,4 +1,12 @@
 @font-face{
+  font-family:"Baloo 2";
+  src:url("../../verse_fonts/Baloo2.ttf") format("truetype");
+  font-weight:400 900;
+  font-style:normal;
+  font-display:swap;
+}
+
+@font-face{
   font-family:"CaprasimoLocal";
   src:url("./verse_scramble_fonts/Caprasimo-Regular.ttf") format("truetype");
   font-weight:400;
