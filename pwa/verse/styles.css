@@ -4213,6 +4213,15 @@ Game Mix Loading Screen
   box-shadow: none;
 }
 
+.dlg-btn.dlg-btn-ellipsis {
+  min-width: 0;
+  padding-inline: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1;
+}
+
 /* prevent iOS double-tap zoom on controls */
 .no-zoom {
   touch-action: manipulation;

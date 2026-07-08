@@ -3012,16 +3012,26 @@ function openIndividualProfileImportDialog(
   ];
 
   if (activeProfile) {
-    actions.push(
-      dlgBtn(`Replace ${activeProfile.name}`, {
+    const replaceLabel =
+      `Replace ${activeProfile.name}`;
+    const replaceBtn = dlgBtn(
+      replaceLabel,
+      {
         onClick: () => {
           restoreImportedProgressToActiveProfile(
             importedProfile.progress,
             activeProfile
           );
         }
-      })
+      }
     );
+
+    replaceBtn.classList.add(
+      "dlg-btn-ellipsis"
+    );
+    replaceBtn.title = replaceLabel;
+
+    actions.push(replaceBtn);
   }
 
   showDialog({
