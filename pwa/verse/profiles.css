@@ -226,7 +226,8 @@
   width: min(100%, 560px);
 }
 
-.profile-editor-screen.is-first-profile .profile-editor-shell {
+.profile-editor-screen.is-first-profile .profile-editor-shell,
+.profile-editor-screen.is-add-profile .profile-editor-shell {
   margin-block: auto;
 }
 

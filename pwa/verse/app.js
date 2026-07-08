@@ -9139,10 +9139,12 @@ function screenProfileEditor(idx) {
     State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST;
   const isEdit =
     State.profileEditorMode === PROFILE_EDITOR_MODES.EDIT;
+  const isAdd =
+    State.profileEditorMode === PROFILE_EDITOR_MODES.ADD;
 
   const wrap = document.createElement("div");
   wrap.className =
-    `profile-screen profile-editor-screen${isFirst ? " is-first-profile" : ""}`;
+    `profile-screen profile-editor-screen${isFirst ? " is-first-profile" : ""}${isAdd ? " is-add-profile" : ""}`;
 
   const heading = isFirst
     ? "Let’s make your zookeeper profile."
