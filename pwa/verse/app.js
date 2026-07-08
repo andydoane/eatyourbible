@@ -1810,6 +1810,15 @@ function normalizeImportedProgress(rawProgress) {
   const importedVersion = Number(progress.version || 0);
 
   if (
+    Number.isFinite(importedVersion) &&
+    importedVersion > PROGRESS_VERSION
+  ) {
+    throw new Error(
+      "This progress backup was created by a newer version of BibloZoo."
+    );
+  }
+
+  if (
     !Number.isFinite(importedVersion) ||
     importedVersion < PROGRESS_VERSION
   ) {
@@ -2046,6 +2055,15 @@ function openImportSaveDataPicker({
 
 function parseFamilySaveData(parsed) {
   if (
+    Number(parsed?.saveVersion) !==
+    FAMILY_SAVE_VERSION
+  ) {
+    throw new Error(
+      "This family backup uses an unsupported save version."
+    );
+  }
+
+  if (
     !Array.isArray(parsed?.profiles) ||
     !parsed.profiles.length
   ) {
@@ -2089,6 +2107,15 @@ function parseFamilySaveData(parsed) {
 }
 
 function parseProfileSaveData(parsed) {
+  if (
+    Number(parsed?.saveVersion) !==
+    PROFILE_SAVE_VERSION
+  ) {
+    throw new Error(
+      "This individual backup uses an unsupported save version."
+    );
+  }
+
   const entry = parsed?.profile;
 
   if (
@@ -2200,26 +2227,295 @@ function getUniqueImportedProfileName(
   return candidate;
 }
 
-function captureFamilyStorageSnapshot() {
+function getProfileProgressStoragePrefix() {
   const profileApi = getProfileApi();
-  const progressPrefix =
-    `${profileApi.LEGACY_PROGRESS_STORAGE_KEY}:`;
-  const progressEntries = {};
+  const baseKey =
+    String(
+      profileApi?.LEGACY_PROGRESS_STORAGE_KEY || ""
+    ).trim();
 
-  for (let index = 0; index < localStorage.length; index += 1) {
+  if (!baseKey) {
+    throw new Error(
+      "The Zookeeper progress storage system is unavailable."
+    );
+  }
+
+  return `${baseKey}:`;
+}
+
+function getStoredProfileProgressKeys() {
+  const progressPrefix =
+    getProfileProgressStoragePrefix();
+  const keys = [];
+
+  for (
+    let index = 0;
+    index < localStorage.length;
+    index += 1
+  ) {
     const key = localStorage.key(index);
 
     if (key && key.startsWith(progressPrefix)) {
-      progressEntries[key] = localStorage.getItem(key);
+      keys.push(key);
     }
   }
 
+  return keys.sort();
+}
+
+function captureFamilyStorageSnapshot() {
+  const profileApi = getProfileApi();
+  const registryKey =
+    profileApi?.PROFILE_REGISTRY_STORAGE_KEY;
+
+  if (!registryKey) {
+    throw new Error(
+      "The Zookeeper profile registry is unavailable."
+    );
+  }
+
+  const progressEntries = {};
+
+  getStoredProfileProgressKeys().forEach((key) => {
+    progressEntries[key] =
+      localStorage.getItem(key);
+  });
+
   return {
-    registryRaw: localStorage.getItem(
-      profileApi.PROFILE_REGISTRY_STORAGE_KEY
-    ),
+    registryRaw:
+      localStorage.getItem(registryKey),
     progressEntries
   };
+}
+
+function restoreFamilyStorageSnapshot(snapshot) {
+  const profileApi = getProfileApi();
+  const registryKey =
+    profileApi?.PROFILE_REGISTRY_STORAGE_KEY;
+
+  if (!registryKey) {
+    throw new Error(
+      "The Zookeeper profile registry is unavailable."
+    );
+  }
+
+  getStoredProfileProgressKeys().forEach((key) => {
+    localStorage.removeItem(key);
+  });
+
+  Object.entries(snapshot.progressEntries || {})
+    .forEach(([key, value]) => {
+      if (value !== null) {
+        localStorage.setItem(key, value);
+      }
+    });
+
+  if (snapshot.registryRaw === null) {
+    localStorage.removeItem(registryKey);
+  } else {
+    localStorage.setItem(
+      registryKey,
+      snapshot.registryRaw
+    );
+  }
+
+  const restoredKeys =
+    getStoredProfileProgressKeys();
+  const expectedKeys =
+    Object.keys(
+      snapshot.progressEntries || {}
+    ).sort();
+
+  if (
+    JSON.stringify(restoredKeys) !==
+    JSON.stringify(expectedKeys)
+  ) {
+    throw new Error(
+      "The previous Zookeeper progress keys could not be fully restored."
+    );
+  }
+
+  expectedKeys.forEach((key) => {
+    if (
+      localStorage.getItem(key) !==
+      snapshot.progressEntries[key]
+    ) {
+      throw new Error(
+        "Previous Zookeeper progress could not be fully restored."
+      );
+    }
+  });
+
+  if (
+    localStorage.getItem(registryKey) !==
+    snapshot.registryRaw
+  ) {
+    throw new Error(
+      "The previous Zookeeper registry could not be fully restored."
+    );
+  }
+}
+
+function rollbackFamilyStorage(
+  snapshot,
+  originalError
+) {
+  try {
+    restoreFamilyStorageSnapshot(snapshot);
+  } catch (rollbackError) {
+    console.error(
+      "Could not restore the pre-import Zookeeper data",
+      rollbackError
+    );
+
+    throw new Error(
+      `${String(
+        originalError?.message ||
+        "The import failed."
+      )} The previous family data could not be fully restored.`
+    );
+  }
+
+  throw originalError;
+}
+
+function verifyStoredJsonValue(
+  storageKey,
+  expectedValue,
+  errorMessage
+) {
+  const expectedRaw =
+    JSON.stringify(expectedValue);
+  const savedRaw =
+    localStorage.getItem(storageKey);
+
+  if (savedRaw !== expectedRaw) {
+    throw new Error(errorMessage);
+  }
+
+  try {
+    const parsed = JSON.parse(savedRaw);
+
+    if (
+      JSON.stringify(parsed) !==
+      expectedRaw
+    ) {
+      throw new Error(errorMessage);
+    }
+
+    return parsed;
+  } catch (err) {
+    throw new Error(errorMessage);
+  }
+}
+
+function writeAndVerifyProfileProgress(
+  profileId,
+  progress
+) {
+  const profileApi = getProfileApi();
+  const progressKey =
+    profileApi?.getProfileProgressStorageKey?.(
+      profileId
+    );
+
+  if (!progressKey) {
+    throw new Error(
+      "An imported Zookeeper progress key could not be created."
+    );
+  }
+
+  const expectedProgress =
+    normalizeImportedProgress(progress);
+
+  localStorage.setItem(
+    progressKey,
+    JSON.stringify(expectedProgress)
+  );
+
+  verifyStoredJsonValue(
+    progressKey,
+    expectedProgress,
+    "An imported Zookeeper progress record failed verification."
+  );
+
+  return expectedProgress;
+}
+
+function writeAndVerifyProfileRegistry(
+  registry
+) {
+  const profileApi = getProfileApi();
+  const registryKey =
+    profileApi?.PROFILE_REGISTRY_STORAGE_KEY;
+
+  if (!registryKey) {
+    throw new Error(
+      "The Zookeeper profile registry is unavailable."
+    );
+  }
+
+  const expectedRegistry =
+    profileApi.normalizeProfileRegistry(
+      registry
+    );
+
+  profileApi.saveProfileRegistry(
+    expectedRegistry
+  );
+
+  verifyStoredJsonValue(
+    registryKey,
+    expectedRegistry,
+    "The imported Zookeeper registry failed verification."
+  );
+
+  const loadedRegistry =
+    profileApi.loadProfileRegistry();
+
+  if (
+    JSON.stringify(loadedRegistry) !==
+    JSON.stringify(expectedRegistry)
+  ) {
+    throw new Error(
+      "The imported Zookeeper registry did not match the verified data."
+    );
+  }
+
+  return expectedRegistry;
+}
+
+function cleanupOrphanedProfileProgressKeys(
+  registry
+) {
+  const progressPrefix =
+    getProfileProgressStoragePrefix();
+  const validProfileIds = new Set(
+    (registry?.profiles || []).map(
+      (profile) => String(profile.id || "")
+    )
+  );
+
+  const orphanedKeys =
+    getStoredProfileProgressKeys()
+      .filter((key) => {
+        const profileId =
+          key.slice(progressPrefix.length);
+
+        return !validProfileIds.has(profileId);
+      });
+
+  orphanedKeys.forEach((key) => {
+    localStorage.removeItem(key);
+
+    if (localStorage.getItem(key) !== null) {
+      throw new Error(
+        "An orphaned Zookeeper progress record could not be removed."
+      );
+    }
+  });
+
+  return orphanedKeys.length;
 }
 
 function restoreFamilyStorageSnapshot(snapshot) {
@@ -2364,14 +2660,15 @@ function prepareFamilyImport(familyData, mode) {
 }
 
 function applyFamilyImport(familyData, mode) {
-  const profileApi = getProfileApi();
-  const snapshot = captureFamilyStorageSnapshot();
+  const prepared = prepareFamilyImport(
+    familyData,
+    mode
+  );
+  let snapshot = null;
 
   try {
-    const prepared = prepareFamilyImport(
-      familyData,
-      mode
-    );
+    snapshot =
+      captureFamilyStorageSnapshot();
 
     prepared.imported.forEach((item) => {
       writeAndVerifyProfileProgress(
@@ -2380,83 +2677,121 @@ function applyFamilyImport(familyData, mode) {
       );
     });
 
-    profileApi.saveProfileRegistry(
-      prepared.nextRegistry
-    );
-
     const verifiedRegistry =
-      profileApi.loadProfileRegistry();
-
-    if (
-      verifiedRegistry.profiles.length !==
-      prepared.nextRegistry.profiles.length
-    ) {
-      throw new Error(
-        "The imported Zookeeper registry failed verification."
+      writeAndVerifyProfileRegistry(
+        prepared.nextRegistry
       );
-    }
 
-    const expectedIds = new Set(
-      prepared.nextRegistry.profiles.map(
-        (profile) => profile.id
-      )
+    cleanupOrphanedProfileProgressKeys(
+      verifiedRegistry
     );
-
-    if (
-      verifiedRegistry.profiles.some(
-        (profile) => !expectedIds.has(profile.id)
-      )
-    ) {
-      throw new Error(
-        "The imported Zookeeper registry did not match the backup."
+  } catch (err) {
+    if (snapshot) {
+      rollbackFamilyStorage(
+        snapshot,
+        err
       );
     }
 
-    if (mode === "replace") {
-      const progressPrefix =
-        `${profileApi.LEGACY_PROGRESS_STORAGE_KEY}:`;
-      const keysToRemove = [];
+    throw err;
+  }
 
-      for (
-        let index = 0;
-        index < localStorage.length;
-        index += 1
-      ) {
-        const key = localStorage.key(index);
-
-        if (
-          key &&
-          key.startsWith(progressPrefix)
-        ) {
-          const profileId = key.slice(
-            progressPrefix.length
-          );
-
-          if (!expectedIds.has(profileId)) {
-            keysToRemove.push(key);
-          }
-        }
-      }
-
-      keysToRemove.forEach((key) => {
-        localStorage.removeItem(key);
-      });
-    }
-
-    try {
-      clearGameMixState();
-    } catch (err) { }
-
+  try {
+    clearGameMixState();
     State.pendingBootRoute = null;
     clearTransientStateForProfileActivation();
     setScreen(Screen.PROFILE_PICKER);
     applyMute();
-
-    return prepared.imported.map(
-      (item) => item.profile
-    );
   } catch (err) {
-    restoreFamilyStorageSnapshot(snapshot);
+    console.warn(
+      "The family import committed, but the picker could not be refreshed.",
+      err
+    );
+  }
+
+  return prepared.imported.map(
+    (item) => item.profile
+  );
+}
+
+function createProfileWithImportedProgress({
+  name,
+  avatarVerseId,
+  progress
+}) {
+  const profileApi = getProfileApi();
+  const currentRegistry =
+    profileApi.loadProfileRegistry();
+  const usedIds = new Set(
+    currentRegistry.profiles.map(
+      (profile) => profile.id
+    )
+  );
+  const profileId =
+    generateImportedProfileId(usedIds);
+  const now = Date.now();
+
+  const newProfile = {
+    id: profileId,
+    name,
+    avatarVerseId:
+      String(avatarVerseId || "").trim(),
+    createdAt: now,
+    updatedAt: now
+  };
+
+  const nextRegistry =
+    profileApi.normalizeProfileRegistry({
+      ...currentRegistry,
+      activeProfileId: profileId,
+      profiles: [
+        ...currentRegistry.profiles,
+        newProfile
+      ]
+    });
+
+  const expectedProgress =
+    normalizeImportedProgress(progress);
+  let snapshot = null;
+
+  try {
+    snapshot =
+      captureFamilyStorageSnapshot();
+
+    writeAndVerifyProfileProgress(
+      profileId,
+      expectedProgress
+    );
+
+    const verifiedRegistry =
+      writeAndVerifyProfileRegistry(
+        nextRegistry
+      );
+
+    cleanupOrphanedProfileProgressKeys(
+      verifiedRegistry
+    );
+
+    const verifiedProfile =
+      verifiedRegistry.profiles.find(
+        (profile) => profile.id === profileId
+      );
+
+    if (!verifiedProfile) {
+      throw new Error(
+        "The imported Zookeeper profile failed verification."
+      );
+    }
+
+    return verifiedProfile;
+  } catch (err) {
+    if (snapshot) {
+      rollbackFamilyStorage(
+        snapshot,
+        err
+      );
+    }
+
     throw err;
   }
 }
@@ -2831,60 +3166,68 @@ function restoreImportedProgressToActiveProfile(
   importedProgress,
   activeProfile
 ) {
+  const profileApi = getProfileApi();
+  let snapshot = null;
+
   try {
-    const saved = saveProgress(
-      importedProgress
-    );
-
-    if (!saved) {
-      throw new Error(
-        "The progress could not be written."
-      );
-    }
-
-    const storageKey =
-      getCurrentProgressStorageKey();
-    const savedRaw =
-      localStorage.getItem(storageKey);
-    const verified = savedRaw
-      ? JSON.parse(savedRaw)
-      : null;
+    const activeProfileId =
+      profileApi?.getActiveProfileId?.() || "";
 
     if (
-      !verified ||
-      typeof verified !== "object" ||
-      !verified.verses ||
-      typeof verified.verses !== "object"
+      !activeProfile?.id ||
+      activeProfile.id !== activeProfileId
     ) {
       throw new Error(
-        "The restored progress failed verification."
+        "The selected Zookeeper is no longer active."
       );
     }
 
-    refreshCurrentProgressState();
-    closeDialog();
-    render();
+    const expectedProgress =
+      normalizeImportedProgress(
+        importedProgress
+      );
+    const expectedRegistry =
+      profileApi.loadProfileRegistry();
 
-    showDialog({
-      title: "Progress Restored",
-      body:
-        `${activeProfile.name}'s saved progress has been restored.`,
-      actions: [
-        dlgBtn("OK", {
-          onClick: closeDialog
-        })
-      ]
-    });
+    snapshot =
+      captureFamilyStorageSnapshot();
+
+    writeAndVerifyProfileProgress(
+      activeProfile.id,
+      expectedProgress
+    );
+
+    const verifiedRegistry =
+      writeAndVerifyProfileRegistry(
+        expectedRegistry
+      );
+
+    cleanupOrphanedProfileProgressKeys(
+      verifiedRegistry
+    );
   } catch (err) {
+    let finalError = err;
+
+    if (snapshot) {
+      try {
+        rollbackFamilyStorage(
+          snapshot,
+          err
+        );
+      } catch (rolledBackError) {
+        finalError = rolledBackError;
+      }
+    }
+
     console.warn(
       "Could not restore imported progress",
-      err
+      finalError
     );
 
     showDialog({
       title: "Restore Failed",
       body: String(
-        err?.message ||
+        finalError?.message ||
         "The saved progress could not be restored."
       ),
       actions: [
@@ -2893,7 +3236,24 @@ function restoreImportedProgressToActiveProfile(
         })
       ]
     });
+
+    return;
   }
+
+  refreshCurrentProgressState();
+  closeDialog();
+  render();
+
+  showDialog({
+    title: "Progress Restored",
+    body:
+      `${activeProfile.name}'s saved progress has been restored.`,
+    actions: [
+      dlgBtn("OK", {
+        onClick: closeDialog
+      })
+    ]
+  });
 }
 
 function openRestoreProgressDialog(
@@ -8500,51 +8860,57 @@ async function submitProfileEditor() {
     let createdProfile = null;
 
     try {
-      createdProfile = profileApi.createProfile({
-        name: validation.name,
-        avatarVerseId,
-        makeActive: true
-      });
-
       if (State.profileEditorImportedProgress) {
-        writeAndVerifyProfileProgress(
-          createdProfile.id,
-          normalizeImportedProgress(
-            State.profileEditorImportedProgress
-          )
-        );
-      } else if (
-        State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
-        State.profileEditorMigrationCode === "legacy_progress_ready"
-      ) {
-        migrateLegacyProgressForProfile(
-          createdProfile.id
-        );
+        createdProfile =
+          createProfileWithImportedProgress({
+            name: validation.name,
+            avatarVerseId,
+            progress:
+              State.profileEditorImportedProgress
+          });
       } else {
-        createVerifiedEmptyProfileProgress(
-          createdProfile.id
-        );
+        createdProfile = profileApi.createProfile({
+          name: validation.name,
+          avatarVerseId,
+          makeActive: true
+        });
 
         if (
           State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
-          State.profileEditorMigrationCode === "no_legacy_progress"
+          State.profileEditorMigrationCode === "legacy_progress_ready"
         ) {
-          profileApi.markLegacyMigrationNotNeeded?.();
-        }
-
-        if (
-          State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
-          State.profileEditorMigrationCode === "legacy_progress_malformed"
-        ) {
-          profileApi.markLegacyMigrationFailed?.(
-            createdProfile.id,
-            State.profileEditorMigrationMessage ||
-              "The old progress data could not be read."
+          migrateLegacyProgressForProfile(
+            createdProfile.id
           );
+        } else {
+          createVerifiedEmptyProfileProgress(
+            createdProfile.id
+          );
+
+          if (
+            State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
+            State.profileEditorMigrationCode === "no_legacy_progress"
+          ) {
+            profileApi.markLegacyMigrationNotNeeded?.();
+          }
+
+          if (
+            State.profileEditorMode === PROFILE_EDITOR_MODES.FIRST &&
+            State.profileEditorMigrationCode === "legacy_progress_malformed"
+          ) {
+            profileApi.markLegacyMigrationFailed?.(
+              createdProfile.id,
+              State.profileEditorMigrationMessage ||
+                "The old progress data could not be read."
+            );
+          }
         }
       }
     } catch (err) {
-      if (createdProfile?.id) {
+      if (
+        createdProfile?.id &&
+        !State.profileEditorImportedProgress
+      ) {
         try {
           profileApi.deleteProfile(
             createdProfile.id,
