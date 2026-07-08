@@ -1189,6 +1189,43 @@
     return loadPromise;
   }
 
+  function preloadProfilePictureNeighborhood(verseId) {
+    const catalog = getProfilePictureCatalog({
+      includeMissing: true
+    });
+
+    if (!catalog.length) {
+      return Promise.resolve([]);
+    }
+
+    const cleanVerseId =
+      normalizeProfilePictureVerseId(verseId);
+
+    let centerIndex = catalog.indexOf(cleanVerseId);
+
+    if (centerIndex < 0) {
+      centerIndex = 0;
+    }
+
+    const nearbyVerseIds = [-1, 0, 1]
+      .map((offset) => {
+        const index =
+          ((centerIndex + offset) % catalog.length +
+            catalog.length) % catalog.length;
+
+        return catalog[index];
+      })
+      .filter((item, index, items) =>
+        item && items.indexOf(item) === index
+      );
+
+    return Promise.all(
+      nearbyVerseIds.map((nearbyVerseId) =>
+        preloadProfilePicture(nearbyVerseId)
+      )
+    );
+  }
+
   function handleProfilePictureLoad(img) {
     if (!img) return;
 
@@ -1267,12 +1304,6 @@
         manifest
       );
 
-    profilePictureCatalog
-      .slice(0, 2)
-      .forEach((verseId) => {
-        preloadProfilePicture(verseId);
-      });
-
     return getProfilePictureCatalog();
   }
 
@@ -1340,6 +1371,7 @@
     loadProfilePictureCatalog,
     getProfilePictureCatalog,
     preloadProfilePicture,
+    preloadProfilePictureNeighborhood,
     handleProfilePictureLoad,
     handleProfilePictureError,
     markProfilePictureLoaded,

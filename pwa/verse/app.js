@@ -5786,6 +5786,27 @@ function setProfilePictureIndex(index) {
   State.profilePictureIndex =
     normalizeProfilePictureIndex(index);
 
+  const catalog = getProfilePictureCatalogForUi();
+  const verseId =
+    catalog[State.profilePictureIndex] || "";
+  const preloadPromise =
+    window.BibloZooProfiles
+      ?.preloadProfilePictureNeighborhood?.(
+        verseId
+      );
+
+  if (
+    preloadPromise &&
+    typeof preloadPromise.catch === "function"
+  ) {
+    preloadPromise.catch((err) => {
+      console.warn(
+        "Could not preload nearby profile pictures",
+        err
+      );
+    });
+  }
+
   return State.profilePictureIndex;
 }
 
@@ -8191,8 +8212,9 @@ function getProfilePictureIndexForVerseId(verseId) {
 function setProfilePictureIndexForVerseId(verseId) {
   const index = getProfilePictureIndexForVerseId(verseId);
 
-  State.profilePictureIndex = index >= 0 ? index : 0;
-  return State.profilePictureIndex;
+  return setProfilePictureIndex(
+    index >= 0 ? index : 0
+  );
 }
 
 function profilePictureVisualHtml(
@@ -8265,10 +8287,11 @@ function selectAdjacentProfilePicture(offset) {
       State.profilePictureIndex = originalIndex;
       moveProfilePictureIndex(safeOffset);
     } else {
-      State.profilePictureIndex =
+      setProfilePictureIndex(
         safeOffset < 0
           ? catalog.length - 1
-          : 0;
+          : 0
+      );
     }
 
     State.profilePictureSelectionChanged = true;
