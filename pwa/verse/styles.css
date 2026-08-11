@@ -46,13 +46,13 @@ body {
   position: fixed;
   top: 0;
   right: 0;
-  bottom: calc(var(--safeB) * -1);
+  bottom: auto;
   left: 0;
   width: 100%;
-  height: auto;
-  min-height: 0;
+  height: var(--appH);
+  min-height: var(--appH);
   overflow: hidden;
-  background: var(--purple);
+  background: var(--bg, var(--purple));
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }

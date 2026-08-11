@@ -8158,6 +8158,33 @@ function renderNav() {
 }
 
 /* Screen builders */
+function syncAppBackground(bg) {
+  const safeBg =
+    bg || "var(--purple)";
+
+  try {
+    app?.style?.setProperty(
+      "--bg",
+      safeBg
+    );
+
+    document.documentElement.style.setProperty(
+      "--bg",
+      safeBg
+    );
+
+    document.body.style.setProperty(
+      "--bg",
+      safeBg
+    );
+  } catch (err) {
+    console.warn(
+      "Could not sync app background",
+      err
+    );
+  }
+}
+
 function makeSlide({ idx, bg, navHidden = false, inner }) {
   const learnLayout = inner?.querySelector?.(".learn-layout");
   const learnRef = learnLayout?.querySelector?.(".learn-ref");
@@ -8181,6 +8208,7 @@ function makeSlide({ idx, bg, navHidden = false, inner }) {
   const s = document.createElement("div");
   s.className = "slide" + (navHidden ? " nav-hidden" : "");
   s.style.setProperty("--bg", bg);
+  s.dataset.bg = bg;
   s.dataset.idx = String(idx);
   s.innerHTML = "";
   s.appendChild(inner);
@@ -12997,7 +13025,16 @@ function render() {
     if (screen === Screen.PRACTICE) slide = screenPractice(idx);
     if (screen === Screen.PLAYGROUND) slide = screenPlayground(idx);
     if (screen === Screen.GAME_MIX_FINISHED) slide = screenGameMixFinished(idx);
-    if (slide) app.appendChild(slide);
+
+    if (slide) {
+      app.appendChild(slide);
+
+      if (idx === currentIdx) {
+        syncAppBackground(
+          slide.dataset.bg || "var(--purple)"
+        );
+      }
+    }
   }
 
   if (!State.isSliding) {
