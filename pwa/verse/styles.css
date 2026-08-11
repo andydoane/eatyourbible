@@ -46,11 +46,11 @@ body {
   position: fixed;
   top: 0;
   right: 0;
-  bottom: auto;
+  bottom: calc(var(--safeB) * -1);
   left: 0;
   width: 100%;
-  height: var(--appH);
-  min-height: var(--appH);
+  height: auto;
+  min-height: 0;
   overflow: hidden;
   background: var(--purple);
   touch-action: manipulation;
