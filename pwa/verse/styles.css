@@ -8,8 +8,8 @@
 
 :root {
   --navH: 70px;
-  --safeB: env(safe-area-inset-bottom);
-  --safeT: env(safe-area-inset-top);
+  --safeB: env(safe-area-inset-bottom, 0px);
+  --safeT: env(safe-area-inset-top, 0px);
   --tap: 44px;
 
   --purple: #7f66c6;
@@ -479,7 +479,7 @@ Learn Instruction Screens
 
 /* ---------- Bottom nav (Creed/Commandments style) ---------- */
 nav#navBar {
-  height: var(--navH);
+  height: calc(var(--navH) + var(--safeB));
   background: var(--dark);
   display: none;
   justify-content: space-between;
@@ -537,7 +537,10 @@ nav#navBar {
   height: 100%;
   text-align: center;
   gap: 16px;
-  padding: 24px 18px;
+  padding:
+    calc(24px + var(--safeT))
+    18px
+    calc(24px + var(--safeB));
 }
 
 .quiz-intro img {
@@ -758,8 +761,11 @@ nav#navBar {
   flex-direction: column;
   align-items: center;
   height: 100%;
-  padding: 24px 16px;
-  padding-bottom: calc(16px + var(--safeB));
+  min-height: 0;
+  padding:
+    calc(24px + var(--safeT))
+    16px
+    calc(24px + var(--safeB));
   background: var(--purple);
   color: white;
   text-align: center;
@@ -768,7 +774,8 @@ nav#navBar {
 }
 
 .title-content {
-  flex: 1;
+  flex: 0 0 auto;
+  margin-block: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4153,7 +4160,10 @@ Game Mix Loading Screen
   display: none;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding:
+    calc(16px + var(--safeT))
+    16px
+    calc(16px + var(--safeB));
   z-index: 20000;
   opacity: 0;
   transition: opacity 220ms ease;
@@ -4280,7 +4290,8 @@ Game Mix Loading Screen
 
 .learn-level-content {
   width: min(92vw, 760px);
-  margin: 0 auto;
+  margin: auto;
+  padding-top: calc(var(--tap) + 12px);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -4452,7 +4463,10 @@ Progress Screen (isolated)
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 14px 14px calc(14px + var(--safeB));
+  padding:
+    calc(14px + var(--safeT))
+    14px
+    calc(14px + var(--safeB));
   overflow: hidden;
 }
 
@@ -4667,7 +4681,10 @@ BibloPet Zoo / Detail
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 14px 14px calc(14px + var(--safeB));
+  padding:
+    calc(14px + var(--safeT))
+    14px
+    calc(14px + var(--safeB));
   overflow: hidden;
 }
 
@@ -5678,7 +5695,10 @@ BibloPet Stats Screen
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 18px;
+  padding:
+    calc(18px + var(--safeT))
+    18px
+    calc(18px + var(--safeB));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
