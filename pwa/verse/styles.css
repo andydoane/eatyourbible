@@ -7,6 +7,7 @@
 }
 
 :root {
+  --appH: 100%;
   --navH: 70px;
   --safeB: env(safe-area-inset-bottom, 0px);
   --safeT: env(safe-area-inset-top, 0px);
@@ -14,6 +15,12 @@
 
   --purple: #7f66c6;
   --dark: rgba(0, 0, 0, 0.30);
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --appH: 100dvh;
+  }
 }
 
 *,
@@ -24,7 +31,9 @@
 
 html,
 body {
-  height: 100%;
+  width: 100%;
+  height: var(--appH);
+  min-height: var(--appH);
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -35,8 +44,15 @@ body {
 
 #app {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  width: 100%;
+  height: var(--appH);
+  min-height: var(--appH);
   overflow: hidden;
+  background: var(--purple);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
@@ -45,6 +61,7 @@ body {
 .slide {
   position: absolute;
   inset: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   min-height: 0;
