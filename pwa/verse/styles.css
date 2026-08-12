@@ -7331,3 +7331,68 @@ BibloPet Mastery Backgrounds
   justify-content: center;
   line-height: 0;
 }
+
+/* =========================
+   Full-height screen fill polish
+   ========================= */
+
+/* Zoo To-Do: let the clipboard/paper grow into the available lower space. */
+.todo-dev-page {
+  padding-bottom: 0;
+  align-items: stretch;
+}
+
+.todo-dev-clipboard {
+  min-height: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.todo-dev-paper {
+  flex: 1 1 auto;
+  padding-bottom: calc(clamp(28px, 7vw, 56px) + var(--safeB));
+}
+
+/* BibloPet Zoo list: keep safety padding inside the scroll area, not outside the screen fill. */
+.progress-screen {
+  padding-bottom: 0;
+}
+
+.progress-list {
+  padding-bottom: calc(14px + var(--safeB));
+}
+
+/* BibloPet detail: same pattern as the Zoo list. */
+.detail-screen {
+  padding-bottom: 0;
+}
+
+.detail-scroll {
+  padding-bottom: calc(14px + var(--safeB));
+}
+
+/* BibloPet Stats: let the stat cards stretch into the available space. */
+.pet-stats-screen {
+  height: 100%;
+  min-height: 0;
+  align-items: stretch;
+  padding-bottom: 0;
+}
+
+.pet-stats-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: calc(18px + var(--safeB));
+}
+
+.pet-stats-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-auto-rows: minmax(140px, 1fr);
+}
+
+/* Settings: reduce the lower dead-zone while keeping the final buttons safe. */
+.settings-page {
+  padding-bottom: calc(16px + var(--safeB));
+}
