@@ -8,6 +8,7 @@
 
 :root {
   --appH: 100%;
+  --appBottomBleed: 0px;
   --navH: 70px;
   --safeB: env(safe-area-inset-bottom, 0px);
   --safeT: env(safe-area-inset-top, 0px);
@@ -49,8 +50,8 @@ body {
   bottom: auto;
   left: 0;
   width: 100%;
-  height: var(--appH);
-  min-height: var(--appH);
+  height: calc(var(--appH) + var(--appBottomBleed));
+  min-height: calc(var(--appH) + var(--appBottomBleed));
   overflow: hidden;
   background: var(--bg, var(--purple));
   touch-action: manipulation;

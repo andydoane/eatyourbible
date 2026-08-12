@@ -30,7 +30,7 @@ const BRONZE_MEDAL_ICON = IMG_DIR + "bronze_medal.png";
 const SILVER_MEDAL_ICON = IMG_DIR + "silver_medal.png";
 const GOLD_MEDAL_ICON = IMG_DIR + "gold_medal.png";
 
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.1b";
 const SUPPORT_EMAIL = "BibloZooApp@gmail.com";
 const PRIVACY_POLICY_URL = "https://andydoane.github.io/eatyourbible/pwa/verse/privacy_policy.html";
 
@@ -8185,6 +8185,60 @@ function syncAppBackground(bg) {
   }
 }
 
+function isOldNavBleedScreen(screen) {
+  return (
+    screen === Screen.PROFILE_PICKER ||
+    screen === Screen.PROFILE_EDITOR ||
+    screen === Screen.PROFILE_MANAGE ||
+    screen === Screen.SETTINGS ||
+    screen === Screen.TODO ||
+    screen === Screen.TODO_DEV ||
+    screen === Screen.NEW_VERSE_PICKER ||
+    screen === Screen.PROGRESS ||
+    screen === Screen.VERSE_DETAIL ||
+    screen === Screen.PET_UNLOCK ||
+    screen === Screen.PET_STATS ||
+    screen === Screen.PRACTICE_HUB
+  );
+}
+
+function syncAppBottomBleed(screen, slide) {
+  const shouldBleed =
+    !!slide?.classList?.contains("nav-hidden") &&
+    isOldNavBleedScreen(screen);
+
+  const bleedValue = shouldBleed
+    ? "var(--navH)"
+    : "0px";
+
+  try {
+    app?.style?.setProperty(
+      "--appBottomBleed",
+      bleedValue
+    );
+
+    document.documentElement.style.setProperty(
+      "--appBottomBleed",
+      bleedValue
+    );
+
+    document.body.style.setProperty(
+      "--appBottomBleed",
+      bleedValue
+    );
+
+    document.body.classList.toggle(
+      "app-bottom-bleed",
+      shouldBleed
+    );
+  } catch (err) {
+    console.warn(
+      "Could not sync app bottom bleed",
+      err
+    );
+  }
+}
+
 function makeSlide({ idx, bg, navHidden = false, inner }) {
   const learnLayout = inner?.querySelector?.(".learn-layout");
   const learnRef = learnLayout?.querySelector?.(".learn-ref");
@@ -13047,6 +13101,11 @@ function render() {
       if (idx === currentIdx) {
         syncAppBackground(
           slide.dataset.bg || "var(--purple)"
+        );
+
+        syncAppBottomBleed(
+          screen,
+          slide
         );
       }
     }
