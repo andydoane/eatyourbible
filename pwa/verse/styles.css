@@ -7333,120 +7333,13 @@ BibloPet Mastery Backgrounds
 }
 
 /* =========================
-   Screen scroll-owner polish
+   Nav-hidden slide safety
    ========================= */
 
 /*
-  Full-page utility screens should keep the screen itself fixed,
-  then let the correct inner content area scroll.
+  These screens use custom in-screen navigation instead of the old bottom nav.
+  Keep their old nav reserve at zero.
 */
-
-/* Shared fixed-screen behavior */
-.todo-dev-screen,
-.pet-stats-screen,
-.settings-screen {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Zoo To-Do */
-.todo-dev-page {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(12px + var(--safeB));
-  align-items: stretch;
-}
-
-.todo-dev-clipboard {
-  width: min(100%, 700px);
-  min-height: calc(100% - clamp(28px, 6vw, 54px));
-  display: flex;
-  flex-direction: column;
-}
-
-.todo-dev-paper {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.todo-dev-list,
-.todo-tutorial-note {
-  flex: 1 1 auto;
-}
-
-/* BibloPet Zoo list */
-.progress-screen {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  padding-bottom: 0;
-}
-
-.progress-list {
-  min-height: 0;
-  overscroll-behavior: contain;
-  padding-bottom: calc(12px + var(--safeB));
-}
-
-/* BibloPet detail */
-.detail-screen {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  padding-bottom: 0;
-}
-
-.detail-scroll {
-  min-height: 0;
-  overscroll-behavior: contain;
-  padding-bottom: calc(12px + var(--safeB));
-}
-
-/* BibloPet Stats */
-.pet-stats-screen {
-  align-items: stretch;
-  justify-content: center;
-  padding-bottom: 0;
-}
-
-.pet-stats-shell {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.pet-stats-grid {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  align-content: start;
-  grid-auto-rows: minmax(140px, auto);
-  padding: 0 10px calc(12px + var(--safeB));
-  margin: 0 -10px;
-}
-
-/* Settings */
-.settings-page {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-  padding-bottom: calc(12px + var(--safeB));
-}
-
-.settings-shell {
-  flex: 0 0 auto;
+.slide.nav-hidden {
+  padding-bottom: 0 !important;
 }

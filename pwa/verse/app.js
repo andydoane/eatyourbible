@@ -8207,8 +8207,19 @@ function makeSlide({ idx, bg, navHidden = false, inner }) {
 
   const s = document.createElement("div");
   s.className = "slide" + (navHidden ? " nav-hidden" : "");
+
   s.style.setProperty("--bg", bg);
+
+  /*
+    Make the old bottom-nav reserve explicit.
+    Hidden-nav screens should not inherit any reserved nav height.
+  */
+  s.style.paddingBottom = navHidden
+    ? "0px"
+    : "calc(var(--navH) + var(--safeB))";
+
   s.dataset.bg = bg;
+  s.dataset.navHidden = navHidden ? "true" : "false";
   s.dataset.idx = String(idx);
   s.innerHTML = "";
   s.appendChild(inner);
