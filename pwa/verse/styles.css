@@ -7,8 +7,7 @@
 }
 
 :root {
-  --appH: 100%;
-  --appBottomBleed: 0px;
+  --appH: 100vh;
   --navH: 70px;
   --safeB: env(safe-area-inset-bottom, 0px);
   --safeT: env(safe-area-inset-top, 0px);
@@ -16,12 +15,6 @@
 
   --purple: #7f66c6;
   --dark: rgba(0, 0, 0, 0.30);
-}
-
-@supports (height: 100dvh) {
-  :root {
-    --appH: 100dvh;
-  }
 }
 
 *,
@@ -50,8 +43,8 @@ body {
   bottom: auto;
   left: 0;
   width: 100%;
-  height: calc(var(--appH) + var(--appBottomBleed));
-  min-height: calc(var(--appH) + var(--appBottomBleed));
+  height: var(--appH);
+  min-height: var(--appH);
   overflow: hidden;
   background: var(--bg, var(--purple));
   touch-action: manipulation;
