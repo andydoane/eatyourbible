@@ -611,7 +611,7 @@
 
   function helpHtml() {
     return `Eat bugs to add words to the verse.<br><br>
-      Tap the bug with the correct words unti you finish the verse.<br><br>
+      Tap the bug with the correct words until you finish the verse.<br><br>
       During the bonus round, eat as many bugs as you can. Watch out for stink bugs!`;
   }
 
