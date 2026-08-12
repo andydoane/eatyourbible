@@ -7333,82 +7333,120 @@ BibloPet Mastery Backgrounds
 }
 
 /* =========================
-   Full-height screen fill polish
+   Screen scroll-owner polish
    ========================= */
 
-/* Zoo To-Do: let the clipboard/paper grow into the available lower space. */
+/*
+  Full-page utility screens should keep the screen itself fixed,
+  then let the correct inner content area scroll.
+*/
+
+/* Shared fixed-screen behavior */
+.todo-dev-screen,
+.pet-stats-screen,
+.settings-screen {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Zoo To-Do */
 .todo-dev-page {
-  padding-bottom: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(12px + var(--safeB));
   align-items: stretch;
 }
 
 .todo-dev-clipboard {
-  min-height: 0;
+  width: min(100%, 700px);
+  min-height: calc(100% - clamp(28px, 6vw, 54px));
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
 }
 
 .todo-dev-paper {
   flex: 1 1 auto;
-  padding-bottom: calc(clamp(28px, 7vw, 56px) + var(--safeB));
+  display: flex;
+  flex-direction: column;
 }
 
-/* BibloPet Zoo list: keep safety padding inside the scroll area, not outside the screen fill. */
+.todo-dev-list,
+.todo-tutorial-note {
+  flex: 1 1 auto;
+}
+
+/* BibloPet Zoo list */
 .progress-screen {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   padding-bottom: 0;
 }
 
 .progress-list {
-  padding-bottom: calc(14px + var(--safeB));
+  min-height: 0;
+  overscroll-behavior: contain;
+  padding-bottom: calc(12px + var(--safeB));
 }
 
-/* BibloPet detail: same pattern as the Zoo list. */
+/* BibloPet detail */
 .detail-screen {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   padding-bottom: 0;
 }
 
 .detail-scroll {
-  padding-bottom: calc(14px + var(--safeB));
+  min-height: 0;
+  overscroll-behavior: contain;
+  padding-bottom: calc(12px + var(--safeB));
 }
 
-/* BibloPet Stats: let the stat cards stretch into the available space. */
+/* BibloPet Stats */
 .pet-stats-screen {
-  height: 100%;
-  min-height: 0;
   align-items: stretch;
+  justify-content: center;
   padding-bottom: 0;
 }
 
 .pet-stats-shell {
   flex: 1 1 auto;
   min-height: 0;
-  padding-bottom: calc(18px + var(--safeB));
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .pet-stats-grid {
   flex: 1 1 auto;
   min-height: 0;
-  grid-auto-rows: minmax(140px, 1fr);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  align-content: start;
+  grid-auto-rows: minmax(140px, auto);
+  padding: 0 10px calc(12px + var(--safeB));
+  margin: 0 -10px;
 }
 
-/* Settings: reduce the lower dead-zone while keeping the final buttons safe. */
+/* Settings */
 .settings-page {
-  padding-bottom: calc(16px + var(--safeB));
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(12px + var(--safeB));
 }
 
-/* =========================
-   TEMP TEST — remove after checking
-   ========================= */
-
-.todo-dev-clipboard {
-  outline: 10px solid #ff00ff !important;
-}
-
-.pet-stats-grid {
-  outline: 10px solid #ff00ff !important;
-}
-
-.settings-card:first-of-type {
-  outline: 10px solid #ff00ff !important;
+.settings-shell {
+  flex: 0 0 auto;
 }

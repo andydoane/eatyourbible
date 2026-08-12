@@ -9033,6 +9033,10 @@ function screenProfileWelcome(idx) {
         draggable="false"
         onerror="this.style.display='none'"
       >
+
+      <div class="profile-welcome-version">
+        Version ${escapeHtml(APP_VERSION)}
+      </div>
     </div>
   `;
 

@@ -63,6 +63,18 @@
   -webkit-user-drag: none;
 }
 
+.profile-welcome-version {
+  margin-top: clamp(12px, 2.4vh, 20px);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: clamp(14px, 3.4vw, 18px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .profile-welcome-splash {
     transition: none;
@@ -817,4 +829,28 @@
     padding-top: 10px;
     padding-bottom: 10px;
   }
+}
+
+/* =========================
+   Profile scroll-owner polish
+   ========================= */
+
+.profile-screen {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.profile-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(14px + var(--safeB));
+}
+
+.profile-shell {
+  flex: 0 0 auto;
 }
