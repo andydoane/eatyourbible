@@ -11,6 +11,7 @@
 
   const GAME_THEME = {
     bg: "#a7cb6f",
+    pageBg: "#a7cb6f",
     accent: "#a7cb6f",
     helpTitleBg: "#a7cb6f",
     helpTitleColor: "#ffffff",
