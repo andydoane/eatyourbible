@@ -138,6 +138,7 @@
     const vars = [];
 
     if (options.bg) vars.push(`--vm-game-bg:${options.bg}`);
+    if (options.pageBg) vars.push(`--vm-page-bg:${options.pageBg}`);
     if (options.accent) vars.push(`--vm-game-accent:${options.accent}`);
     if (options.helpTitleBg) vars.push(`--vm-game-help-title-bg:${options.helpTitleBg}`);
     if (options.helpTitleColor) vars.push(`--vm-game-help-title-color:${options.helpTitleColor}`);
@@ -145,6 +146,47 @@
     if (options.helpCloseColor) vars.push(`--vm-game-help-close-color:${options.helpCloseColor}`);
 
     return vars.length ? ` style="${vars.join("; ")};"` : "";
+  }
+
+  function syncGameShellTheme(options = {}) {
+    const pageBg = String(
+      options.pageBg ||
+      options.bg ||
+      options.accent ||
+      "#7f66c6"
+    ).trim() || "#7f66c6";
+
+    try {
+      document.documentElement.style.setProperty(
+        "--vm-page-bg",
+        pageBg
+      );
+
+      document.body.style.setProperty(
+        "--vm-page-bg",
+        pageBg
+      );
+
+      document.getElementById("app")?.style?.setProperty(
+        "--vm-page-bg",
+        pageBg
+      );
+
+      let themeMeta = document.querySelector('meta[name="theme-color"]');
+
+      if (!themeMeta) {
+        themeMeta = document.createElement("meta");
+        themeMeta.setAttribute("name", "theme-color");
+        document.head.appendChild(themeMeta);
+      }
+
+      themeMeta.setAttribute("content", pageBg);
+    } catch (err) {
+      console.warn(
+        "Could not sync external game shell theme",
+        err
+      );
+    }
   }
 
   function getLaunchParams() {
@@ -1500,6 +1542,9 @@
     onStart
   } = {}) {
     if (!app) return;
+
+    syncGameShellTheme(theme);
+
     const debugBadgeMarkup = debugBadge
       ? `<div class="vm-game-debug-badge">${escapeHtml(debugBadge)}</div>`
       : "";
@@ -1576,6 +1621,8 @@
     onSelect
   } = {}) {
     if (!app) return;
+
+    syncGameShellTheme(theme);
 
     const mixMode = getGameMixMode();
 
@@ -1742,6 +1789,8 @@
     onChangeVerse
   } = {}) {
     if (!app) return;
+
+    syncGameShellTheme(theme);
 
     const useStandardComplete = !!(mode || completion || gameMessage || gameId || verseId || gameIcon);
     const gameMix = isGameMixLaunch();
