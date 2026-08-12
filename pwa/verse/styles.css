@@ -7337,3 +7337,36 @@ BibloPet Mastery Backgrounds
 .slide.nav-hidden {
   padding-bottom: 0 !important;
 }
+
+/* =========================
+   Post-iOS chin-gap layout polish
+   ========================= */
+
+/*
+  After removing the iOS standalone chin-gap trigger, these two screens
+  should keep the fixed screen flush to the bottom and place bottom
+  breathing room inside the actual scroll areas.
+*/
+
+/* BibloPet Zoo list */
+.progress-screen {
+  padding-bottom: 0;
+}
+
+.progress-list {
+  padding-bottom: calc(18px + var(--safeB));
+}
+
+/* Individual BibloPet detail page */
+.detail-screen {
+  padding-bottom: 0;
+}
+
+.detail-scroll {
+  padding-bottom: calc(18px + var(--safeB));
+}
+
+/* BibloPet Stats: add a little more bottom breathing room. */
+.pet-stats-screen {
+  padding-bottom: calc(30px + var(--safeB));
+}
