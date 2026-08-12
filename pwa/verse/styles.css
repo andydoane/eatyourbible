@@ -7396,3 +7396,19 @@ BibloPet Mastery Backgrounds
 .settings-page {
   padding-bottom: calc(16px + var(--safeB));
 }
+
+/* =========================
+   TEMP TEST — remove after checking
+   ========================= */
+
+.todo-dev-clipboard {
+  outline: 10px solid #ff00ff !important;
+}
+
+.pet-stats-grid {
+  outline: 10px solid #ff00ff !important;
+}
+
+.settings-card:first-of-type {
+  outline: 10px solid #ff00ff !important;
+}
