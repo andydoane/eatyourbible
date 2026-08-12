@@ -3,7 +3,7 @@
    App scope: /eatyourbible/pwa/verse/
    ========================================================= */
 
-const CACHE_VERSION = "v_august_11_2026_k";
+const CACHE_VERSION = "2026_Aug_12_a";
 const SHELL_CACHE =
   `biblozoo-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE =
