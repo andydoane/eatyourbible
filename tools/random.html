@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Random Countdown Timer</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: white;
+    }
+
+    .card {
+      width: min(90vw, 420px);
+      padding: 35px;
+      text-align: center;
+      background: #1f2937;
+      border-radius: 20px;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    #display {
+      font-size: 90px;
+      font-weight: bold;
+      margin: 30px 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin-top: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #startButton {
+      background: #22c55e;
+      color: black;
+    }
+
+    #stopButton {
+      background: #ef4444;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin-top: 20px;
+      color: #d1d5db;
+    }
+
+    .ringing #display {
+      color: #ff5555;
+      animation: pulse 0.5s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from {
+        transform: scale(1);
+      }
+
+      to {
+        transform: scale(1.1);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card" id="card">
+    <h1>Random Timer</h1>
+    <p>Random time between 25 and 35 seconds.</p>
+
+    <div id="display">--</div>
+
+    <button id="startButton">Start Timer</button>
+    <button id="stopButton" disabled>Stop Alarm</button>
+
+    <div id="status">Ready</div>
+  </div>
+
+  <script>
+    const display = document.getElementById("display");
+    const startButton = document.getElementById("startButton");
+    const stopButton = document.getElementById("stopButton");
+    const status = document.getElementById("status");
+    const card = document.getElementById("card");
+
+    let timerInterval;
+    let alarmInterval;
+    let audioContext;
+
+    function getRandomTime() {
+      // Random whole number from 25 through 35
+      return Math.floor(Math.random() * 11) + 25;
+    }
+
+    function setupAudio() {
+      try {
+        const AudioContext =
+          window.AudioContext || window.webkitAudioContext;
+
+        if (!AudioContext) {
+          return;
+        }
+
+        if (!audioContext) {
+          audioContext = new AudioContext();
+        }
+
+        if (audioContext.state === "suspended") {
+          audioContext.resume();
+        }
+      } catch (error) {
+        console.log("Audio unavailable:", error);
+      }
+    }
+
+    function beep() {
+      if (!audioContext) {
+        return;
+      }
+
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = "square";
+        oscillator.frequency.value = 900;
+
+        gain.gain.setValueAtTime(
+          0.25,
+          audioContext.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioContext.currentTime + 0.2
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+
+        oscillator.stop(
+          audioContext.currentTime + 0.2
+        );
+      } catch (error) {
+        console.log("Beep failed:", error);
+      }
+    }
+
+    function startAlarm() {
+      clearInterval(timerInterval);
+
+      display.textContent = "0";
+      status.textContent = "TIME'S UP!";
+      card.classList.add("ringing");
+
+      stopButton.disabled = false;
+      startButton.disabled = true;
+
+      beep();
+
+      alarmInterval = setInterval(() => {
+        beep();
+      }, 450);
+    }
+
+    function stopAlarm() {
+      clearInterval(alarmInterval);
+
+      card.classList.remove("ringing");
+
+      display.textContent = "--";
+      status.textContent = "Alarm stopped. Ready.";
+
+      stopButton.disabled = true;
+      startButton.disabled = false;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      clearInterval(alarmInterval);
+
+      setupAudio();
+
+      card.classList.remove("ringing");
+
+      startButton.disabled = true;
+      stopButton.disabled = true;
+
+      const seconds = getRandomTime();
+      const endTime = Date.now() + seconds * 1000;
+
+      display.textContent = seconds;
+
+      status.textContent =
+        "Timer started for " + seconds + " seconds";
+
+      timerInterval = setInterval(() => {
+        const remaining = Math.max(
+          0,
+          Math.ceil((endTime - Date.now()) / 1000)
+        );
+
+        display.textContent = remaining;
+
+        if (remaining <= 0) {
+          startAlarm();
+        }
+      }, 100);
+    }
+
+    startButton.addEventListener(
+      "click",
+      startTimer
+    );
+
+    stopButton.addEventListener(
+      "click",
+      stopAlarm
+    );
+  </script>
+
+</body>
+</html>
