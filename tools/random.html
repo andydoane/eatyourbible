@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Random Countdown Timer</title>
+  <title>Bomb Countdown Timer</title>
 
   <style>
     * {
@@ -18,6 +18,7 @@
       font-family: Arial, sans-serif;
       background: #111827;
       color: white;
+      overflow: hidden;
     }
 
     .card {
@@ -26,16 +27,65 @@
       text-align: center;
       background: #1f2937;
       border-radius: 20px;
+      position: relative;
+      z-index: 2;
     }
 
     h1 {
       margin-top: 0;
     }
 
+    #bomb {
+      font-size: 100px;
+      margin: 10px 0;
+      display: inline-block;
+      transform-origin: center;
+    }
+
+    #bomb.ticking {
+      animation: bombPulse 0.75s infinite ease-in-out;
+    }
+
+    #bomb.explode {
+      animation: explodeBomb 0.55s forwards;
+    }
+
+    @keyframes bombPulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.18);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes explodeBomb {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      40% {
+        transform: scale(1.8) rotate(15deg);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(5);
+        opacity: 0;
+      }
+    }
+
     #display {
       font-size: 90px;
       font-weight: bold;
-      margin: 30px 0;
+      margin: 15px 0 30px;
+      font-variant-numeric: tabular-nums;
     }
 
     button {
@@ -67,35 +117,99 @@
     #status {
       margin-top: 20px;
       color: #d1d5db;
+      min-height: 24px;
     }
 
-    .ringing #display {
-      color: #ff5555;
-      animation: pulse 0.5s infinite alternate;
+    #flash {
+      position: fixed;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
     }
 
-    @keyframes pulse {
-      from {
-        transform: scale(1);
+    #flash.active {
+      animation: flashEffect 0.5s;
+    }
+
+    @keyframes flashEffect {
+      0% {
+        opacity: 0;
       }
 
-      to {
-        transform: scale(1.1);
+      15% {
+        opacity: 1;
       }
+
+      100% {
+        opacity: 0;
+      }
+    }
+
+    #explosion {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      font-size: 160px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9;
+    }
+
+    #explosion.active {
+      animation: explosionEffect 1.2s forwards;
+    }
+
+    @keyframes explosionEffect {
+      0% {
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 1;
+      }
+
+      35% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(3);
+        opacity: 0;
+      }
+    }
+
+    body.shake {
+      animation: screenShake 0.5s;
+    }
+
+    @keyframes screenShake {
+      0%   { transform: translate(0, 0); }
+      15%  { transform: translate(-12px, 8px); }
+      30%  { transform: translate(10px, -10px); }
+      45%  { transform: translate(-8px, 6px); }
+      60%  { transform: translate(8px, -4px); }
+      75%  { transform: translate(-4px, 3px); }
+      100% { transform: translate(0, 0); }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="card" id="card">
-    <h1>Random Timer</h1>
+  <div id="flash"></div>
+  <div id="explosion">💥</div>
+
+  <div class="card">
+    <h1>Bomb Timer</h1>
     <p>Random time between 25 and 35 seconds.</p>
+
+    <div id="bomb">💣</div>
 
     <div id="display">--</div>
 
     <button id="startButton">Start Timer</button>
-    <button id="stopButton" disabled>Stop Alarm</button>
+    <button id="stopButton" disabled>Reset</button>
 
     <div id="status">Ready</div>
   </div>
@@ -105,14 +219,15 @@
     const startButton = document.getElementById("startButton");
     const stopButton = document.getElementById("stopButton");
     const status = document.getElementById("status");
-    const card = document.getElementById("card");
 
-    let timerInterval;
-    let alarmInterval;
-    let audioContext;
+    const bomb = document.getElementById("bomb");
+    const flash = document.getElementById("flash");
+    const explosion = document.getElementById("explosion");
+
+    let timerInterval = null;
+    let audioContext = null;
 
     function getRandomTime() {
-      // Random whole number from 25 through 35
       return Math.floor(Math.random() * 11) + 25;
     }
 
@@ -137,77 +252,154 @@
       }
     }
 
-    function beep() {
+    function playExplosionSound() {
       if (!audioContext) {
         return;
       }
 
       try {
-        const oscillator = audioContext.createOscillator();
+        const duration = 1.5;
+        const sampleRate = audioContext.sampleRate;
+        const bufferSize = sampleRate * duration;
+
+        const buffer = audioContext.createBuffer(
+          1,
+          bufferSize,
+          sampleRate
+        );
+
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < bufferSize; i++) {
+          const decay = Math.pow(1 - i / bufferSize, 2.5);
+          data[i] = (Math.random() * 2 - 1) * decay;
+        }
+
+        const noise = audioContext.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = audioContext.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(
+          900,
+          audioContext.currentTime
+        );
+
+        filter.frequency.exponentialRampToValueAtTime(
+          80,
+          audioContext.currentTime + duration
+        );
+
         const gain = audioContext.createGain();
 
-        oscillator.type = "square";
-        oscillator.frequency.value = 900;
-
         gain.gain.setValueAtTime(
-          0.25,
+          1,
           audioContext.currentTime
         );
 
         gain.gain.exponentialRampToValueAtTime(
           0.001,
-          audioContext.currentTime + 0.2
+          audioContext.currentTime + duration
         );
 
-        oscillator.connect(gain);
+        noise.connect(filter);
+        filter.connect(gain);
         gain.connect(audioContext.destination);
 
-        oscillator.start();
+        noise.start();
 
-        oscillator.stop(
-          audioContext.currentTime + 0.2
+        // Low boom
+        const boom = audioContext.createOscillator();
+        const boomGain = audioContext.createGain();
+
+        boom.type = "sine";
+
+        boom.frequency.setValueAtTime(
+          120,
+          audioContext.currentTime
         );
+
+        boom.frequency.exponentialRampToValueAtTime(
+          35,
+          audioContext.currentTime + 0.8
+        );
+
+        boomGain.gain.setValueAtTime(
+          0.8,
+          audioContext.currentTime
+        );
+
+        boomGain.gain.exponentialRampToValueAtTime(
+          0.001,
+          audioContext.currentTime + 1
+        );
+
+        boom.connect(boomGain);
+        boomGain.connect(audioContext.destination);
+
+        boom.start();
+        boom.stop(audioContext.currentTime + 1);
+
       } catch (error) {
-        console.log("Beep failed:", error);
+        console.log("Explosion sound failed:", error);
       }
     }
 
-    function startAlarm() {
+    function explode() {
       clearInterval(timerInterval);
 
       display.textContent = "0";
-      status.textContent = "TIME'S UP!";
-      card.classList.add("ringing");
+      status.textContent = "💥 BOOM!";
 
-      stopButton.disabled = false;
+      bomb.classList.remove("ticking");
+      bomb.classList.add("explode");
+
+      flash.classList.remove("active");
+      explosion.classList.remove("active");
+
+      void flash.offsetWidth;
+
+      flash.classList.add("active");
+      explosion.classList.add("active");
+
+      document.body.classList.add("shake");
+
+      playExplosionSound();
+
       startButton.disabled = true;
+      stopButton.disabled = false;
 
-      beep();
-
-      alarmInterval = setInterval(() => {
-        beep();
-      }, 450);
+      setTimeout(() => {
+        document.body.classList.remove("shake");
+      }, 500);
     }
 
-    function stopAlarm() {
-      clearInterval(alarmInterval);
-
-      card.classList.remove("ringing");
+    function resetTimer() {
+      clearInterval(timerInterval);
 
       display.textContent = "--";
-      status.textContent = "Alarm stopped. Ready.";
+      status.textContent = "Ready";
 
-      stopButton.disabled = true;
+      bomb.classList.remove("ticking");
+      bomb.classList.remove("explode");
+
+      flash.classList.remove("active");
+      explosion.classList.remove("active");
+
       startButton.disabled = false;
+      stopButton.disabled = true;
     }
 
     function startTimer() {
       clearInterval(timerInterval);
-      clearInterval(alarmInterval);
 
       setupAudio();
 
-      card.classList.remove("ringing");
+      bomb.classList.remove("explode");
+      bomb.classList.add("ticking");
+
+      explosion.classList.remove("active");
+      flash.classList.remove("active");
 
       startButton.disabled = true;
       stopButton.disabled = true;
@@ -216,9 +408,8 @@
       const endTime = Date.now() + seconds * 1000;
 
       display.textContent = seconds;
-
       status.textContent =
-        "Timer started for " + seconds + " seconds";
+        "Bomb armed for " + seconds + " seconds";
 
       timerInterval = setInterval(() => {
         const remaining = Math.max(
@@ -228,21 +419,23 @@
 
         display.textContent = remaining;
 
+        // Speed up pulsing near the end
+        if (remaining <= 5) {
+          bomb.style.animationDuration = "0.25s";
+        } else if (remaining <= 10) {
+          bomb.style.animationDuration = "0.45s";
+        } else {
+          bomb.style.animationDuration = "0.75s";
+        }
+
         if (remaining <= 0) {
-          startAlarm();
+          explode();
         }
       }, 100);
     }
 
-    startButton.addEventListener(
-      "click",
-      startTimer
-    );
-
-    stopButton.addEventListener(
-      "click",
-      stopAlarm
-    );
+    startButton.addEventListener("click", startTimer);
+    stopButton.addEventListener("click", resetTimer);
   </script>
 
 </body>
